@@ -13,6 +13,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Firebase -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUXMdQCrVGnUHcHwykw0HN-FcO7y_cMhI",
+            authDomain: "inventario-industronic.firebaseapp.com",
+            projectId: "inventario-industronic",
+            storageBucket: "inventario-industronic.firebasestorage.app",
+            messagingSenderId: "147085153787",
+            appId: "1:147085153787:web:cdb6895bfa687ce44e275e"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Hacer disponible globalmente
+        window.firebaseDB = db;
+        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs };
+    </script>
     <style>
         * {
             margin: 0;
@@ -1535,7 +1559,7 @@
                         <span class="arrow">›</span>
                     </div>
 
-                    <div class="menu-card" onclick="alert('Gestionar duplicados')">
+                    <div class="menu-card" onclick="gestionarDuplicados()">
                         <div class="icon-box orange">⚠️</div>
                         <div class="text">
                             <h3>Duplicados</h3>
@@ -1574,7 +1598,7 @@
 
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="search-registros" placeholder="Buscar por folio o SAP...">
+                    <input type="text" id="search-registros" placeholder="Buscar por folio o SAP..." onkeyup="buscarRegistros()">
                     <button onclick="buscarRegistros()">🔍</button>
                 </div>
 
@@ -1605,65 +1629,10 @@
                 </div>
             </div>
 
-            <div class="results-count" id="count-registros">3 registros encontrados</div>
+            <div class="results-count" id="count-registros">0 registros encontrados</div>
 
-            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;">
-                <div class="registro-card">
-                    <div class="registro-header">
-                        <span class="registro-folio">F7</span>
-                        <span class="registro-badge almacen">📦 01</span>
-                    </div>
-                    <p class="registro-sap">2002398</p>
-                    <p class="registro-desc">CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH</p>
-                    <div class="registro-meta">
-                        <span>Cant: <strong>25</strong></span>
-                        <span>Ubic: <strong>A-12</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon">✏️</button>
-                            <button class="btn-icon delete">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Sandra Antonio • 📱 QR • 28/01 10:45</div>
-                </div>
-
-                <div class="registro-card">
-                    <div class="registro-header">
-                        <span class="registro-folio">F59</span>
-                        <span class="registro-badge positivo">POSITIVO</span>
-                    </div>
-                    <p class="registro-sap">9999999</p>
-                    <p class="registro-desc">MATERIAL NO ENCONTRADO EN SAP</p>
-                    <div class="registro-meta">
-                        <span>Cant: <strong>10</strong></span>
-                        <span>Ubic: <strong>Jaula</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon">✏️</button>
-                            <button class="btn-icon delete">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Jahyr Castro • ✍️ Manual • 28/01 11:20</div>
-                </div>
-
-                <div class="registro-card">
-                    <div class="registro-header">
-                        <span class="registro-folio">F33</span>
-                        <span class="registro-badge duplicado">DUPLICADO</span>
-                    </div>
-                    <p class="registro-sap">2000187</p>
-                    <p class="registro-desc">CABLE ROJO CAL.18 AWG MCA. VIAKON</p>
-                    <div class="registro-nota">
-                        <strong>⚠️ Nota:</strong> Usuario continuó después de alerta de duplicado. Validar con usuario.
-                    </div>
-                    <div class="registro-meta">
-                        <span>Cant: <strong>1901.91</strong></span>
-                        <span>Ubic: <strong>Rack 3</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon">✏️</button>
-                            <button class="btn-icon delete">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Sandra Antonio • 📱 QR • 28/01 09:15</div>
-                </div>
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-todos-registros">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>
             </div>
         </div>
 
@@ -1824,6 +1793,13 @@
                         </button>
                         <button class="btn-primary" style="flex: 1;" onclick="descargarSegundoConteo()">
                             📥 Descargar Segundo Conteo
+                        </button>
+                    </div>
+                    
+                    <!-- Botón Borrar Todos (solo para pruebas) -->
+                    <div style="margin-top: 16px;">
+                        <button class="btn-secondary" style="width: 100%; background: #d32f2f; color: white; font-weight: 700;" onclick="borrarTodosRegistros()">
+                            🗑️ Borrar TODOS los Registros (Pruebas)
                         </button>
                     </div>
                 </div>
@@ -1992,9 +1968,11 @@
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + screenId).classList.add('active');
             
-            // Renderizar mis registros cuando se abre esa pantalla
+            // Renderizar registros según la pantalla
             if (screenId === 'mis-registros') {
                 renderizarMisRegistros();
+            } else if (screenId === 'registros') {
+                renderizarTodosRegistros();
             }
         }
         
@@ -2486,26 +2464,48 @@
         }
 
         // Confirmar escaneos
-        function confirmarEscaneos() {
+        async function confirmarEscaneos() {
             if (escaneados.length === 0) return;
             
-            // Guardar registros en la BD según el modo
-            if (esSegundoConteo) {
-                registrosSegundoConteo.push(...escaneados);
-            } else {
-                registrosGuardados.push(...escaneados);
+            try {
+                // Guardar cada registro en Firebase
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                
+                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                
+                for (const registro of escaneados) {
+                    await addDoc(collection(db, coleccion), {
+                        ...registro,
+                        timestamp: new Date().toISOString(),
+                        sincronizado: true
+                    });
+                }
+                
+                // Guardar también en memoria local
+                if (esSegundoConteo) {
+                    registrosSegundoConteo.push(...escaneados);
+                } else {
+                    registrosGuardados.push(...escaneados);
+                }
+                
+                // Sonido de confirmación
+                reproducirSonido('success');
+                
+                document.getElementById('success-overlay').classList.add('show');
+                
+                setTimeout(() => {
+                    document.getElementById('success-overlay').classList.remove('show');
+                    escaneados = [];
+                    actualizarListaEscaneados();
+                }, 2000);
+                
+                console.log('✅ Registros guardados en Firebase');
+                
+            } catch (error) {
+                console.error('Error al guardar en Firebase:', error);
+                alert('⚠️ Error al guardar registros. Verifica tu conexión.');
             }
-            
-            // Sonido de confirmación
-            reproducirSonido('success');
-
-            document.getElementById('success-overlay').classList.add('show');
-            
-            setTimeout(() => {
-                document.getElementById('success-overlay').classList.remove('show');
-                escaneados = [];
-                actualizarListaEscaneados();
-            }, 2000);
         }
         
         // Reproducir sonidos
@@ -2623,15 +2623,8 @@
             
             currentFilter = type;
             
-            // Si se selecciona duplicados, aplicar filtro inmediatamente
-            if (type === 'duplicados') {
-                // Aquí se filtraría la lista para mostrar solo duplicados
-                console.log('Mostrando solo duplicados');
-                // TODO: Implementar filtrado visual
-            } else if (type === 'todos') {
-                console.log('Mostrando todos los registros');
-                // TODO: Mostrar todos
-            }
+            // Aplicar filtro inmediatamente
+            buscarRegistros();
         }
 
         function selectAlmacen(almacen) {
@@ -2639,6 +2632,7 @@
             event.target.classList.add('selected');
             currentAlmacen = almacen;
             document.getElementById('filter-almacen').classList.remove('show');
+            buscarRegistros();
         }
 
         function selectUsuario(usuario) {
@@ -2646,10 +2640,73 @@
             event.target.classList.add('selected');
             currentUsuario = usuario;
             document.getElementById('filter-usuario').classList.remove('show');
+            buscarRegistros();
         }
 
         function buscarRegistros() {
-            console.log('Buscando...', currentAlmacen, currentUsuario);
+            const query = document.getElementById('search-registros').value.toLowerCase();
+            
+            let registrosFiltrados = registrosGuardados.filter(r => !r.eliminado);
+            
+            // Filtrar por búsqueda
+            if (query) {
+                registrosFiltrados = registrosFiltrados.filter(r => 
+                    r.folio.toLowerCase().includes(query) ||
+                    r.sap.toLowerCase().includes(query) ||
+                    r.desc.toLowerCase().includes(query)
+                );
+            }
+            
+            // Filtrar por tipo
+            if (currentFilter === 'duplicados') {
+                registrosFiltrados = registrosFiltrados.filter(r => r.esDuplicado);
+            }
+            
+            // Filtrar por almacén
+            if (currentAlmacen !== 'todos') {
+                registrosFiltrados = registrosFiltrados.filter(r => r.almacen === currentAlmacen);
+            }
+            
+            // Filtrar por usuario
+            if (currentUsuario !== 'todos') {
+                registrosFiltrados = registrosFiltrados.filter(r => r.usuario === currentUsuario);
+            }
+            
+            // Renderizar resultados
+            const container = document.getElementById('container-todos-registros');
+            const count = document.getElementById('count-registros');
+            
+            count.textContent = `${registrosFiltrados.length} registros encontrados`;
+            
+            if (registrosFiltrados.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No se encontraron registros</div>';
+                return;
+            }
+            
+            container.innerHTML = registrosFiltrados.map((r) => `
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">${r.folio}</span>
+                        <span class="registro-badge almacen">📦 ${r.almacen}</span>
+                        ${r.esDuplicado ? '<span class="registro-badge duplicado">DUPLICADO</span>' : ''}
+                        ${r.esPositivo ? '<span class="registro-badge positivo">POSITIVO</span>' : ''}
+                    </div>
+                    <p class="registro-sap">${r.sap}</p>
+                    <p class="registro-desc">${r.desc}</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
+                        <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
+                            <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">
+                        👤 ${r.usuario} • ${r.metodo === 'QR' ? '📱' : '✍️'} ${r.metodo} • ${r.nombreContador || 'N/A'} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
+                    </div>
+                    ${r.esDuplicado ? '<div class="registro-nota"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
+                </div>
+            `).join('');
         }
 
         // ========== EDITAR REGISTRO ==========
@@ -2779,12 +2836,48 @@
             console.log('Comparativo generado:', diferencias.length, 'diferencias encontradas');
             console.log('Top 10 diferencias:', diferencias.slice(0, 10));
 
-            alert(`📊 Comparativo generado\n\n${diferencias.length} diferencias encontradas\n\nTop 3 mayores:\n` + 
+            // Generar Excel con todas las diferencias
+            if (confirm(`📊 Comparativo SAP vs Físico\n\n${diferencias.length} diferencias encontradas\n\nTop 3:\n` + 
                 diferencias.slice(0, 3).map((d, i) => 
                     `${i+1}. ${d.codigo} - Dif: ${d.diferencia.toFixed(2)} (${d.diferenciaCosto.toFixed(2)} MXN)`
                 ).join('\n') +
-                '\n\n(Ver consola para detalles completos)'
-            );
+                '\n\n¿Deseas descargar el comparativo completo en Excel?'
+            )) {
+                try {
+                    // Preparar datos para Excel
+                    const datos = diferencias.map(d => ({
+                        'Código SAP': d.codigo,
+                        'Descripción': d.descripcion,
+                        'Almacén': d.almacen,
+                        'Cant. SAP': d.cantidadSAP,
+                        'Cant. Física': d.cantidadFisica,
+                        'Diferencia': d.diferencia,
+                        'Costo Unit.': d.costoUnitario,
+                        'Dif. en Costo': d.diferenciaCosto,
+                        'Status': d.diferencia > 0 ? 'SOBRANTE' : 'FALTANTE'
+                    }));
+                    
+                    // Crear workbook
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(datos);
+                    
+                    // Ajustar anchos
+                    ws['!cols'] = [
+                        {wch: 12}, {wch: 50}, {wch: 10}, {wch: 12}, 
+                        {wch: 12}, {wch: 12}, {wch: 12}, {wch: 15}, {wch: 12}
+                    ];
+                    
+                    XLSX.utils.book_append_sheet(wb, ws, "Comparativo");
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    XLSX.writeFile(wb, `Comparativo_SAP_Fisico_${fecha}.xlsx`);
+                    
+                    console.log('✓ Comparativo descargado');
+                } catch (error) {
+                    console.error('Error al generar Excel:', error);
+                    alert('⚠️ Error al generar el archivo');
+                }
+            }
         }
 
         // ========== VER POSITIVOS ==========
@@ -2798,24 +2891,130 @@
 
             console.log('Positivos encontrados:', positivos);
 
-            alert(`⚠️ Códigos no encontrados en SAP\n\n${positivos.length} positivos encontrados:\n\n` +
+            if (confirm(`⚠️ Códigos no encontrados en SAP\n\n${positivos.length} positivos encontrados:\n\n` +
                 positivos.slice(0, 5).map((p, i) => 
-                    `${i+1}. Folio ${p.folio} - SAP: ${p.sap}`
+                    `${i+1}. Folio ${p.folio} - SAP: ${p.sap} - Alm: ${p.almacen}`
                 ).join('\n') +
                 (positivos.length > 5 ? '\n\n... y ' + (positivos.length - 5) + ' más' : '') +
-                '\n\n(Ver consola para detalles completos)'
-            );
+                '\n\n¿Deseas descargar la lista completa en Excel?'
+            )) {
+                try {
+                    // Preparar datos para Excel
+                    const datos = positivos.map(p => ({
+                        'Folio': p.folio,
+                        'Almacén': p.almacen,
+                        'Código SAP': p.sap,
+                        'Cantidad': p.cantidad,
+                        'Unidad': p.unidadMedida || 'PZA',
+                        'Ubicación': p.ubicacion || '',
+                        'Quién Contó': p.nombreContador || '',
+                        'Usuario': p.usuario,
+                        'Método': p.metodo,
+                        'Fecha': new Date(p.fecha).toLocaleString('es-MX')
+                    }));
+                    
+                    // Crear workbook
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(datos);
+                    
+                    // Ajustar anchos
+                    ws['!cols'] = [
+                        {wch: 8}, {wch: 10}, {wch: 12}, {wch: 10}, {wch: 8},
+                        {wch: 15}, {wch: 20}, {wch: 20}, {wch: 10}, {wch: 20}
+                    ];
+                    
+                    XLSX.utils.book_append_sheet(wb, ws, "Positivos");
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    XLSX.writeFile(wb, `Positivos_NoEncontrados_${fecha}.xlsx`);
+                    
+                    console.log('✓ Positivos descargados');
+                } catch (error) {
+                    console.error('Error al generar Excel:', error);
+                    alert('⚠️ Error al generar el archivo');
+                }
+            }
+        }
+        
+        // ========== GESTIONAR DUPLICADOS ==========
+        function gestionarDuplicados() {
+            const duplicados = registrosGuardados.filter(r => !r.eliminado && r.esDuplicado);
+            
+            if (duplicados.length === 0) {
+                alert('✓ No hay duplicados\n\nTodos los registros son únicos.');
+                return;
+            }
+            
+            console.log('Duplicados encontrados:', duplicados);
+            
+            if (confirm(`⚠️ Registros Duplicados\n\n${duplicados.length} duplicados encontrados:\n\n` +
+                duplicados.slice(0, 5).map((d, i) => 
+                    `${i+1}. ${d.folio} - SAP: ${d.sap} - ${d.usuario}`
+                ).join('\n') +
+                (duplicados.length > 5 ? '\n\n... y ' + (duplicados.length - 5) + ' más' : '') +
+                '\n\n¿Deseas descargar la lista completa en Excel?'
+            )) {
+                try {
+                    const datos = duplicados.map(d => ({
+                        'Folio': d.folio,
+                        'Almacén': d.almacen,
+                        'Código SAP': d.sap,
+                        'Descripción': d.desc,
+                        'Cantidad': d.cantidad,
+                        'Unidad': d.unidadMedida || 'PZA',
+                        'Ubicación': d.ubicacion || '',
+                        'Quién Contó': d.nombreContador || '',
+                        'Usuario': d.usuario,
+                        'Continuó': d.continuoDespuesAlerta ? 'SÍ' : 'NO',
+                        'Fecha': new Date(d.fecha).toLocaleString('es-MX')
+                    }));
+                    
+                    const wb = XLSX.utils.book_new();
+                    const ws = XLSX.utils.json_to_sheet(datos);
+                    
+                    ws['!cols'] = [
+                        {wch: 8}, {wch: 10}, {wch: 12}, {wch: 50}, {wch: 10},
+                        {wch: 8}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 10}, {wch: 20}
+                    ];
+                    
+                    XLSX.utils.book_append_sheet(wb, ws, "Duplicados");
+                    
+                    const fecha = new Date().toISOString().split('T')[0];
+                    XLSX.writeFile(wb, `Registros_Duplicados_${fecha}.xlsx`);
+                    
+                    console.log('✓ Duplicados descargados');
+                } catch (error) {
+                    console.error('Error al generar Excel:', error);
+                    alert('⚠️ Error al generar el archivo');
+                }
+            }
         }
 
         // ========== BLOQUEO DE ALMACENES ==========
-        function toggleBloqueoAlmacen(almacen) {
+        async function toggleBloqueoAlmacen(almacen) {
             const checkbox = document.getElementById('bloqueo-' + almacen);
             almacenesBloqueados[almacen] = checkbox.checked;
             
-            if (checkbox.checked) {
-                alert(`🔒 Almacén ${almacen} BLOQUEADO\n\nYa no se pueden agregar nuevos registros del primer conteo a este almacén.`);
-            } else {
-                alert(`🔓 Almacén ${almacen} DESBLOQUEADO\n\nSe pueden agregar registros nuevamente.`);
+            try {
+                // Guardar estado en Firebase
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                
+                await addDoc(collection(db, 'control_almacenes'), {
+                    almacen: almacen,
+                    bloqueado: checkbox.checked,
+                    timestamp: new Date().toISOString(),
+                    usuario: currentRole || selectedUser
+                });
+                
+                if (checkbox.checked) {
+                    alert(`🔒 Almacén ${almacen} BLOQUEADO\n\nYa no se pueden agregar nuevos registros del primer conteo a este almacén.`);
+                } else {
+                    alert(`🔓 Almacén ${almacen} DESBLOQUEADO\n\nSe pueden agregar registros nuevamente.`);
+                }
+            } catch (error) {
+                console.error('Error al actualizar estado de almacén:', error);
+                alert('⚠️ Error al sincronizar. Verifica tu conexión.');
             }
         }
 
@@ -2929,27 +3128,225 @@
                 </div>
             `).join('');
         }
+        
+        // ========== RENDERIZAR TODOS LOS REGISTROS (AUDITORÍA/MESA) ==========
+        function renderizarTodosRegistros() {
+            const todosRegistros = registrosGuardados.filter(r => !r.eliminado);
+            const container = document.getElementById('container-todos-registros');
+            const count = document.getElementById('count-registros');
+            
+            if (!container) return;
+            
+            count.textContent = `${todosRegistros.length} registros encontrados`;
+            
+            if (todosRegistros.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>';
+                return;
+            }
+            
+            container.innerHTML = todosRegistros.map((r, index) => `
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">${r.folio}</span>
+                        <span class="registro-badge almacen">📦 ${r.almacen}</span>
+                        ${r.esDuplicado ? '<span class="registro-badge duplicado">DUPLICADO</span>' : ''}
+                        ${r.esPositivo ? '<span class="registro-badge positivo">POSITIVO</span>' : ''}
+                    </div>
+                    <p class="registro-sap">${r.sap}</p>
+                    <p class="registro-desc">${r.desc}</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
+                        <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
+                            <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">
+                        👤 ${r.usuario} • ${r.metodo === 'QR' ? '📱' : '✍️'} ${r.metodo} • ${r.nombreContador || 'N/A'} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
+                    </div>
+                    ${r.esDuplicado ? '<div class="registro-nota"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
+                </div>
+            `).join('');
+        }
 
         // ========== DESCARGAS ==========
         function descargarPrimerConteo() {
-            if (registrosGuardados.length === 0) {
+            if (registrosGuardados.filter(r => !r.eliminado).length === 0) {
                 alert('⚠️ No hay registros para descargar');
                 return;
             }
-
-            console.log('Descargando primer conteo:', registrosGuardados.length, 'registros');
-            alert(`📥 Preparando descarga...\n\n${registrosGuardados.length} registros del primer conteo\n\n(Funcionalidad de descarga Excel pendiente de implementar con librería XLSX)`);
+            
+            try {
+                // Preparar datos para Excel
+                const datos = registrosGuardados.filter(r => !r.eliminado).map(r => ({
+                    'Folio': r.folio,
+                    'Almacén': r.almacen,
+                    'Código SAP': r.sap,
+                    'Descripción': r.desc,
+                    'Cantidad': r.cantidad,
+                    'Unidad': r.unidadMedida || 'PZA',
+                    'Ubicación': r.ubicacion || '',
+                    'Quién Contó': r.nombreContador || '',
+                    'Usuario Sistema': r.usuario,
+                    'Método': r.metodo,
+                    'Duplicado': r.esDuplicado ? 'SÍ' : 'NO',
+                    'Positivo': r.esPositivo ? 'SÍ' : 'NO',
+                    'Fecha': new Date(r.fecha).toLocaleString('es-MX')
+                }));
+                
+                // Crear workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(datos);
+                
+                // Ajustar anchos de columna
+                ws['!cols'] = [
+                    {wch: 8},  // Folio
+                    {wch: 10}, // Almacén
+                    {wch: 12}, // SAP
+                    {wch: 50}, // Descripción
+                    {wch: 10}, // Cantidad
+                    {wch: 8},  // Unidad
+                    {wch: 15}, // Ubicación
+                    {wch: 20}, // Quién Contó
+                    {wch: 20}, // Usuario
+                    {wch: 10}, // Método
+                    {wch: 10}, // Duplicado
+                    {wch: 10}, // Positivo
+                    {wch: 20}  // Fecha
+                ];
+                
+                XLSX.utils.book_append_sheet(wb, ws, "Primer Conteo");
+                
+                // Descargar archivo
+                const fecha = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `Inventario_PrimerConteo_${fecha}.xlsx`);
+                
+                console.log('✓ Excel descargado:', datos.length, 'registros');
+                
+            } catch (error) {
+                console.error('Error al generar Excel:', error);
+                alert('⚠️ Error al generar el archivo. Verifica que XLSX esté cargado.');
+            }
         }
 
         function descargarSegundoConteo() {
-            if (registrosSegundoConteo.length === 0) {
+            if (registrosSegundoConteo.filter(r => !r.eliminado).length === 0) {
                 alert('⚠️ No hay registros de segundo conteo para descargar');
                 return;
             }
-
-            console.log('Descargando segundo conteo:', registrosSegundoConteo.length, 'registros');
-            alert(`📥 Preparando descarga...\n\n${registrosSegundoConteo.length} registros del segundo conteo\n\n(Funcionalidad de descarga Excel pendiente de implementar con librería XLSX)`);
+            
+            try {
+                // Preparar datos para Excel
+                const datos = registrosSegundoConteo.filter(r => !r.eliminado).map(r => ({
+                    'Folio': r.folio,
+                    'Almacén': r.almacen,
+                    'Código SAP': r.sap,
+                    'Descripción': r.desc,
+                    'Cantidad': r.cantidad,
+                    'Unidad': r.unidadMedida || 'PZA',
+                    'Ubicación': r.ubicacion || '',
+                    'Quién Contó': r.nombreContador || '',
+                    'Usuario Sistema': r.usuario,
+                    'Método': r.metodo,
+                    'Duplicado': r.esDuplicado ? 'SÍ' : 'NO',
+                    'Positivo': r.esPositivo ? 'SÍ' : 'NO',
+                    'Fecha': new Date(r.fecha).toLocaleString('es-MX')
+                }));
+                
+                // Crear workbook
+                const wb = XLSX.utils.book_new();
+                const ws = XLSX.utils.json_to_sheet(datos);
+                
+                // Ajustar anchos de columna
+                ws['!cols'] = [
+                    {wch: 8}, {wch: 10}, {wch: 12}, {wch: 50}, {wch: 10}, 
+                    {wch: 8}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 10},
+                    {wch: 10}, {wch: 10}, {wch: 20}
+                ];
+                
+                XLSX.utils.book_append_sheet(wb, ws, "Segundo Conteo");
+                
+                // Descargar archivo
+                const fecha = new Date().toISOString().split('T')[0];
+                XLSX.writeFile(wb, `Inventario_SegundoConteo_${fecha}.xlsx`);
+                
+                console.log('✓ Excel descargado:', datos.length, 'registros');
+                
+            } catch (error) {
+                console.error('Error al generar Excel:', error);
+                alert('⚠️ Error al generar el archivo. Verifica que XLSX esté cargado.');
+            }
         }
+        
+        // ========== BORRAR TODOS LOS REGISTROS (SOLO PRUEBAS) ==========
+        function borrarTodosRegistros() {
+            if (confirm('⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará TODOS los registros guardados.\n\nEsta acción NO se puede deshacer.')) {
+                if (confirm('⚠️ ÚLTIMA CONFIRMACIÓN\n\n¿Realmente deseas borrar TODO?')) {
+                    // Borrar de memoria local
+                    registrosGuardados = [];
+                    registrosSegundoConteo = [];
+                    escaneados = [];
+                    
+                    // Actualizar vistas
+                    renderizarMisRegistros();
+                    renderizarTodosRegistros();
+                    
+                    alert('✓ Todos los registros han sido borrados\n\n(Nota: Si Firebase está activo, los registros en la nube siguen ahí. Esto solo borra la memoria local de la app)');
+                    
+                    console.log('🗑️ Todos los registros borrados');
+                }
+            }
+        }
+        
+        // ========== INICIALIZACIÓN FIREBASE ==========
+        async function inicializarFirebase() {
+            try {
+                const { collection, onSnapshot, query, orderBy } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                
+                // Escuchar cambios en registros en tiempo real
+                const qRegistros = query(collection(db, 'registros'), orderBy('timestamp', 'desc'));
+                onSnapshot(qRegistros, (snapshot) => {
+                    registrosGuardados = [];
+                    snapshot.forEach((doc) => {
+                        registrosGuardados.push({ id: doc.id, ...doc.data() });
+                    });
+                    console.log('📥 Registros sincronizados:', registrosGuardados.length);
+                    
+                    // Actualizar vista si está abierta
+                    if (document.getElementById('screen-mis-registros').classList.contains('active')) {
+                        renderizarMisRegistros();
+                    }
+                });
+                
+                // Escuchar bloqueos de almacenes
+                const qControl = query(collection(db, 'control_almacenes'), orderBy('timestamp', 'desc'));
+                onSnapshot(qControl, (snapshot) => {
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        almacenesBloqueados[data.almacen] = data.bloqueado;
+                        
+                        // Actualizar UI si está en auditoría
+                        const checkbox = document.getElementById('bloqueo-' + data.almacen);
+                        if (checkbox && checkbox.checked !== data.bloqueado) {
+                            checkbox.checked = data.bloqueado;
+                        }
+                    });
+                    console.log('🔒 Control de almacenes sincronizado');
+                });
+                
+                console.log('✅ Firebase inicializado correctamente');
+                
+            } catch (error) {
+                console.error('❌ Error al inicializar Firebase:', error);
+            }
+        }
+        
+        // Inicializar cuando se carga la página
+        window.addEventListener('load', () => {
+            setTimeout(inicializarFirebase, 1000);
+        });
     </script>
 </body>
 </html>
