@@ -1396,44 +1396,10 @@
                 </div>
             </div>
 
-            <div class="results-count" id="count-mis-registros">2 registros encontrados</div>
+            <div class="results-count" id="count-mis-registros">0 registros encontrados</div>
 
-            <div style="background: #f5f5f5; min-height: calc(100vh - 180px); padding: 8px 0;">
-                <div class="registro-card">
-                    <div class="registro-header">
-                        <span class="registro-folio">F7</span>
-                        <span class="registro-badge almacen">📦 01</span>
-                    </div>
-                    <p class="registro-sap">2002398</p>
-                    <p class="registro-desc">CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH</p>
-                    <div class="registro-meta">
-                        <span>Cant: <strong>25</strong></span>
-                        <span>Ubic: <strong>A-12</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon" onclick="alert('Editar')">✏️</button>
-                            <button class="btn-icon delete" onclick="alert('Eliminar')">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">📱 QR • 28/01 10:45</div>
-                </div>
-
-                <div class="registro-card">
-                    <div class="registro-header">
-                        <span class="registro-folio">F33</span>
-                        <span class="registro-badge almacen">📦 30</span>
-                    </div>
-                    <p class="registro-sap">2000187</p>
-                    <p class="registro-desc">CABLE ROJO CAL.18 AWG MCA. VIAKON</p>
-                    <div class="registro-meta">
-                        <span>Cant: <strong>1901.91</strong></span>
-                        <span>Ubic: <strong>Rack 3</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon" onclick="alert('Editar')">✏️</button>
-                            <button class="btn-icon delete" onclick="alert('Eliminar')">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">✍️ Manual • 28/01 09:30</div>
-                </div>
+            <div style="background: #f5f5f5; min-height: calc(100vh - 180px); padding: 8px 0;" id="container-mis-registros">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>
             </div>
         </div>
 
@@ -1560,7 +1526,7 @@
 
             <div class="content-white">
                 <div class="menu-grid">
-                    <div class="menu-card" onclick="showScreen('registros')">
+                    <div class="menu-card" onclick="showScreen('registros', 'mesa')">
                         <div class="icon-box blue">📋</div>
                         <div class="text">
                             <h3>Todos los Registros</h3>
@@ -1602,7 +1568,7 @@
         <!-- ========== TODOS LOS REGISTROS ========== -->
         <div id="screen-registros" class="screen">
             <div class="header-inner">
-                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <button class="btn-back" onclick="regresarDeRegistros()">←</button>
                 <h1>Todos los Registros</h1>
             </div>
 
@@ -1863,7 +1829,7 @@
                 </div>
 
                 <div class="menu-grid" style="margin-top: 24px;">
-                    <div class="menu-card" onclick="showScreen('registros')">
+                    <div class="menu-card" onclick="showScreen('registros', 'auditoria')">
                         <div class="icon-box blue">📋</div>
                         <div class="text">
                             <h3>Todos los Registros</h3>
@@ -2013,12 +1979,28 @@
         };
         
         let esSegundoConteo = false; // Flag para saber si estamos en modo segundo conteo
+        let pantallaAnterior = 'login'; // Rastrear de dónde viene
 
 
         // Cambiar pantalla
-        function showScreen(screenId) {
+        function showScreen(screenId, from) {
+            // Guardar de dónde viene si es "registros"
+            if (screenId === 'registros' && from) {
+                pantallaAnterior = from;
+            }
+            
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById('screen-' + screenId).classList.add('active');
+            
+            // Renderizar mis registros cuando se abre esa pantalla
+            if (screenId === 'mis-registros') {
+                renderizarMisRegistros();
+            }
+        }
+        
+        // Regresar de Todos los Registros
+        function regresarDeRegistros() {
+            showScreen(pantallaAnterior);
         }
 
         // Seleccionar usuario
@@ -2261,23 +2243,55 @@
 
         // Validar duplicado
         function validarDuplicado(item) {
-            return registrosGuardados.some(r => 
+            // Revisar en registros guardados
+            const duplicadoGuardado = registrosGuardados.some(r => 
                 r.usuario === selectedUser &&
                 r.folio === item.folio &&
                 r.almacen === item.almacen &&
                 r.sap === item.sap &&
                 !r.eliminado
             );
+            
+            // Revisar en escaneados temporales (antes de confirmar)
+            const duplicadoEscaneado = escaneados.some(r => 
+                r.folio === item.folio &&
+                r.almacen === item.almacen &&
+                r.sap === item.sap
+            );
+            
+            return duplicadoGuardado || duplicadoEscaneado;
         }
 
         // Confirmar formulario
         function confirmarFormulario() {
-            const cantidad = document.getElementById('form-cantidad').value;
+            const cantidad = parseFloat(document.getElementById('form-cantidad').value);
             const ubicacion = document.getElementById('form-ubicacion').value;
+            const nombreContador = document.getElementById('form-contador').value.trim();
             
-            if (!cantidad || cantidad <= 0) {
+            // Validar que "Quién contó" esté lleno
+            if (!nombreContador) {
+                alert('⚠️ Debes indicar quién hizo el conteo');
+                document.getElementById('form-contador').focus();
+                return;
+            }
+            
+            // Validar cantidad
+            if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
                 alert('Ingresa una cantidad válida');
                 return;
+            }
+            
+            // Validar cantidad negativa
+            if (cantidad < 0) {
+                alert('La cantidad no puede ser negativa');
+                return;
+            }
+            
+            // Confirmación si cantidad es 0
+            if (cantidad === 0) {
+                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
+                    return;
+                }
             }
             
             const item = {
@@ -2285,13 +2299,16 @@
                 almacen: currentScanData.almacenCod,
                 sap: currentScanData.sap,
                 desc: currentScanData.desc,
-                cantidad: parseFloat(cantidad),
+                cantidad: cantidad,
                 ubicacion: ubicacion,
+                nombreContador: nombreContador,
                 metodo: currentScanData.metodo,
                 usuario: selectedUser,
+                unidadMedida: currentScanData.unidadMedida || 'PZA',
                 esDuplicado: false,
                 continuoDespuesAlerta: false,
-                esPositivo: currentScanData.esPositivo || false
+                esPositivo: currentScanData.esPositivo || false,
+                fecha: new Date().toISOString()
             };
 
             if (validarDuplicado(item)) {
@@ -2299,9 +2316,15 @@
                     item.esDuplicado = true;
                     item.continuoDespuesAlerta = true;
                     agregarEscaneado(item);
+                    
+                    // Sonido de escaneo exitoso
+                    reproducirSonido('scan');
                 }
             } else {
                 agregarEscaneado(item);
+                
+                // Sonido de escaneo exitoso
+                reproducirSonido('scan');
             }
             
             document.getElementById('scan-form-container').style.display = 'none';
@@ -2315,30 +2338,112 @@
 
         // Agregar manual
         function agregarManual() {
-            const folio = document.getElementById('manual-folio').value.toUpperCase();
+            const folio = document.getElementById('manual-folio').value.toUpperCase().trim();
             const almacen = document.getElementById('manual-almacen').value;
-            const sap = document.getElementById('manual-sap').value;
-            const cantidad = document.getElementById('manual-cantidad').value;
-            const ubicacion = document.getElementById('manual-ubicacion').value;
+            const sap = document.getElementById('manual-sap').value.trim();
+            const cantidad = parseFloat(document.getElementById('manual-cantidad').value);
+            const ubicacion = document.getElementById('manual-ubicacion').value.trim();
+            const nombreContador = document.getElementById('manual-contador').value.trim();
 
-            if (!folio || !sap || !cantidad) {
-                alert('Llena los campos requeridos');
+            // Validar campos requeridos
+            if (!folio || !sap) {
+                alert('⚠️ Debes llenar Folio y Código SAP');
                 return;
             }
+            
+            // Validar que "Quién contó" esté lleno
+            if (!nombreContador) {
+                alert('⚠️ Debes indicar quién hizo el conteo');
+                document.getElementById('manual-contador').focus();
+                return;
+            }
+            
+            // Validar cantidad
+            if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
+                alert('⚠️ Ingresa una cantidad válida');
+                return;
+            }
+            
+            // Validar cantidad negativa
+            if (cantidad < 0) {
+                alert('La cantidad no puede ser negativa');
+                return;
+            }
+            
+            // Confirmación si cantidad es 0
+            if (cantidad === 0) {
+                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
+                    return;
+                }
+            }
+            
+            // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
+            if (!esSegundoConteo && almacenesBloqueados[almacen]) {
+                alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+            
+            // Obtener descripción y UM de la base
+            let descripcion = 'Captura manual';
+            let unidadMedida = 'PZA';
+            let esPositivo = false;
+            
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (!encontrado) {
+                    esPositivo = true;
+                    descripcion = '⚠️ MATERIAL NO ENCONTRADO EN SAP';
+                } else {
+                    descripcion = encontrado.descripcion || 'Captura manual';
+                }
+            }
+            
+            if (kardexSAP.length > 0) {
+                const itemKardex = kardexSAP.find(item => item.codigo === sap);
+                if (itemKardex && itemKardex.unidadMedida) {
+                    unidadMedida = itemKardex.unidadMedida;
+                }
+            }
 
-            agregarEscaneado({
+            const item = {
                 folio: folio,
                 almacen: almacen,
                 sap: sap,
-                desc: 'Captura manual',
-                cantidad: parseFloat(cantidad),
-                ubicacion: ubicacion
-            });
+                desc: descripcion,
+                cantidad: cantidad,
+                ubicacion: ubicacion,
+                nombreContador: nombreContador,
+                metodo: 'Manual',
+                usuario: selectedUser,
+                unidadMedida: unidadMedida,
+                esDuplicado: false,
+                esPositivo: esPositivo,
+                fecha: new Date().toISOString()
+            };
+            
+            // Validar duplicado
+            if (validarDuplicado(item)) {
+                if (confirm('⚠️ ALERTA: Ya existe un registro con este Folio, Almacén y SAP hecho por ti.\n\n¿Deseas continuar de todos modos?')) {
+                    item.esDuplicado = true;
+                    item.continuoDespuesAlerta = true;
+                    agregarEscaneado(item);
+                    
+                    // Sonido
+                    reproducirSonido('scan');
+                }
+            } else {
+                agregarEscaneado(item);
+                
+                // Sonido
+                reproducirSonido('scan');
+            }
 
+            // Limpiar formulario
             document.getElementById('manual-folio').value = '';
             document.getElementById('manual-sap').value = '';
             document.getElementById('manual-cantidad').value = '';
             document.getElementById('manual-ubicacion').value = '';
+            document.getElementById('manual-contador').value = '';
         }
 
         // Agregar escaneado
@@ -2383,6 +2488,16 @@
         // Confirmar escaneos
         function confirmarEscaneos() {
             if (escaneados.length === 0) return;
+            
+            // Guardar registros en la BD según el modo
+            if (esSegundoConteo) {
+                registrosSegundoConteo.push(...escaneados);
+            } else {
+                registrosGuardados.push(...escaneados);
+            }
+            
+            // Sonido de confirmación
+            reproducirSonido('success');
 
             document.getElementById('success-overlay').classList.add('show');
             
@@ -2391,6 +2506,34 @@
                 escaneados = [];
                 actualizarListaEscaneados();
             }, 2000);
+        }
+        
+        // Reproducir sonidos
+        function reproducirSonido(tipo) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                if (tipo === 'scan') {
+                    // Beep corto para escaneo
+                    oscillator.frequency.value = 800;
+                    gainNode.gain.value = 0.3;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                } else if (tipo === 'success') {
+                    // Sonido de éxito
+                    oscillator.frequency.value = 1000;
+                    gainNode.gain.value = 0.3;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                }
+            } catch (error) {
+                console.log('No se pudo reproducir sonido:', error);
+            }
         }
 
         // File upload
@@ -2564,8 +2707,8 @@
                 alert('✓ Registro actualizado correctamente');
                 cerrarModalEditar();
                 
-                // Recargar vista si es necesario
-                console.log('Registro editado:', registro);
+                // Recargar vista
+                renderizarMisRegistros();
             }
         }
 
@@ -2585,7 +2728,7 @@
                 alert('✓ Registro eliminado');
                 
                 // Recargar vista
-                console.log('Registro eliminado:', registro);
+                renderizarMisRegistros();
             }
         }
 
@@ -2746,6 +2889,45 @@
             });
             
             return articulosRecontar;
+        }
+
+        // ========== RENDERIZAR MIS REGISTROS ==========
+        function renderizarMisRegistros() {
+            const misRegistros = registrosGuardados.filter(r => !r.eliminado && r.usuario === selectedUser);
+            const container = document.getElementById('container-mis-registros');
+            const count = document.getElementById('count-mis-registros');
+            
+            if (!container) return;
+            
+            count.textContent = `${misRegistros.length} registros encontrados`;
+            
+            if (misRegistros.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>';
+                return;
+            }
+            
+            container.innerHTML = misRegistros.map((r, index) => `
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">${r.folio}</span>
+                        <span class="registro-badge almacen">📦 ${r.almacen}</span>
+                    </div>
+                    <p class="registro-sap">${r.sap}</p>
+                    <p class="registro-desc">${r.desc}</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
+                        <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
+                            <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">
+                        ${r.metodo === 'QR' ? '📱' : '✍️'} ${r.metodo} • ${r.nombreContador || 'N/A'} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
+                    </div>
+                    ${r.esDuplicado ? '<div class="registro-nota"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
+                </div>
+            `).join('');
         }
 
         // ========== DESCARGAS ==========
