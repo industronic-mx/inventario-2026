@@ -1,0 +1,2773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a237e">
+    <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Inventario 2026 - Industronic</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #1565c0 0%, #1565c0 40%, #e3f2fd 40%, #e3f2fd 100%);
+            min-height: 100vh;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            width: 100%;
+            min-height: auto;
+            background: transparent;
+        }
+
+        /* Header principal - Card flotante */
+        .header-main {
+            background: white;
+            padding: 40px 24px 32px;
+            text-align: center;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
+        }
+
+        .header-main h1 {
+            color: #1565c0;
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-main h2 {
+            color: #1565c0;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .header-main p {
+            color: #757575;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Logo circular - INDUSTRONIC */
+        .logo-circle {
+            width: 80px;
+            height: 80px;
+            background: #1565c0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: 2px;
+            padding: 0 4px;
+        }
+
+        .logo-circle .i-flip {
+            display: inline-block;
+            transform: rotate(180deg);
+            margin-left: -2px;
+        }
+
+        /* Content area - Card flotante */
+        .content-white {
+            background: white;
+            min-height: auto;
+            padding: 24px 20px 32px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        }
+
+        /* User cards grid - 2x2 */
+        .user-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 0;
+        }
+
+        .user-card {
+            background: #f5f5f5;
+            border-radius: 16px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            position: relative;
+        }
+
+        .user-card:hover {
+            background: #eeeeee;
+            transform: translateY(-2px);
+        }
+
+        .user-card:active {
+            transform: scale(0.98);
+        }
+
+        .user-card .icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .user-card h3 {
+            color: #1a237e;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-card p {
+            color: #9e9e9e;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .user-card.needs-password::after {
+            content: "🔒";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 14px;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: #1a237e;
+            color: white;
+            font-weight: 700;
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(26, 35, 126, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+            background: #0d1742;
+        }
+
+        .btn-success {
+            background: #4caf50;
+            color: white;
+            font-weight: 600;
+            padding: 14px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1a237e;
+            font-weight: 600;
+            padding: 14px 24px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            cursor: pointer;
+            width: 100%;
+            font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Header interno */
+        .header-inner {
+            background: #1a237e;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+        }
+
+        .header-inner h1 {
+            font-size: 17px;
+            font-weight: 700;
+            flex: 1;
+        }
+
+        .btn-back {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            padding: 4px;
+            margin: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #757575;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .tab-btn.active {
+            background: #1a237e;
+            color: white;
+        }
+
+        /* Scan area */
+        .scan-area {
+            padding: 0 16px;
+        }
+
+        .scan-box {
+            background: white;
+            border-radius: 8px;
+            padding: 32px 20px;
+            text-align: center;
+            border: 2px dashed #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .scan-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .scan-box h3 {
+            color: #1a237e;
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .scan-box p {
+            color: #757575;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* QR Reader container */
+        #qr-reader {
+            width: 100%;
+            margin: 16px 0;
+        }
+
+        #qr-reader__dashboard_section_swaplink {
+            display: none !important;
+        }
+
+        /* Lista de escaneados */
+        .scanned-list {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 80px;
+        }
+
+        .list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .list-header h3 {
+            color: #1a237e;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .count-badge {
+            background: #1a237e;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .scanned-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .scanned-item .info {
+            flex: 1;
+        }
+
+        .scanned-item .folio {
+            font-weight: 700;
+            color: #1a237e;
+            font-size: 15px;
+        }
+
+        .scanned-item .details {
+            font-size: 12px;
+            color: #757575;
+            font-weight: 500;
+        }
+
+        .scanned-item .qty {
+            font-weight: 700;
+            color: #4caf50;
+            font-size: 15px;
+        }
+
+        .btn-remove {
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #9e9e9e;
+            font-size: 14px;
+        }
+
+        /* Confirm bar */
+        .confirm-bar {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            padding: 16px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .confirm-bar.show {
+            display: block;
+        }
+
+        /* Form manual */
+        .form-manual {
+            padding: 0 16px;
+        }
+
+        .input-group {
+            margin-bottom: 16px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #424242;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 500;
+            background: white;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .two-cols {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* User selection */
+        .user-selection {
+            margin-bottom: 24px;
+        }
+
+        .user-selection h3 {
+            color: #1a237e;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .user-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .user-option {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: #424242;
+        }
+
+        .user-option.selected {
+            border-color: #1a237e;
+            background: #e8eaf6;
+            color: #1a237e;
+        }
+
+        .user-option .icon {
+            font-size: 18px;
+        }
+
+        /* Menu cards */
+        .menu-grid {
+            display: grid;
+            gap: 12px;
+            padding: 0 16px;
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+            border: 1px solid #e0e0e0;
+        }
+
+        .menu-card:active {
+            transform: scale(0.98);
+        }
+
+        .icon-box {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+
+        .icon-box.blue { background: #e3f2fd; }
+        .icon-box.green { background: #e8f5e9; }
+        .icon-box.orange { background: #fff3e0; }
+        .icon-box.purple { background: #f3e5f5; }
+
+        .menu-card .text {
+            flex: 1;
+        }
+
+        .menu-card h3 {
+            color: #1a237e;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .menu-card p {
+            color: #757575;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .menu-card .arrow {
+            color: #bdbdbd;
+            font-size: 20px;
+        }
+
+        /* Control de Almacenes y Segundo Conteo */
+        .almacen-control-item, .segundo-conteo-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .almacen-control-item:last-child, .segundo-conteo-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #1a237e;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Registros cards - ESTILO PÁGINA UBICACIONES */
+        .registro-card {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 0 16px 12px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .registro-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .registro-folio {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1a237e;
+            letter-spacing: 0.5px;
+        }
+
+        .registro-badge {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .registro-badge.positivo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .registro-badge.duplicado {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .registro-badge.almacen {
+            background: #e0e0e0;
+            color: #616161;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .registro-nota {
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #856404;
+        }
+
+        .registro-nota strong {
+            font-weight: 700;
+        }
+
+        .registro-sap {
+            color: #1976d2;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            letter-spacing: 0.3px;
+        }
+
+        .registro-desc {
+            color: #757575;
+            font-size: 13px;
+            line-height: 1.4;
+            margin-bottom: 12px;
+        }
+
+        .registro-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            color: #616161;
+            padding-top: 12px;
+            border-top: 1px solid #f5f5f5;
+            align-items: center;
+        }
+
+        .registro-meta strong {
+            color: #212121;
+            font-weight: 700;
+        }
+
+        .registro-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .btn-icon {
+            background: #f5f5f5;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-icon.delete {
+            background: #ffebee;
+        }
+
+        /* Dashboard */
+        .progress-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e0e0e0;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #1a237e;
+            border-radius: 6px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin: 16px;
+        }
+
+        .stats-row .stat-card {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        .stats-row .stat-card .icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .stats-row .stat-card .value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a237e;
+        }
+
+        .stats-row .stat-card .label {
+            font-size: 11px;
+            color: #757575;
+            font-weight: 600;
+        }
+
+        .almacen-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 16px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .almacen-card h3 {
+            color: #1a237e;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .almacen-item {
+            margin-bottom: 14px;
+        }
+
+        .almacen-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .almacen-name {
+            color: #424242;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .almacen-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .almacen-percent {
+            color: #757575;
+            font-weight: 500;
+        }
+
+        .almacen-bar {
+            height: 6px;
+            background: #f5f5f5;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .almacen-fill {
+            height: 100%;
+        }
+
+        /* Success overlay */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .success-overlay.show {
+            display: flex;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .success-overlay h2 {
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .success-overlay p {
+            color: rgba(255,255,255,0.8);
+            font-size: 15px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9998;
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .modal-content h3 {
+            color: #1a237e;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Form scan */
+        .scan-form {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 0 16px 20px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .scan-form h4 {
+            color: #1a237e;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .field-readonly {
+            margin-bottom: 12px;
+        }
+
+        .field-readonly label {
+            display: block;
+            color: #757575;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .field-readonly .value {
+            color: #212121;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        /* Upload area */
+        .upload-area {
+            background: white;
+            border-radius: 8px;
+            padding: 28px 20px;
+            text-align: center;
+            border: 2px dashed #e0e0e0;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .upload-area .icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .upload-area h4 {
+            color: #1a237e;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .upload-area p {
+            color: #757575;
+            font-size: 12px;
+        }
+
+        .file-preview {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 14px;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .file-preview.show {
+            display: block;
+        }
+
+        .file-preview .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-preview .file-icon {
+            font-size: 28px;
+        }
+
+        .file-preview .file-name {
+            flex: 1;
+            font-weight: 600;
+            color: #1a237e;
+            font-size: 13px;
+        }
+
+        .file-preview .file-remove {
+            background: #f44336;
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* Search box */
+        /* Search box mejorado con filtros */
+        .search-container {
+            padding: 16px;
+        }
+
+        .search-box {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .search-box button {
+            background: #1a237e;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        .filter-chips {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-chip {
+            background: white;
+            border: 1px solid #e0e0e0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #616161;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: #1a237e;
+            color: white;
+            border-color: #1a237e;
+        }
+
+        .filter-dropdown {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 8px;
+            margin-top: 8px;
+            display: none;
+        }
+
+        .filter-dropdown.show {
+            display: block;
+        }
+
+        .filter-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #424242;
+        }
+
+        .filter-option:hover {
+            background: #f5f5f5;
+        }
+
+        .filter-option.selected {
+            background: #e8eaf6;
+            color: #1a237e;
+            font-weight: 600;
+        }
+
+        .results-count {
+            padding: 8px 16px;
+            color: white;
+            font-size: 13px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ========== PANTALLA LOGIN ========== -->
+        <div id="screen-login" class="screen active">
+            <div class="header-main">
+                <div class="logo-circle">i<span class="i-flip">i</span></div>
+                <h1>Inventario 2026</h1>
+                <p>Selecciona tu tipo de acceso</p>
+            </div>
+
+            <div class="content-white">
+                <div class="user-grid">
+                    <div class="user-card" onclick="showScreen('capturista-login')">
+                        <div class="icon">📱</div>
+                        <h3>Capturista</h3>
+                        <p>Captura de marbetes</p>
+                    </div>
+
+                    <div class="user-card" onclick="showScreen('dashboard')">
+                        <div class="icon">📊</div>
+                        <h3>Dashboard</h3>
+                        <p>Reportes y avance</p>
+                    </div>
+
+                    <div class="user-card needs-password" onclick="showPasswordModal('mesa')">
+                        <div class="icon">📋</div>
+                        <h3>Mesa Control</h3>
+                        <p>🔒 Clave</p>
+                    </div>
+
+                    <div class="user-card needs-password" onclick="showPasswordModal('auditoria')">
+                        <div class="icon">🔍</div>
+                        <h3>Auditoría</h3>
+                        <p>🔒 Clave</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== LOGIN CAPTURISTA ========== -->
+        <div id="screen-capturista-login" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1>Selecciona tu nombre</h1>
+            </div>
+
+            <div class="content-white">
+                <div class="user-selection">
+                    <h3>¿Quién eres?</h3>
+                    <div class="user-list">
+                        <div class="user-option" onclick="selectUser(this, 'Sandra Antonio')">
+                            <span class="icon">👤</span>
+                            Sandra Antonio
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'Jahyr Castro')">
+                            <span class="icon">👤</span>
+                            Jahyr Castro
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'Angie Martínez')">
+                            <span class="icon">👤</span>
+                            Angie Martínez
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'Ingrid González')">
+                            <span class="icon">👤</span>
+                            Ingrid González
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'Edson Encinia')">
+                            <span class="icon">👤</span>
+                            Edson Encinia
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'Enrique García')">
+                            <span class="icon">👤</span>
+                            Enrique García
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="enterAsCapturista()">
+                    Continuar →
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== MENÚ CAPTURISTA ========== -->
+        <div id="screen-menu-capturista" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1 id="capturista-name">Capturista</h1>
+            </div>
+
+            <div class="content-white">
+                <div class="menu-grid">
+                    <div class="menu-card" onclick="showScreen('capture')">
+                        <div class="icon-box blue">📱</div>
+                        <div class="text">
+                            <h3>Capturar</h3>
+                            <p>Escanear o captura manual</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="showScreen('mis-registros')">
+                        <div class="icon-box green">📝</div>
+                        <div class="text">
+                            <h3>Mis Registros</h3>
+                            <p>Ver y editar mis capturas</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="showScreen('dashboard')">
+                        <div class="icon-box purple">📊</div>
+                        <div class="text">
+                            <h3>Dashboard</h3>
+                            <p>Ver avance general</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PANTALLA CAPTURA ========== -->
+        <div id="screen-capture" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('menu-capturista')">←</button>
+                <h1>Captura</h1>
+            </div>
+
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchTab('escanear')">
+                    📱 Escanear QR
+                </button>
+                <button class="tab-btn" onclick="switchTab('manual')">
+                    ✏️ Manual
+                </button>
+            </div>
+
+            <!-- Tab Escanear -->
+            <div id="tab-escanear" class="scan-area">
+                <div class="scan-box" id="scan-button" onclick="startScanning()">
+                    <div class="scan-icon">📱</div>
+                    <h3>Escanear Código QR</h3>
+                    <p>Toca aquí para activar cámara</p>
+                </div>
+
+                <!-- QR Reader -->
+                <div id="qr-reader" style="display: none;"></div>
+
+                <!-- Formulario prellenado -->
+                <div id="scan-form-container" style="display: none;">
+                    <div class="scan-form">
+                        <h4>Datos del Marbete</h4>
+                        
+                        <div class="field-readonly">
+                            <label>Folio</label>
+                            <div class="value" id="form-folio">-</div>
+                        </div>
+                        
+                        <div class="field-readonly">
+                            <label>Almacén</label>
+                            <div class="value" id="form-almacen">-</div>
+                        </div>
+                        
+                        <div class="field-readonly">
+                            <label>Código SAP</label>
+                            <div class="value" id="form-sap">-</div>
+                        </div>
+                        
+                        <div class="field-readonly">
+                            <label>Descripción</label>
+                            <div class="value" id="form-desc">-</div>
+                        </div>
+
+                        <div class="input-group">
+                            <label>Cantidad *</label>
+                            <input type="number" id="form-cantidad" placeholder="Ingresa cantidad" step="0.01">
+                        </div>
+
+                        <div class="input-group">
+                            <label>Ubicación (Opcional)</label>
+                            <input type="text" id="form-ubicacion" placeholder="Ej: Rack A-5">
+                        </div>
+
+                        <div class="input-group">
+                            <label>¿Quién contó? *</label>
+                            <input type="text" id="form-contador" placeholder="Ej: Juan Pérez">
+                        </div>
+
+                        <div class="two-cols">
+                            <button class="btn-secondary" onclick="cancelarFormulario()">Cancelar</button>
+                            <button class="btn-success" onclick="confirmarFormulario()">Agregar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de escaneados -->
+                <div class="scanned-list">
+                    <div class="list-header">
+                        <h3>Escaneados</h3>
+                        <span class="count-badge" id="count-escaneados">0</span>
+                    </div>
+                    <div id="lista-escaneados">
+                        <div class="empty-state">Escanea marbetes para agregarlos</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Manual -->
+            <div id="tab-manual" class="form-manual" style="display: none;">
+                <div class="input-group">
+                    <label>Folio *</label>
+                    <input type="text" id="manual-folio" placeholder="Ej: F7">
+                </div>
+
+                <div class="input-group">
+                    <label>Almacén *</label>
+                    <select id="manual-almacen">
+                        <option value="01">01 - Materia Prima</option>
+                        <option value="30">30 - Transformadores</option>
+                        <option value="31">31 - Placas</option>
+                        <option value="32">32 - Arneses</option>
+                        <option value="33">33 - Gabinetes</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Código SAP *</label>
+                    <input type="text" id="manual-sap" placeholder="Ej: 2002398">
+                </div>
+
+                <div class="two-cols">
+                    <div class="input-group">
+                        <label>Cantidad *</label>
+                        <input type="number" id="manual-cantidad" placeholder="0.00" step="0.01">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Ubicación</label>
+                        <input type="text" id="manual-ubicacion" placeholder="Rack">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>¿Quién contó? *</label>
+                    <input type="text" id="manual-contador" placeholder="Ej: Juan Pérez">
+                </div>
+
+                <button class="btn-primary" onclick="agregarManual()" style="margin-top: 8px;">
+                    ➕ Agregar Marbete
+                </button>
+            </div>
+
+            <!-- Barra de confirmación -->
+            <div id="confirm-bar" class="confirm-bar">
+                <button class="btn-success" onclick="confirmarEscaneos()">
+                    ✓ Confirmar Todo (<span id="count-confirm">0</span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== MIS REGISTROS (CAPTURISTA) ========== -->
+        <div id="screen-mis-registros" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('menu-capturista')">←</button>
+                <h1>Mis Registros</h1>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-mis-registros" placeholder="Buscar por folio o SAP...">
+                    <button onclick="filtrarMisRegistros()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active">Todos</div>
+                    <div class="filter-chip" onclick="alert('Filtrar por almacén')">📦 Almacén</div>
+                </div>
+            </div>
+
+            <div class="results-count" id="count-mis-registros">2 registros encontrados</div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 180px); padding: 8px 0;">
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">F7</span>
+                        <span class="registro-badge almacen">📦 01</span>
+                    </div>
+                    <p class="registro-sap">2002398</p>
+                    <p class="registro-desc">CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>25</strong></span>
+                        <span>Ubic: <strong>A-12</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon" onclick="alert('Editar')">✏️</button>
+                            <button class="btn-icon delete" onclick="alert('Eliminar')">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">📱 QR • 28/01 10:45</div>
+                </div>
+
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">F33</span>
+                        <span class="registro-badge almacen">📦 30</span>
+                    </div>
+                    <p class="registro-sap">2000187</p>
+                    <p class="registro-desc">CABLE ROJO CAL.18 AWG MCA. VIAKON</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>1901.91</strong></span>
+                        <span>Ubic: <strong>Rack 3</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon" onclick="alert('Editar')">✏️</button>
+                            <button class="btn-icon delete" onclick="alert('Eliminar')">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">✍️ Manual • 28/01 09:30</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== DASHBOARD ========== -->
+        <div id="screen-dashboard" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1>Dashboard</h1>
+                <button class="btn-back">🔄</button>
+            </div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 60px); padding-bottom: 20px;">
+                <div class="progress-card">
+                    <div style="text-align: center; margin-bottom: 14px;">
+                        <span style="font-size: 38px; font-weight: 800; color: #1a237e;">1,450</span>
+                        <span style="font-size: 18px; color: #9e9e9e;"> / 10,000</span>
+                    </div>
+                    <div class="progress-bar" style="height: 12px; margin-bottom: 8px;">
+                        <div class="progress-fill" style="width: 14.5%;"></div>
+                    </div>
+                    <p style="text-align: center; color: #1a237e; font-weight: 600; font-size: 14px;">14.5% completado</p>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="icon">⚠️</div>
+                        <div class="value" style="color: #f57c00;">12</div>
+                        <div class="label">Positivos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="icon">📈</div>
+                        <div class="value" style="color: #1976d2;">~45</div>
+                        <div class="label">escaneos/hora</div>
+                    </div>
+                </div>
+
+                <div class="almacen-card">
+                    <h3>📦 Avance por Almacén</h3>
+                    
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: #fbc02d;"></span>
+                                01 - Materia Prima
+                            </span>
+                            <span class="almacen-percent">500 / 3,800 (13.2%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: 13.2%; background: #fbc02d;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: #1976d2;"></span>
+                                30 - Transformadores
+                            </span>
+                            <span class="almacen-percent">150 / 300 (50%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: 50%; background: #1976d2;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: #388e3c;"></span>
+                                31 - Placas
+                            </span>
+                            <span class="almacen-percent">100 / 200 (50%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: 50%; background: #388e3c;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: #c2185b;"></span>
+                                32 - Arneses
+                            </span>
+                            <span class="almacen-percent">200 / 300 (66.7%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: 66.7%; background: #c2185b;"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: #f57c00;"></span>
+                                33 - Gabinetes
+                            </span>
+                            <span class="almacen-percent">500 / 2,000 (25%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: 25%; background: #f57c00;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div style="padding: 0 20px 20px;">
+                    <button class="btn-primary" onclick="verComparativo()" style="margin-bottom: 12px;">
+                        📊 Ver Comparativo SAP vs Físico
+                    </button>
+                    <button class="btn-secondary" onclick="verPositivos()">
+                        ❓ Ver Códigos Positivos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MENÚ MESA DE CONTROL ========== -->
+        <div id="screen-mesa" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1>Mesa de Control</h1>
+            </div>
+
+            <div class="content-white">
+                <div class="menu-grid">
+                    <div class="menu-card" onclick="showScreen('registros')">
+                        <div class="icon-box blue">📋</div>
+                        <div class="text">
+                            <h3>Todos los Registros</h3>
+                            <p>Ver y editar cualquier registro</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="alert('Gestionar duplicados')">
+                        <div class="icon-box orange">⚠️</div>
+                        <div class="text">
+                            <h3>Duplicados</h3>
+                            <p>Gestionar folios duplicados</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="verPositivos()">
+                        <div class="icon-box purple">❓</div>
+                        <div class="text">
+                            <h3>Positivos</h3>
+                            <p>Códigos no encontrados en SAP</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="showScreen('dashboard')">
+                        <div class="icon-box green">📊</div>
+                        <div class="text">
+                            <h3>Dashboard</h3>
+                            <p>Avance en tiempo real</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TODOS LOS REGISTROS ========== -->
+        <div id="screen-registros" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <h1>Todos los Registros</h1>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-registros" placeholder="Buscar por folio o SAP...">
+                    <button onclick="buscarRegistros()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleFilter(this, 'todos')">Todos</div>
+                    <div class="filter-chip" onclick="toggleFilter(this, 'duplicados')">⚠️ Duplicados</div>
+                    <div class="filter-chip" onclick="toggleFilter(this, 'almacen')">📦 Almacén</div>
+                    <div class="filter-chip" onclick="toggleFilter(this, 'usuario')">👤 Usuario</div>
+                </div>
+
+                <div id="filter-almacen" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAlmacen('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacen('01')">01 - Materia Prima</div>
+                    <div class="filter-option" onclick="selectAlmacen('30')">30 - Transformadores</div>
+                    <div class="filter-option" onclick="selectAlmacen('31')">31 - Placas</div>
+                    <div class="filter-option" onclick="selectAlmacen('32')">32 - Arneses</div>
+                    <div class="filter-option" onclick="selectAlmacen('33')">33 - Gabinetes</div>
+                </div>
+
+                <div id="filter-usuario" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectUsuario('todos')">Todos los usuarios</div>
+                    <div class="filter-option" onclick="selectUsuario('Sandra Antonio')">Sandra Antonio</div>
+                    <div class="filter-option" onclick="selectUsuario('Jahyr Castro')">Jahyr Castro</div>
+                    <div class="filter-option" onclick="selectUsuario('Angie Martínez')">Angie Martínez</div>
+                    <div class="filter-option" onclick="selectUsuario('Ingrid González')">Ingrid González</div>
+                    <div class="filter-option" onclick="selectUsuario('Edson Encinia')">Edson Encinia</div>
+                    <div class="filter-option" onclick="selectUsuario('Enrique García')">Enrique García</div>
+                </div>
+            </div>
+
+            <div class="results-count" id="count-registros">3 registros encontrados</div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;">
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">F7</span>
+                        <span class="registro-badge almacen">📦 01</span>
+                    </div>
+                    <p class="registro-sap">2002398</p>
+                    <p class="registro-desc">CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>25</strong></span>
+                        <span>Ubic: <strong>A-12</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon">✏️</button>
+                            <button class="btn-icon delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Sandra Antonio • 📱 QR • 28/01 10:45</div>
+                </div>
+
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">F59</span>
+                        <span class="registro-badge positivo">POSITIVO</span>
+                    </div>
+                    <p class="registro-sap">9999999</p>
+                    <p class="registro-desc">MATERIAL NO ENCONTRADO EN SAP</p>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>10</strong></span>
+                        <span>Ubic: <strong>Jaula</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon">✏️</button>
+                            <button class="btn-icon delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Jahyr Castro • ✍️ Manual • 28/01 11:20</div>
+                </div>
+
+                <div class="registro-card">
+                    <div class="registro-header">
+                        <span class="registro-folio">F33</span>
+                        <span class="registro-badge duplicado">DUPLICADO</span>
+                    </div>
+                    <p class="registro-sap">2000187</p>
+                    <p class="registro-desc">CABLE ROJO CAL.18 AWG MCA. VIAKON</p>
+                    <div class="registro-nota">
+                        <strong>⚠️ Nota:</strong> Usuario continuó después de alerta de duplicado. Validar con usuario.
+                    </div>
+                    <div class="registro-meta">
+                        <span>Cant: <strong>1901.91</strong></span>
+                        <span>Ubic: <strong>Rack 3</strong></span>
+                        <div class="registro-actions">
+                            <button class="btn-icon">✏️</button>
+                            <button class="btn-icon delete">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">👤 Sandra Antonio • 📱 QR • 28/01 09:15</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MENÚ AUDITORÍA ========== -->
+        <div id="screen-auditoria" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1>Auditoría</h1>
+            </div>
+
+            <div class="content-white">
+                <div style="padding: 0 16px;">
+                    <!-- Upload Kardex -->
+                    <div class="upload-area" onclick="document.getElementById('file-kardex').click()">
+                        <div class="icon">📊</div>
+                        <h4>Kardex SAP</h4>
+                        <p>Cargar archivo Excel con inventario teórico</p>
+                        <input type="file" id="file-kardex" accept=".xlsx,.xls" style="display: none;" onchange="handleFileUpload(this, 'kardex')">
+                    </div>
+                    <div id="preview-kardex" class="file-preview">
+                        <div class="file-info">
+                            <div class="file-icon">📄</div>
+                            <div class="file-name" id="name-kardex">-</div>
+                            <button class="file-remove" onclick="removeFile('kardex')">✕</button>
+                        </div>
+                    </div>
+
+                    <!-- Upload Base Descripciones -->
+                    <div class="upload-area" onclick="document.getElementById('file-descripciones').click()">
+                        <div class="icon">📚</div>
+                        <h4>Base de Descripciones</h4>
+                        <p>Cargar catálogo completo de artículos</p>
+                        <input type="file" id="file-descripciones" accept=".xlsx,.xls" style="display: none;" onchange="handleFileUpload(this, 'descripciones')">
+                    </div>
+                    <div id="preview-descripciones" class="file-preview">
+                        <div class="file-info">
+                            <div class="file-icon">📄</div>
+                            <div class="file-name" id="name-descripciones">-</div>
+                            <button class="file-remove" onclick="removeFile('descripciones')">✕</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Control de Almacenes -->
+                <div style="padding: 0 16px; margin-top: 32px;">
+                    <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
+                        🔒 Control de Almacenes
+                    </h3>
+                    <div style="background: white; border-radius: 12px; padding: 16px;">
+                        <div class="almacen-control-item">
+                            <span>📦 01 - Materia Prima</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-01" onchange="toggleBloqueoAlmacen('01')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="almacen-control-item">
+                            <span>📦 30 - Transformadores</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-30" onchange="toggleBloqueoAlmacen('30')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="almacen-control-item">
+                            <span>📦 31 - Placas</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-31" onchange="toggleBloqueoAlmacen('31')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="almacen-control-item">
+                            <span>📦 32 - Arneses</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-32" onchange="toggleBloqueoAlmacen('32')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="almacen-control-item">
+                            <span>📦 33 - Gabinetes</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-33" onchange="toggleBloqueoAlmacen('33')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <p style="color: #757575; font-size: 12px; margin-top: 12px;">
+                            ON = Bloqueado (no permite nuevos registros) • OFF = Abierto
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Segundo Conteo -->
+                <div style="padding: 0 16px; margin-top: 32px;">
+                    <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
+                        🔄 Segundo Conteo
+                    </h3>
+                    <div style="background: white; border-radius: 12px; padding: 16px;">
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 01 - Materia Prima</strong>
+                                <p id="status-2do-01" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('01')">
+                                Liberar
+                            </button>
+                        </div>
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 30 - Transformadores</strong>
+                                <p id="status-2do-30" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('30')">
+                                Liberar
+                            </button>
+                        </div>
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 31 - Placas</strong>
+                                <p id="status-2do-31" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('31')">
+                                Liberar
+                            </button>
+                        </div>
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 32 - Arneses</strong>
+                                <p id="status-2do-32" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('32')">
+                                Liberar
+                            </button>
+                        </div>
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 33 - Gabinetes</strong>
+                                <p id="status-2do-33" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('33')">
+                                Liberar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Botones de descarga -->
+                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                        <button class="btn-primary" style="flex: 1;" onclick="descargarPrimerConteo()">
+                            📥 Descargar Primer Conteo
+                        </button>
+                        <button class="btn-primary" style="flex: 1;" onclick="descargarSegundoConteo()">
+                            📥 Descargar Segundo Conteo
+                        </button>
+                    </div>
+                </div>
+
+                <div class="menu-grid" style="margin-top: 24px;">
+                    <div class="menu-card" onclick="showScreen('registros')">
+                        <div class="icon-box blue">📋</div>
+                        <div class="text">
+                            <h3>Todos los Registros</h3>
+                            <p>Ver y editar cualquier registro</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="verComparativo()">
+                        <div class="icon-box orange">📊</div>
+                        <div class="text">
+                            <h3>Comparativo</h3>
+                            <p>SAP vs Inventario Físico</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="verPositivos()">
+                        <div class="icon-box purple">❓</div>
+                        <div class="text">
+                            <h3>Positivos</h3>
+                            <p>Códigos no encontrados en SAP</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="alert('Exportar reportes')">
+                        <div class="icon-box green">📥</div>
+                        <div class="text">
+                            <h3>Exportar</h3>
+                            <p>Generar reportes en Excel</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="showScreen('dashboard')">
+                        <div class="icon-box purple">📈</div>
+                        <div class="text">
+                            <h3>Dashboard</h3>
+                            <p>Métricas y diferencias</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SUCCESS OVERLAY ========== -->
+        <div id="success-overlay" class="success-overlay">
+            <div style="text-align: center;">
+                <div class="success-icon">✓</div>
+                <h2>¡Guardado!</h2>
+                <p>Marbetes registrados correctamente</p>
+            </div>
+        </div>
+
+        <!-- ========== MODAL PASSWORD ========== -->
+        <div id="modal-password" class="modal-overlay">
+            <div class="modal-content">
+                <h3 id="modal-title">Ingresa la clave</h3>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" id="modal-pass" placeholder="****">
+                </div>
+                <div class="two-cols" style="margin-top: 16px;">
+                    <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button class="btn-primary" onclick="validatePassword()">Entrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== MODAL EDITAR REGISTRO ========== -->
+        <div id="modal-editar" class="modal-overlay">
+            <div class="modal-content">
+                <h3>✏️ Editar Registro</h3>
+                
+                <div class="input-group">
+                    <label>Folio</label>
+                    <input type="text" id="edit-folio" disabled style="background: #f5f5f5;">
+                </div>
+
+                <div class="input-group">
+                    <label>Código SAP</label>
+                    <input type="text" id="edit-sap" disabled style="background: #f5f5f5;">
+                </div>
+
+                <div class="input-group">
+                    <label>Descripción</label>
+                    <input type="text" id="edit-desc" disabled style="background: #f5f5f5;">
+                </div>
+
+                <div class="two-cols">
+                    <div class="input-group">
+                        <label>Cantidad *</label>
+                        <input type="number" id="edit-cantidad" step="0.01">
+                    </div>
+
+                    <div class="input-group">
+                        <label>Ubicación</label>
+                        <input type="text" id="edit-ubicacion" placeholder="Ej: Rack A-5">
+                    </div>
+                </div>
+
+                <div class="two-cols" style="margin-top: 16px;">
+                    <button class="btn-secondary" onclick="cerrarModalEditar()">Cancelar</button>
+                    <button class="btn-primary" onclick="guardarEdicion()">💾 Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedUser = null;
+        let currentRole = null;
+        let escaneados = [];
+        let currentScanData = null;
+        let html5QrCode = null;
+        let isScanning = false;
+        let registrosGuardados = []; // Simulación BD - Primer conteo
+        let registrosSegundoConteo = []; // Segundo conteo independiente
+        let currentFilter = 'todos';
+        let currentAlmacen = 'todos';
+        let currentUsuario = 'todos';
+        
+        // Bases de datos Excel
+        let kardexSAP = []; // Inventario teórico
+        let baseDescripciones = []; // Catálogo de artículos
+        
+        // Edición de registros
+        let registroEnEdicion = null;
+        
+        // Control de almacenes y segundo conteo
+        let almacenesBloqueados = {
+            '01': false,
+            '30': false,
+            '31': false,
+            '32': false,
+            '33': false
+        };
+        
+        let segundoConteoLiberado = {
+            '01': false,
+            '30': false,
+            '31': false,
+            '32': false,
+            '33': false
+        };
+        
+        let esSegundoConteo = false; // Flag para saber si estamos en modo segundo conteo
+
+
+        // Cambiar pantalla
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+        }
+
+        // Seleccionar usuario
+        function selectUser(element, nombre) {
+            document.querySelectorAll('.user-option').forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedUser = nombre;
+        }
+
+        // Entrar como capturista
+        function enterAsCapturista() {
+            if (!selectedUser) {
+                alert('Por favor selecciona tu nombre');
+                return;
+            }
+            document.getElementById('capturista-name').textContent = selectedUser;
+            showScreen('menu-capturista');
+        }
+
+        // Modal contraseña
+        function showPasswordModal(role) {
+            currentRole = role;
+            const titles = {
+                'mesa': 'Mesa de Control',
+                'auditoria': 'Auditoría',
+                'admin': 'Administrador'
+            };
+            document.getElementById('modal-title').textContent = titles[role];
+            document.getElementById('modal-password').classList.add('show');
+            document.getElementById('modal-pass').value = '';
+            document.getElementById('modal-pass').focus();
+        }
+
+        function closeModal() {
+            document.getElementById('modal-password').classList.remove('show');
+        }
+
+        function validatePassword() {
+            const pass = document.getElementById('modal-pass').value;
+            if (pass.length >= 1) {
+                closeModal();
+                if (currentRole === 'auditoria') {
+                    showScreen('auditoria');
+                } else if (currentRole === 'mesa') {
+                    showScreen('mesa');
+                } else {
+                    showScreen('mesa');
+                }
+            } else {
+                alert('Ingresa la contraseña');
+            }
+        }
+
+        // Tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (tab === 'escanear') {
+                document.getElementById('tab-escanear').style.display = 'block';
+                document.getElementById('tab-manual').style.display = 'none';
+            } else {
+                document.getElementById('tab-escanear').style.display = 'none';
+                document.getElementById('tab-manual').style.display = 'block';
+            }
+        }
+
+        // Iniciar escaneo QR
+        async function startScanning() {
+            const scanButton = document.getElementById('scan-button');
+            const qrReader = document.getElementById('qr-reader');
+            
+            try {
+                // Solicitar permisos explícitamente primero
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                
+                // Detener el stream de prueba
+                stream.getTracks().forEach(track => track.stop());
+                
+                // Ahora iniciar el lector QR
+                scanButton.style.display = 'none';
+                qrReader.style.display = 'block';
+
+                html5QrCode = new Html5Qrcode("qr-reader");
+                
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    },
+                    (decodedText) => {
+                        html5QrCode.stop();
+                        qrReader.style.display = 'none';
+                        scanButton.style.display = 'block';
+                        procesarQR(decodedText, 'QR');
+                    },
+                    (errorMessage) => {
+                        // Errores de escaneo (ignorar)
+                    }
+                );
+            } catch (err) {
+                console.error('Error cámara:', err);
+                qrReader.style.display = 'none';
+                scanButton.style.display = 'block';
+                
+                let mensaje = 'No se pudo acceder a la cámara.\n\n';
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    mensaje += '⚠️ Debes permitir el acceso a la cámara en la configuración de tu navegador.\n\n';
+                    mensaje += '1. Ve a Configuración del sitio\n';
+                    mensaje += '2. Busca "Permisos"\n';
+                    mensaje += '3. Activa "Cámara"\n';
+                    mensaje += '4. Recarga la página';
+                } else if (err.name === 'NotFoundError') {
+                    mensaje += '❌ No se encontró ninguna cámara en este dispositivo.';
+                } else if (err.name === 'NotReadableError') {
+                    mensaje += '⚠️ La cámara está siendo usada por otra aplicación.\n\nCierra otras apps y vuelve a intentar.';
+                } else {
+                    mensaje += 'Error: ' + err.message + '\n\nUsa la captura manual en su lugar.';
+                }
+                
+                alert(mensaje);
+            }
+        }
+
+        // Procesar QR escaneado
+        function procesarQR(texto, metodo = 'QR') {
+            // Formato: F7 Materia Prima 2002398 CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH, MOD.890334027006CS
+            const partes = texto.split(' ');
+            
+            if (partes.length < 3) {
+                if (confirm('⚠️ Código QR no válido o dañado.\n\n¿Deseas usar captura manual?')) {
+                    document.getElementById('tab-qr').classList.remove('active');
+                    document.getElementById('tab-manual').classList.add('active');
+                    document.getElementById('tab-scan').style.display = 'none';
+                    document.getElementById('tab-manual').style.display = 'block';
+                }
+                return;
+            }
+
+            const folio = partes[0];
+            let almacen = '';
+            let almacenCod = '';
+            let sap = '';
+            let desc = '';
+
+            // Detectar almacén
+            if (texto.includes('Materia Prima')) {
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('Transformadores')) {
+                almacen = '30 - Transformadores';
+                almacenCod = '30';
+            } else if (texto.includes('Placas')) {
+                almacen = '31 - Placas';
+                almacenCod = '31';
+            } else if (texto.includes('Arneses')) {
+                almacen = '32 - Arneses';
+                almacenCod = '32';
+            } else if (texto.includes('Gabinetes')) {
+                almacen = '33 - Gabinetes';
+                almacenCod = '33';
+            }
+
+            // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
+            if (!esSegundoConteo && almacenesBloqueados[almacenCod]) {
+                alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+
+            // Encontrar código SAP (6-7 dígitos)
+            for (let i = 0; i < partes.length; i++) {
+                if (/^\d{6,7}$/.test(partes[i])) {
+                    sap = partes[i];
+                    desc = partes.slice(i + 1).join(' ');
+                    break;
+                }
+            }
+
+            if (!sap) {
+                if (confirm('⚠️ No se encontró código SAP válido.\n\n¿Deseas usar captura manual?')) {
+                    document.getElementById('tab-qr').classList.remove('active');
+                    document.getElementById('tab-manual').classList.add('active');
+                    document.getElementById('tab-scan').style.display = 'none';
+                    document.getElementById('tab-manual').style.display = 'block';
+                }
+                return;
+            }
+
+            // VALIDAR SI EXISTE EN BASE DE DESCRIPCIONES Y OBTENER UNIDAD DE MEDIDA
+            let esPositivo = false;
+            let descripcionFinal = desc;
+            let unidadMedida = 'PZA'; // Default
+            
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (!encontrado) {
+                    esPositivo = true;
+                    descripcionFinal = '⚠️ MATERIAL NO ENCONTRADO EN SAP - ' + desc;
+                } else {
+                    descripcionFinal = encontrado.descripcion || desc;
+                }
+            }
+            
+            // Obtener UM del Kardex si existe
+            if (kardexSAP.length > 0) {
+                const itemKardex = kardexSAP.find(item => item.codigo === sap);
+                if (itemKardex && itemKardex.unidadMedida) {
+                    unidadMedida = itemKardex.unidadMedida;
+                }
+            }
+
+            currentScanData = {
+                folio: folio,
+                almacen: almacen,
+                almacenCod: almacenCod,
+                sap: sap,
+                desc: descripcionFinal,
+                metodo: metodo,
+                esPositivo: esPositivo,
+                unidadMedida: unidadMedida
+            };
+            
+            // Mostrar formulario
+            document.getElementById('form-folio').textContent = folio;
+            document.getElementById('form-almacen').textContent = almacen;
+            document.getElementById('form-sap').textContent = sap + (esPositivo ? ' ⚠️ POSITIVO' : '');
+            document.getElementById('form-desc').textContent = descripcionFinal;
+            document.getElementById('form-cantidad').value = '';
+            document.getElementById('form-ubicacion').value = '';
+            document.getElementById('form-contador').value = '';
+            
+            document.getElementById('scan-form-container').style.display = 'block';
+            document.getElementById('form-cantidad').focus();
+        }
+
+        // Validar duplicado
+        function validarDuplicado(item) {
+            return registrosGuardados.some(r => 
+                r.usuario === selectedUser &&
+                r.folio === item.folio &&
+                r.almacen === item.almacen &&
+                r.sap === item.sap &&
+                !r.eliminado
+            );
+        }
+
+        // Confirmar formulario
+        function confirmarFormulario() {
+            const cantidad = document.getElementById('form-cantidad').value;
+            const ubicacion = document.getElementById('form-ubicacion').value;
+            
+            if (!cantidad || cantidad <= 0) {
+                alert('Ingresa una cantidad válida');
+                return;
+            }
+            
+            const item = {
+                folio: currentScanData.folio,
+                almacen: currentScanData.almacenCod,
+                sap: currentScanData.sap,
+                desc: currentScanData.desc,
+                cantidad: parseFloat(cantidad),
+                ubicacion: ubicacion,
+                metodo: currentScanData.metodo,
+                usuario: selectedUser,
+                esDuplicado: false,
+                continuoDespuesAlerta: false,
+                esPositivo: currentScanData.esPositivo || false
+            };
+
+            if (validarDuplicado(item)) {
+                if (confirm('⚠️ ALERTA: Ya existe un registro con este Folio, Almacén y SAP hecho por ti.\n\n¿Deseas continuar de todos modos?')) {
+                    item.esDuplicado = true;
+                    item.continuoDespuesAlerta = true;
+                    agregarEscaneado(item);
+                }
+            } else {
+                agregarEscaneado(item);
+            }
+            
+            document.getElementById('scan-form-container').style.display = 'none';
+            currentScanData = null;
+        }
+
+        function cancelarFormulario() {
+            document.getElementById('scan-form-container').style.display = 'none';
+            currentScanData = null;
+        }
+
+        // Agregar manual
+        function agregarManual() {
+            const folio = document.getElementById('manual-folio').value.toUpperCase();
+            const almacen = document.getElementById('manual-almacen').value;
+            const sap = document.getElementById('manual-sap').value;
+            const cantidad = document.getElementById('manual-cantidad').value;
+            const ubicacion = document.getElementById('manual-ubicacion').value;
+
+            if (!folio || !sap || !cantidad) {
+                alert('Llena los campos requeridos');
+                return;
+            }
+
+            agregarEscaneado({
+                folio: folio,
+                almacen: almacen,
+                sap: sap,
+                desc: 'Captura manual',
+                cantidad: parseFloat(cantidad),
+                ubicacion: ubicacion
+            });
+
+            document.getElementById('manual-folio').value = '';
+            document.getElementById('manual-sap').value = '';
+            document.getElementById('manual-cantidad').value = '';
+            document.getElementById('manual-ubicacion').value = '';
+        }
+
+        // Agregar escaneado
+        function agregarEscaneado(item) {
+            escaneados.push(item);
+            actualizarListaEscaneados();
+        }
+
+        // Actualizar lista
+        function actualizarListaEscaneados() {
+            const lista = document.getElementById('lista-escaneados');
+            const count = document.getElementById('count-escaneados');
+            const countConfirm = document.getElementById('count-confirm');
+            const confirmBar = document.getElementById('confirm-bar');
+            
+            count.textContent = escaneados.length;
+            countConfirm.textContent = escaneados.length;
+            
+            if (escaneados.length === 0) {
+                lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
+                confirmBar.classList.remove('show');
+            } else {
+                confirmBar.classList.add('show');
+                lista.innerHTML = escaneados.map((item, index) => `
+                    <div class="scanned-item">
+                        <div class="info">
+                            <span class="folio">${item.folio}</span>
+                            <span class="details">${item.sap} • Alm ${item.almacen}</span>
+                        </div>
+                        <span class="qty">${item.cantidad}</span>
+                        <button class="btn-remove" onclick="removerEscaneado(${index})">✕</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removerEscaneado(index) {
+            escaneados.splice(index, 1);
+            actualizarListaEscaneados();
+        }
+
+        // Confirmar escaneos
+        function confirmarEscaneos() {
+            if (escaneados.length === 0) return;
+
+            document.getElementById('success-overlay').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('success-overlay').classList.remove('show');
+                escaneados = [];
+                actualizarListaEscaneados();
+            }, 2000);
+        }
+
+        // File upload
+        async function handleFileUpload(input, type) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            try {
+                // Mostrar preview con nombre
+                document.getElementById('preview-' + type).classList.add('show');
+                document.getElementById('name-' + type).textContent = file.name + ' (Procesando...)';
+                
+                // Leer archivo
+                const data = await file.arrayBuffer();
+                const workbook = XLSX.read(data);
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if (type === 'kardex') {
+                    // Guardar Kardex SAP
+                    kardexSAP = jsonData.map(row => ({
+                        codigo: String(row['Código Artículo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                        descripcion: String(row['Descripción'] || row['DESCRIPCION'] || row['ItemName'] || '').trim(),
+                        serie: String(row['Número de Serie'] || row['Serie'] || '').trim(),
+                        tieneSerie: String(row['Tiene Serie'] || '').trim(),
+                        almacen: String(row['Almacén'] || row['ALMACEN'] || row['WhsCode'] || '').trim(),
+                        cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0),
+                        costoUnitario: parseFloat(row['Costo Unitario'] || 0),
+                        costoTotal: parseFloat(row['Costo Total'] || 0)
+                    })).filter(item => item.codigo);
+                    
+                    document.getElementById('name-' + type).textContent = 
+                        file.name + ` ✓ (${kardexSAP.length} artículos)`;
+                    
+                    console.log('Kardex cargado:', kardexSAP.length, 'artículos');
+                    
+                } else if (type === 'descripciones') {
+                    // Guardar Base de Descripciones
+                    baseDescripciones = jsonData.map(row => ({
+                        codigo: String(row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                        descripcion: String(row['Descripción'] || row['DESCRIPCION'] || row['ItemName'] || '').trim(),
+                        grupo: String(row['Grupo'] || row['GRUPO'] || row['ItmsGrpNam'] || '').trim()
+                    })).filter(item => item.codigo);
+                    
+                    document.getElementById('name-' + type).textContent = 
+                        file.name + ` ✓ (${baseDescripciones.length} artículos)`;
+                    
+                    console.log('Base Descripciones cargada:', baseDescripciones.length, 'artículos');
+                }
+                
+                alert(`✓ Archivo cargado exitosamente\n\n${jsonData.length} registros procesados`);
+                
+            } catch (error) {
+                console.error('Error al leer Excel:', error);
+                alert('❌ Error al leer el archivo Excel\n\n' + error.message);
+                document.getElementById('name-' + type).textContent = file.name + ' (Error)';
+            }
+        }
+
+        function removeFile(type) {
+            document.getElementById('file-' + type).value = '';
+            document.getElementById('preview-' + type).classList.remove('show');
+            
+            if (type === 'kardex') {
+                kardexSAP = [];
+            } else if (type === 'descripciones') {
+                baseDescripciones = [];
+            }
+        }
+
+        // Filtrar mis registros
+        function filtrarMisRegistros() {
+            const query = document.getElementById('search-mis-registros').value;
+            alert('Buscando: ' + query);
+        }
+
+        // Filtros
+        function toggleFilter(element, type) {
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            element.classList.add('active');
+            document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
+            
+            if (type !== 'todos' && type !== 'duplicados') {
+                const dropdown = document.getElementById('filter-' + type);
+                if (dropdown) dropdown.classList.add('show');
+            }
+            
+            currentFilter = type;
+            
+            // Si se selecciona duplicados, aplicar filtro inmediatamente
+            if (type === 'duplicados') {
+                // Aquí se filtraría la lista para mostrar solo duplicados
+                console.log('Mostrando solo duplicados');
+                // TODO: Implementar filtrado visual
+            } else if (type === 'todos') {
+                console.log('Mostrando todos los registros');
+                // TODO: Mostrar todos
+            }
+        }
+
+        function selectAlmacen(almacen) {
+            document.querySelectorAll('#filter-almacen .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            currentAlmacen = almacen;
+            document.getElementById('filter-almacen').classList.remove('show');
+        }
+
+        function selectUsuario(usuario) {
+            document.querySelectorAll('#filter-usuario .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            currentUsuario = usuario;
+            document.getElementById('filter-usuario').classList.remove('show');
+        }
+
+        function buscarRegistros() {
+            console.log('Buscando...', currentAlmacen, currentUsuario);
+        }
+
+        // ========== EDITAR REGISTRO ==========
+        function editarRegistro(index) {
+            const registro = registrosGuardados[index];
+            if (!registro || registro.eliminado) {
+                alert('Registro no encontrado');
+                return;
+            }
+
+            registroEnEdicion = index;
+            
+            document.getElementById('edit-folio').value = registro.folio;
+            document.getElementById('edit-sap').value = registro.sap;
+            document.getElementById('edit-desc').value = registro.desc;
+            document.getElementById('edit-cantidad').value = registro.cantidad;
+            document.getElementById('edit-ubicacion').value = registro.ubicacion || '';
+            
+            document.getElementById('modal-editar').classList.add('show');
+        }
+
+        function cerrarModalEditar() {
+            document.getElementById('modal-editar').classList.remove('show');
+            registroEnEdicion = null;
+        }
+
+        function guardarEdicion() {
+            const cantidad = document.getElementById('edit-cantidad').value;
+            const ubicacion = document.getElementById('edit-ubicacion').value;
+
+            if (!cantidad || cantidad <= 0) {
+                alert('Ingresa una cantidad válida');
+                return;
+            }
+
+            if (registroEnEdicion !== null) {
+                const registro = registrosGuardados[registroEnEdicion];
+                
+                // Guardar modificación en historial
+                if (!registro.modificaciones) registro.modificaciones = [];
+                registro.modificaciones.push({
+                    fecha: new Date().toISOString(),
+                    usuario: currentRole || selectedUser,
+                    cantidadAnterior: registro.cantidad,
+                    cantidadNueva: parseFloat(cantidad),
+                    ubicacionAnterior: registro.ubicacion,
+                    ubicacionNueva: ubicacion
+                });
+
+                // Actualizar registro
+                registro.cantidad = parseFloat(cantidad);
+                registro.ubicacion = ubicacion;
+                registro.modificado = true;
+
+                alert('✓ Registro actualizado correctamente');
+                cerrarModalEditar();
+                
+                // Recargar vista si es necesario
+                console.log('Registro editado:', registro);
+            }
+        }
+
+        // ========== ELIMINAR REGISTRO ==========
+        function eliminarRegistro(index) {
+            const registro = registrosGuardados[index];
+            if (!registro || registro.eliminado) {
+                alert('Registro no encontrado');
+                return;
+            }
+
+            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\n\nEsta acción se puede deshacer.`)) {
+                registro.eliminado = true;
+                registro.fechaEliminacion = new Date().toISOString();
+                registro.eliminadoPor = currentRole || selectedUser;
+
+                alert('✓ Registro eliminado');
+                
+                // Recargar vista
+                console.log('Registro eliminado:', registro);
+            }
+        }
+
+        // ========== COMPARATIVO SAP VS FÍSICO ==========
+        function verComparativo() {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Debes cargar el Kardex SAP primero en Auditoría');
+                return;
+            }
+
+            if (registrosGuardados.length === 0) {
+                alert('⚠️ No hay registros capturados aún');
+                return;
+            }
+
+            // Calcular diferencias
+            const diferencias = [];
+
+            kardexSAP.forEach(itemSAP => {
+                // Sumar cantidades físicas del mismo código en el mismo almacén
+                const registrosFisicos = registrosGuardados.filter(r => 
+                    !r.eliminado && 
+                    r.sap === itemSAP.codigo && 
+                    r.almacen === itemSAP.almacen
+                );
+
+                const cantidadFisica = registrosFisicos.reduce((sum, r) => sum + r.cantidad, 0);
+                const diferencia = cantidadFisica - itemSAP.cantidad;
+                const diferenciaCosto = diferencia * itemSAP.costoUnitario;
+
+                if (Math.abs(diferencia) > 0) {
+                    diferencias.push({
+                        codigo: itemSAP.codigo,
+                        descripcion: itemSAP.descripcion,
+                        almacen: itemSAP.almacen,
+                        cantidadSAP: itemSAP.cantidad,
+                        cantidadFisica: cantidadFisica,
+                        diferencia: diferencia,
+                        costoUnitario: itemSAP.costoUnitario,
+                        diferenciaCosto: diferenciaCosto
+                    });
+                }
+            });
+
+            // Ordenar por mayor diferencia en costo (valor absoluto)
+            diferencias.sort((a, b) => Math.abs(b.diferenciaCosto) - Math.abs(a.diferenciaCosto));
+
+            console.log('Comparativo generado:', diferencias.length, 'diferencias encontradas');
+            console.log('Top 10 diferencias:', diferencias.slice(0, 10));
+
+            alert(`📊 Comparativo generado\n\n${diferencias.length} diferencias encontradas\n\nTop 3 mayores:\n` + 
+                diferencias.slice(0, 3).map((d, i) => 
+                    `${i+1}. ${d.codigo} - Dif: ${d.diferencia.toFixed(2)} (${d.diferenciaCosto.toFixed(2)} MXN)`
+                ).join('\n') +
+                '\n\n(Ver consola para detalles completos)'
+            );
+        }
+
+        // ========== VER POSITIVOS ==========
+        function verPositivos() {
+            const positivos = registrosGuardados.filter(r => !r.eliminado && r.esPositivo);
+
+            if (positivos.length === 0) {
+                alert('✓ No hay positivos\n\nTodos los códigos SAP capturados existen en la base de descripciones.');
+                return;
+            }
+
+            console.log('Positivos encontrados:', positivos);
+
+            alert(`⚠️ Códigos no encontrados en SAP\n\n${positivos.length} positivos encontrados:\n\n` +
+                positivos.slice(0, 5).map((p, i) => 
+                    `${i+1}. Folio ${p.folio} - SAP: ${p.sap}`
+                ).join('\n') +
+                (positivos.length > 5 ? '\n\n... y ' + (positivos.length - 5) + ' más' : '') +
+                '\n\n(Ver consola para detalles completos)'
+            );
+        }
+
+        // ========== BLOQUEO DE ALMACENES ==========
+        function toggleBloqueoAlmacen(almacen) {
+            const checkbox = document.getElementById('bloqueo-' + almacen);
+            almacenesBloqueados[almacen] = checkbox.checked;
+            
+            if (checkbox.checked) {
+                alert(`🔒 Almacén ${almacen} BLOQUEADO\n\nYa no se pueden agregar nuevos registros del primer conteo a este almacén.`);
+            } else {
+                alert(`🔓 Almacén ${almacen} DESBLOQUEADO\n\nSe pueden agregar registros nuevamente.`);
+            }
+        }
+
+        // ========== SEGUNDO CONTEO ==========
+        function liberarSegundoConteo(almacen) {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Debes cargar el Kardex SAP primero');
+                return;
+            }
+
+            if (confirm(`¿Liberar segundo conteo para almacén ${almacen}?\n\nEsto hará lo siguiente:\n1. Bloqueará el primer conteo de este almacén\n2. Generará lista de artículos a recontar\n3. Los usuarios verán "Segundo Conteo" en su menú`)) {
+                
+                // Bloquear primer conteo automáticamente
+                almacenesBloqueados[almacen] = true;
+                document.getElementById('bloqueo-' + almacen).checked = true;
+                
+                // Marcar como liberado
+                segundoConteoLiberado[almacen] = true;
+                
+                // Calcular artículos a recontar
+                const articulosRecontar = calcularArticulosRecontar(almacen);
+                
+                // Actualizar UI
+                document.getElementById('status-2do-' + almacen).innerHTML = 
+                    `✅ Liberado (${articulosRecontar.length} artículos a verificar)`;
+                
+                alert(`✓ Segundo conteo liberado\n\n${articulosRecontar.length} artículos requieren verificación:\n- Diferencias de cantidad\n- No escaneados\n\nLos usuarios ya pueden acceder a "Segundo Conteo"`);
+                
+                console.log('Artículos a recontar:', articulosRecontar);
+            }
+        }
+
+        function calcularArticulosRecontar(almacen) {
+            const articulosRecontar = [];
+            
+            // Recorrer Kardex del almacén
+            kardexSAP.forEach(itemKardex => {
+                if (itemKardex.almacen !== almacen) return;
+                
+                // Buscar registros físicos
+                const registrosFisicos = registrosGuardados.filter(r => 
+                    !r.eliminado && 
+                    r.sap === itemKardex.codigo && 
+                    r.almacen === almacen
+                );
+                
+                const cantidadFisica = registrosFisicos.reduce((sum, r) => sum + r.cantidad, 0);
+                const diferencia = cantidadFisica - itemKardex.cantidad;
+                
+                // Agregar si hay diferencia o no fue escaneado
+                if (registrosFisicos.length === 0) {
+                    // NO ESCANEADO
+                    articulosRecontar.push({
+                        codigo: itemKardex.codigo,
+                        descripcion: itemKardex.descripcion,
+                        cantidadKardex: itemKardex.cantidad,
+                        cantidadFisica: 0,
+                        tipo: 'NO_ESCANEADO'
+                    });
+                } else if (Math.abs(diferencia) > 0) {
+                    // DIFERENCIA
+                    articulosRecontar.push({
+                        codigo: itemKardex.codigo,
+                        descripcion: itemKardex.descripcion,
+                        cantidadKardex: itemKardex.cantidad,
+                        cantidadFisica: cantidadFisica,
+                        diferencia: diferencia,
+                        tipo: 'DIFERENCIA'
+                    });
+                }
+            });
+            
+            return articulosRecontar;
+        }
+
+        // ========== DESCARGAS ==========
+        function descargarPrimerConteo() {
+            if (registrosGuardados.length === 0) {
+                alert('⚠️ No hay registros para descargar');
+                return;
+            }
+
+            console.log('Descargando primer conteo:', registrosGuardados.length, 'registros');
+            alert(`📥 Preparando descarga...\n\n${registrosGuardados.length} registros del primer conteo\n\n(Funcionalidad de descarga Excel pendiente de implementar con librería XLSX)`);
+        }
+
+        function descargarSegundoConteo() {
+            if (registrosSegundoConteo.length === 0) {
+                alert('⚠️ No hay registros de segundo conteo para descargar');
+                return;
+            }
+
+            console.log('Descargando segundo conteo:', registrosSegundoConteo.length, 'registros');
+            alert(`📥 Preparando descarga...\n\n${registrosSegundoConteo.length} registros del segundo conteo\n\n(Funcionalidad de descarga Excel pendiente de implementar con librería XLSX)`);
+        }
+    </script>
+</body>
+</html>
