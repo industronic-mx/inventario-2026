@@ -37,6 +37,68 @@
         window.firebaseDB = db;
         window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs };
     </script>
+    
+    <!-- Google Sheets API Configuration -->
+    <script>
+        // Google Sheets API Key
+        const SHEETS_API_KEY = 'AIzaSyDDpwYApJTNQuDA19EL4-7M1uH60kEaz3s';
+        const SPREADSHEET_ID = '1V3zXZPyjgxs7y5f7s4vhacLI0NCdlhxWhzmNDnmHElw';
+        const SHEET_NAME = 'Hoja 1'; // Nombre de la pestaña en tu Google Sheet
+        
+        // Función para escribir en Google Sheets
+        async function escribirEnGoogleSheets(registros) {
+            if (!Array.isArray(registros) || registros.length === 0) return;
+            
+            try {
+                // Preparar datos en formato de array
+                const valores = registros.map(r => [
+                    r.folio || '',
+                    r.almacen || '',
+                    r.sap || '',
+                    r.desc || '',
+                    r.cantidad || 0,
+                    r.unidadMedida || 'PZA',
+                    r.ubicacion || '',
+                    r.nombreContador || '',
+                    r.usuario || '',
+                    r.metodo || '',
+                    r.esDuplicado ? 'SÍ' : 'NO',
+                    r.esPositivo ? 'SÍ' : 'NO',
+                    new Date(r.fecha).toLocaleString('es-MX')
+                ]);
+                
+                // Usar la API de Google Sheets v4
+                const range = `${SHEET_NAME}!A:M`;
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${range}:append?valueInputOption=RAW&key=${SHEETS_API_KEY}`;
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        values: valores
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('✓ Datos escritos en Google Sheets:', registros.length, 'registros');
+                    return true;
+                } else {
+                    const error = await response.json();
+                    console.error('Error al escribir en Sheets:', error);
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('Error en escribirEnGoogleSheets:', error);
+                return false;
+            }
+        }
+        
+        // Hacer disponible globalmente
+        window.escribirEnGoogleSheets = escribirEnGoogleSheets;
+    </script>
     <style>
         * {
             margin: 0;
@@ -2513,6 +2575,14 @@
                         timestamp: new Date().toISOString(),
                         sincronizado: true
                     });
+                }
+                
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
+                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
+                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
+                    if (exitoSheets) {
+                        console.log('✅ Registros escritos en Google Sheets');
+                    }
                 }
                 
                 // Guardar también en memoria local
