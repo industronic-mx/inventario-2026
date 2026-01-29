@@ -1368,7 +1368,12 @@
 
                 <div class="input-group">
                     <label>Código SAP *</label>
-                    <input type="text" id="manual-sap" placeholder="Ej: 2002398">
+                    <input type="text" id="manual-sap" placeholder="Ej: 2002398" onblur="autocompletarDescripcion()">
+                </div>
+                
+                <div class="input-group">
+                    <label>Descripción</label>
+                    <input type="text" id="manual-descripcion" placeholder="Se completa automáticamente" readonly style="background: #f5f5f5;">
                 </div>
 
                 <div class="two-cols">
@@ -2315,6 +2320,32 @@
         }
 
         // Agregar manual
+        // Autocompletar descripción en captura manual
+        function autocompletarDescripcion() {
+            const sap = document.getElementById('manual-sap').value.trim();
+            const descInput = document.getElementById('manual-descripcion');
+            
+            if (!sap) {
+                descInput.value = '';
+                return;
+            }
+            
+            // Buscar en base de descripciones
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (encontrado) {
+                    descInput.value = encontrado.descripcion;
+                    descInput.style.color = '#000';
+                } else {
+                    descInput.value = '⚠️ CÓDIGO NO ENCONTRADO EN SAP';
+                    descInput.style.color = '#d32f2f';
+                }
+            } else {
+                descInput.value = 'Base de descripciones no cargada';
+                descInput.style.color = '#ff9800';
+            }
+        }
+        
         function agregarManual() {
             const folio = document.getElementById('manual-folio').value.toUpperCase().trim();
             const almacen = document.getElementById('manual-almacen').value;
@@ -2419,6 +2450,8 @@
             // Limpiar formulario
             document.getElementById('manual-folio').value = '';
             document.getElementById('manual-sap').value = '';
+            document.getElementById('manual-descripcion').value = '';
+            document.getElementById('manual-descripcion').style.color = '#000';
             document.getElementById('manual-cantidad').value = '';
             document.getElementById('manual-ubicacion').value = '';
             document.getElementById('manual-contador').value = '';
@@ -2770,22 +2803,42 @@
         }
 
         // ========== ELIMINAR REGISTRO ==========
-        function eliminarRegistro(index) {
+        async function eliminarRegistro(index) {
             const registro = registrosGuardados[index];
             if (!registro || registro.eliminado) {
                 alert('Registro no encontrado');
                 return;
             }
 
-            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\n\nEsta acción se puede deshacer.`)) {
-                registro.eliminado = true;
-                registro.fechaEliminacion = new Date().toISOString();
-                registro.eliminadoPor = currentRole || selectedUser;
+            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
+                try {
+                    // Marcar como eliminado localmente
+                    registro.eliminado = true;
+                    registro.fechaEliminacion = new Date().toISOString();
+                    registro.eliminadoPor = currentRole || selectedUser;
+                    
+                    // Si tiene ID de Firebase, actualizar en la nube
+                    if (registro.id && window.firebaseDB) {
+                        const { doc, updateDoc } = window.firebaseCollections;
+                        const db = window.firebaseDB;
+                        
+                        await updateDoc(doc(db, 'registros', registro.id), {
+                            eliminado: true,
+                            fechaEliminacion: registro.fechaEliminacion,
+                            eliminadoPor: registro.eliminadoPor
+                        });
+                    }
 
-                alert('✓ Registro eliminado');
-                
-                // Recargar vista
-                renderizarMisRegistros();
+                    alert('✓ Registro eliminado para todos');
+                    
+                    // Recargar vistas
+                    renderizarMisRegistros();
+                    renderizarTodosRegistros();
+                    
+                } catch (error) {
+                    console.error('Error al eliminar:', error);
+                    alert('⚠️ Error al eliminar. Verifica tu conexión.');
+                }
             }
         }
 
