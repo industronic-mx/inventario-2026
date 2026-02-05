@@ -2260,8 +2260,8 @@
 
         // Validar duplicado
         function validarDuplicado(item) {
-            // Revisar en registros guardados
-            const duplicadoGuardado = registrosGuardados.some(r => 
+            // NIVEL 1: Revisar duplicados del MISMO usuario (mi usuario)
+            const duplicadoMio = registrosGuardados.some(r => 
                 r.usuario === selectedUser &&
                 r.folio === item.folio &&
                 r.almacen === item.almacen &&
@@ -2269,14 +2269,28 @@
                 !r.eliminado
             );
             
-            // Revisar en escaneados temporales (antes de confirmar)
             const duplicadoEscaneado = escaneados.some(r => 
                 r.folio === item.folio &&
                 r.almacen === item.almacen &&
                 r.sap === item.sap
             );
             
-            return duplicadoGuardado || duplicadoEscaneado;
+            // NIVEL 2: Revisar duplicados de OTRO usuario (global)
+            const duplicadoOtro = registrosGuardados.find(r => 
+                r.usuario !== selectedUser &&
+                r.folio === item.folio &&
+                r.almacen === item.almacen &&
+                r.sap === item.sap &&
+                !r.eliminado
+            );
+            
+            // Retornar objeto con info de duplicado
+            return {
+                esDuplicado: duplicadoMio || duplicadoEscaneado || duplicadoOtro,
+                duplicadoMio: duplicadoMio || duplicadoEscaneado,
+                duplicadoOtro: duplicadoOtro,
+                otroUsuario: duplicadoOtro ? duplicadoOtro.usuario : null
+            };
         }
 
         // Confirmar formulario
@@ -2328,8 +2342,20 @@
                 fecha: new Date().toISOString()
             };
 
-            if (validarDuplicado(item)) {
-                if (confirm('⚠️ ALERTA: Ya existe un registro con este Folio, Almacén y SAP hecho por ti.\n\n¿Deseas continuar de todos modos?')) {
+            const resultadoDuplicado = validarDuplicado(item);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${item.folio}\nAlmacén: ${item.almacen}\nSAP: ${item.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${item.folio}\nAlmacén: ${item.almacen}\nSAP: ${item.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (confirm(mensaje)) {
                     item.esDuplicado = true;
                     item.continuoDespuesAlerta = true;
                     agregarEscaneado(item);
@@ -2389,8 +2415,8 @@
             const nombreContador = document.getElementById('manual-contador').value.trim();
 
             // Validar campos requeridos
-            if (!folio || !sap) {
-                alert('⚠️ Debes llenar Folio y Código SAP');
+            if (!folio || !sap || !almacen) {
+                alert('⚠️ Debes llenar Folio, Almacén y Código SAP');
                 return;
             }
             
@@ -2465,8 +2491,20 @@
             };
             
             // Validar duplicado
-            if (validarDuplicado(item)) {
-                if (confirm('⚠️ ALERTA: Ya existe un registro con este Folio, Almacén y SAP hecho por ti.\n\n¿Deseas continuar de todos modos?')) {
+            const resultadoDuplicado = validarDuplicado(item);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${item.folio}\nAlmacén: ${item.almacen}\nSAP: ${item.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${item.folio}\nAlmacén: ${item.almacen}\nSAP: ${item.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (confirm(mensaje)) {
                     item.esDuplicado = true;
                     item.continuoDespuesAlerta = true;
                     agregarEscaneado(item);
@@ -2630,14 +2668,15 @@
                 if (type === 'kardex') {
                     // Guardar Kardex SAP
                     kardexSAP = jsonData.map(row => ({
-                        codigo: String(row['Código Artículo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                        codigo: String(row['Código Artículo'] || row['Codigo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
                         descripcion: String(row['Descripción'] || row['DESCRIPCION'] || row['ItemName'] || '').trim(),
                         serie: String(row['Número de Serie'] || row['Serie'] || '').trim(),
                         tieneSerie: String(row['Tiene Serie'] || '').trim(),
-                        almacen: String(row['Almacén'] || row['ALMACEN'] || row['WhsCode'] || '').trim(),
+                        almacen: String(row['Almacén'] || row['Almacen'] || row['ALMACEN'] || row['WhsCode'] || '').trim().padStart(2, '0'),
                         cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0),
-                        costoUnitario: parseFloat(row['Costo Unitario'] || 0),
-                        costoTotal: parseFloat(row['Costo Total'] || 0)
+                        costoUnitario: parseFloat(row['Costo Unitario'] || row['CostoUnitario'] || 0),
+                        costoTotal: parseFloat(row['Costo Total'] || row['CostoTotal'] || 0),
+                        unidadMedida: String(row['Unidad de Medida'] || row['UnidadMedida'] || row['InvntryUom'] || 'PZA').trim()
                     })).filter(item => item.codigo);
                     
                     document.getElementById('name-' + type).textContent = 
@@ -2648,8 +2687,8 @@
                 } else if (type === 'descripciones') {
                     // Guardar Base de Descripciones
                     baseDescripciones = jsonData.map(row => ({
-                        codigo: String(row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
-                        descripcion: String(row['Descripción'] || row['DESCRIPCION'] || row['ItemName'] || '').trim(),
+                        codigo: String(row['Codigo'] || row['Código SAP'] || row['Código Artículo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                        descripcion: String(row['Descripcion'] || row['Descripción del material'] || row['Descripción'] || row['DESCRIPCION'] || row['ItemName'] || '').trim(),
                         grupo: String(row['Grupo'] || row['GRUPO'] || row['ItmsGrpNam'] || '').trim()
                     })).filter(item => item.codigo);
                     
@@ -2808,7 +2847,7 @@
             registroEnEdicion = null;
         }
 
-        function guardarEdicion() {
+        async function guardarEdicion() {
             const cantidad = document.getElementById('edit-cantidad').value;
             const ubicacion = document.getElementById('edit-ubicacion').value;
 
@@ -2818,29 +2857,60 @@
             }
 
             if (registroEnEdicion !== null) {
-                const registro = registrosGuardados[registroEnEdicion];
+                const registroViejo = registrosGuardados[registroEnEdicion];
                 
-                // Guardar modificación en historial
-                if (!registro.modificaciones) registro.modificaciones = [];
-                registro.modificaciones.push({
+                // Notificar a Google Sheets que el original fue EDITADO
+                try {
+                    await fetch(`${GOOGLE_SCRIPT_URL}?action=editar&folio=${encodeURIComponent(registroViejo.folio)}&almacen=${encodeURIComponent(registroViejo.almacen)}&sap=${encodeURIComponent(registroViejo.sap)}&usuario=${encodeURIComponent(currentRole || selectedUser)}`, {
+                        method: 'GET',
+                        redirect: 'follow'
+                    });
+                    console.log('✓ Google Sheets: Registro original marcado como EDITADO');
+                } catch (error) {
+                    console.error('Error al actualizar Sheets:', error);
+                }
+                
+                // Crear NUEVA versión del registro
+                const registroNuevo = {
+                    ...registroViejo,
+                    cantidad: parseFloat(cantidad),
+                    ubicacion: ubicacion,
                     fecha: new Date().toISOString(),
-                    usuario: currentRole || selectedUser,
-                    cantidadAnterior: registro.cantidad,
-                    cantidadNueva: parseFloat(cantidad),
-                    ubicacionAnterior: registro.ubicacion,
-                    ubicacionNueva: ubicacion
-                });
+                    editadoDe: registroViejo.folio // Referencia al original
+                };
+                
+                // Agregar nuevo registro a Firebase y Sheets
+                try {
+                    const { collection, addDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await addDoc(collection(db, 'registros'), {
+                        ...registroNuevo,
+                        timestamp: new Date().toISOString(),
+                        sincronizado: true
+                    });
+                    
+                    // Enviar a Google Sheets
+                    if (typeof window.escribirEnGoogleSheets === 'function') {
+                        await window.escribirEnGoogleSheets([registroNuevo]);
+                    }
+                    
+                    registrosGuardados.push(registroNuevo);
+                    
+                } catch (error) {
+                    console.error('Error al guardar nueva versión:', error);
+                }
+                
+                // Marcar el original como modificado localmente
+                registroViejo.modificado = true;
+                registroViejo.fechaModificacion = new Date().toISOString();
 
-                // Actualizar registro
-                registro.cantidad = parseFloat(cantidad);
-                registro.ubicacion = ubicacion;
-                registro.modificado = true;
-
-                alert('✓ Registro actualizado correctamente');
+                alert('✓ Registro actualizado correctamente\n\nSe creó una nueva versión');
                 cerrarModalEditar();
                 
                 // Recargar vista
                 renderizarMisRegistros();
+                renderizarTodosRegistros();
             }
         }
 
@@ -2869,6 +2939,17 @@
                             fechaEliminacion: registro.fechaEliminacion,
                             eliminadoPor: registro.eliminadoPor
                         });
+                    }
+                    
+                    // Notificar a Google Sheets
+                    try {
+                        await fetch(`${GOOGLE_SCRIPT_URL}?action=eliminar&folio=${encodeURIComponent(registro.folio)}&almacen=${encodeURIComponent(registro.almacen)}&sap=${encodeURIComponent(registro.sap)}&usuario=${encodeURIComponent(currentRole || selectedUser)}`, {
+                            method: 'GET',
+                            redirect: 'follow'
+                        });
+                        console.log('✓ Google Sheets actualizado: ELIMINADO');
+                    } catch (error) {
+                        console.error('Error al actualizar Sheets:', error);
                     }
 
                     alert('✓ Registro eliminado para todos');
