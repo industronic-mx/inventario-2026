@@ -3377,6 +3377,8 @@
             if (escaneados.length === 0) return;
             
             try {
+                console.log('🔵 Iniciando guardado de', escaneados.length, 'registros');
+                
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
@@ -3390,24 +3392,18 @@
                         sincronizado: true
                     });
                 }
+                console.log('✅ Firebase OK');
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
+                // ESCRIBIR EN GOOGLE SHEETS - SOLO LÍNEA POR LÍNEA
                 if (!esSegundoConteo) {
-                    console.log('📤 Enviando', escaneados.length, 'registros a Google Sheets...');
+                    console.log('📤 Enviando a Google Sheets línea por línea...');
                     
-                    // MÉTODO 1: Intentar BATCH primero
-                    if (typeof window.escribirEnGoogleSheets === 'function') {
-                        const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
-                        if (exitoSheets) {
-                            console.log('✅ Registros enviados en BATCH');
-                        }
-                    }
-                    
-                    // MÉTODO 2: También enviar línea por línea (por compatibilidad)
                     for (const registro of escaneados) {
+                        console.log('  → Enviando:', registro.folio, registro.sap);
                         await enviarAGoogleSheets(registro);
                     }
-                    console.log('✅ Registros enviados línea por línea');
+                    
+                    console.log('✅ Google Sheets OK');
                 }
                 
                 // Guardar también en memoria local
@@ -3428,11 +3424,12 @@
                     actualizarListaEscaneados();
                 }, 2000);
                 
-                console.log('✅ Registros guardados en Firebase');
+                console.log('✅ TODO COMPLETO');
                 
             } catch (error) {
-                console.error('Error al guardar en Firebase:', error);
+                console.error('❌ Error al guardar:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
+            }
             }
         }
         
