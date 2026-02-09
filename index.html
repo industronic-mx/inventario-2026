@@ -5259,7 +5259,14 @@
             
             // Limpiar formulario COMPLETO (incluye contador)
             document.getElementById('taller-folio').value = '';
-            document.getElementById('taller-sap').value = '';
+            
+            // FORZAR limpieza de campo SAP (readonly puede dar problemas)
+            const campoSAP = document.getElementById('taller-sap');
+            campoSAP.value = '';
+            campoSAP.removeAttribute('readonly');
+            campoSAP.value = '';
+            campoSAP.setAttribute('readonly', 'readonly');
+            
             document.getElementById('taller-desc').textContent = 'Escanea el código SAP para ver la descripción';
             document.getElementById('taller-desc').style.color = '#666';
             document.getElementById('taller-desc').style.fontWeight = 'normal';
