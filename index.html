@@ -1647,27 +1647,80 @@
             <div id="tab-qr-sap" class="scan-area" style="display: none;">
                 <div style="background: #fff3e0; border-radius: 12px; padding: 16px; margin: 16px; border-left: 4px solid #ff9800;">
                     <h3 style="color: #e65100; margin: 0 0 8px 0;">🔧 MODO TALLER (Almacén 33)</h3>
-                    <p style="font-size: 13px; color: #424242; margin: 0;">Este modo es <strong>SOLO para almacén 33 (Gabinetes/Taller)</strong> que usa marbetes físicos de papel.</p>
+                    <p style="font-size: 13px; color: #424242; margin: 0;">Formulario simplificado con escaneo de código SAP desde rack.</p>
                 </div>
                 
+                <!-- FORMULARIO TALLER - VISIBLE DESDE EL INICIO -->
                 <div style="background: white; border-radius: 12px; padding: 20px; margin: 16px; border: 2px solid #e0e0e0;">
-                    <h3 style="color: #1a237e; margin: 0 0 12px 0;">📋 Instrucciones:</h3>
-                    <ol style="font-size: 14px; color: #424242; padding-left: 20px; margin: 0;">
-                        <li style="margin-bottom: 8px;">Escanea el <strong>QR del RACK</strong> (contiene código SAP)</li>
-                        <li style="margin-bottom: 8px;">Sistema extrae el código automáticamente</li>
-                        <li style="margin-bottom: 8px;">Ingresa el <strong>folio del marbete físico</strong> manualmente</li>
-                        <li>Completa cantidad y ubicación</li>
-                    </ol>
+                    
+                    <!-- Folio -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Folio del Marbete *</label>
+                        <input type="text" id="taller-folio" placeholder="Ej: G-001" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+                    
+                    <!-- Almacén (FIJO) -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Almacén</label>
+                        <select id="taller-almacen" disabled style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f5f5f5; box-sizing: border-box;">
+                            <option value="33" selected>33 - Gabinetes (Taller)</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Código SAP con botón de cámara -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Código SAP *</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="taller-sap" placeholder="Ej: 263234" readonly style="flex: 1; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f5f5f5; box-sizing: border-box;">
+                            <button id="btn-escanear-sap-taller" onclick="activarCamaraTaller()" style="padding: 12px 20px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap;">
+                                📷 Escanear
+                            </button>
+                        </div>
+                        <div id="qr-reader-taller" style="margin-top: 12px; display: none; border-radius: 8px; overflow: hidden;"></div>
+                    </div>
+                    
+                    <!-- Descripción (auto-llenada) -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Descripción</label>
+                        <div id="taller-desc" style="padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f9f9f9; color: #666; min-height: 44px;">
+                            Escanea el código SAP para ver la descripción
+                        </div>
+                    </div>
+                    
+                    <!-- Cantidad -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Cantidad *</label>
+                        <input type="number" id="taller-cantidad" placeholder="Ej: 10" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+                    
+                    <!-- Unidad de Medida (auto-llenada) -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Unidad</label>
+                        <input type="text" id="taller-unidad" readonly value="PZA" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background: #f5f5f5; box-sizing: border-box;">
+                    </div>
+                    
+                    <!-- Ubicación -->
+                    <div class="input-group" style="margin-bottom: 16px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">Ubicación *</label>
+                        <input type="text" id="taller-ubicacion" placeholder="Ej: Rack A-5" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+                    
+                    <!-- Quién contó -->
+                    <div class="input-group" style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #1a237e;">¿Quién contó? *</label>
+                        <input type="text" id="taller-contador" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    </div>
+                    
+                    <!-- Botones -->
+                    <div style="display: flex; gap: 12px;">
+                        <button onclick="limpiarFormularioTaller()" style="flex: 1; padding: 14px; background: #9e9e9e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                            🗑️ Limpiar
+                        </button>
+                        <button onclick="guardarRegistroTaller()" style="flex: 2; padding: 14px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                            ✓ Guardar Registro
+                        </button>
+                    </div>
                 </div>
-                
-                <div class="scan-box" id="scan-button-taller" onclick="startScanning()">
-                    <div class="scan-icon">🔧</div>
-                    <h3>Escanear QR del Rack</h3>
-                    <p>Toca aquí para activar cámara</p>
-                </div>
-
-                <!-- QR Reader para taller -->
-                <div id="qr-reader-taller" style="display: none;"></div>
             </div>
 
             <!-- Tab Manual -->
@@ -2801,13 +2854,22 @@
                 setTimeout(() => startScanning(), 300);
             } else if (tab === 'qr-sap') {
                 document.getElementById('tab-qr-sap').style.display = 'block';
-                setTimeout(() => startScanningTaller(), 300);
+                // Pre-llenar campo contador con usuario seleccionado
+                if (selectedUser) {
+                    document.getElementById('taller-contador').value = selectedUser;
+                }
+                // Enfocar en folio
+                setTimeout(() => {
+                    document.getElementById('taller-folio').focus();
+                }, 300);
             } else if (tab === 'manual') {
                 document.getElementById('tab-manual').style.display = 'block';
             }
         }
 
         // Iniciar escaneo QR para Taller (Almacén 33)
+        // ========== FUNCIÓN ANTIGUA - YA NO SE USA (nuevo flujo con formulario visible) ==========
+        /*
         async function startScanningTaller() {
             const scanButton = document.getElementById('scan-button-taller');
             const qrReader = document.getElementById('qr-reader-taller');
@@ -2853,6 +2915,8 @@
                 scanButton.style.display = 'block';
             }
         }
+        */
+
 
         // Iniciar escaneo QR
         async function startScanning() {
@@ -4922,7 +4986,291 @@
             }
         }
         
-        // ========== FUNCIÓN ESPECIAL PARA ALMACÉN 33 (QR SAP) ==========
+        // ========== NUEVO FLUJO TALLER - FORMULARIO VISIBLE ==========
+        let html5QrCodeTaller = null; // Instancia separada para Taller
+        let tallerScanData = {
+            sap: '',
+            descripcion: '',
+            unidadMedida: 'PZA',
+            esPositivo: false
+        };
+        
+        // Activar cámara para escanear código SAP en Taller
+        function activarCamaraTaller() {
+            console.log('📷 TALLER: Activando cámara para escanear SAP');
+            
+            const readerDiv = document.getElementById('qr-reader-taller');
+            const btnEscanear = document.getElementById('btn-escanear-sap-taller');
+            
+            // Si ya está escaneando, detener
+            if (html5QrCodeTaller && html5QrCodeTaller.isScanning) {
+                console.log('🛑 TALLER: Deteniendo escáner');
+                html5QrCodeTaller.stop().then(() => {
+                    readerDiv.style.display = 'none';
+                    btnEscanear.textContent = '📷 Escanear';
+                    btnEscanear.style.background = '#1976d2';
+                });
+                return;
+            }
+            
+            // Mostrar área de escaneo
+            readerDiv.style.display = 'block';
+            btnEscanear.textContent = '⏹️ Detener';
+            btnEscanear.style.background = '#d32f2f';
+            
+            // Inicializar escáner si no existe
+            if (!html5QrCodeTaller) {
+                html5QrCodeTaller = new Html5Qrcode("qr-reader-taller");
+            }
+            
+            // Configuración del escáner
+            const config = {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0
+            };
+            
+            // Iniciar escaneo
+            html5QrCodeTaller.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText) => {
+                    console.log('✅ TALLER: Código escaneado:', decodedText);
+                    procesarCodigoSAPTaller(decodedText);
+                },
+                (error) => {
+                    // Ignorar errores de escaneo continuo
+                }
+            ).catch((err) => {
+                console.error('❌ TALLER: Error al iniciar cámara:', err);
+                alert('⚠️ No se pudo activar la cámara\n\n' + err.message);
+                readerDiv.style.display = 'none';
+                btnEscanear.textContent = '📷 Escanear';
+                btnEscanear.style.background = '#1976d2';
+            });
+        }
+        
+        // Procesar código SAP escaneado
+        function procesarCodigoSAPTaller(texto) {
+            console.log('🔍 TALLER: Procesando código:', texto);
+            
+            // Detener escáner
+            if (html5QrCodeTaller && html5QrCodeTaller.isScanning) {
+                html5QrCodeTaller.stop().then(() => {
+                    document.getElementById('qr-reader-taller').style.display = 'none';
+                    document.getElementById('btn-escanear-sap-taller').textContent = '📷 Escanear';
+                    document.getElementById('btn-escanear-sap-taller').style.background = '#1976d2';
+                });
+            }
+            
+            // Extraer SAP del código (formato: "CODIGO : 263234.")
+            const match = texto.match(/CODIGO\s*:\s*(\d+)\.?/i);
+            
+            if (!match) {
+                console.error('❌ TALLER: No se pudo extraer SAP');
+                alert('⚠️ Código no válido\n\nFormato esperado: "CODIGO : 123456"');
+                return;
+            }
+            
+            const sap = match[1];
+            console.log('✅ TALLER: SAP extraído:', sap);
+            
+            // Actualizar campo SAP
+            document.getElementById('taller-sap').value = sap;
+            
+            // Buscar descripción
+            let descripcion = 'Sin descripción';
+            let esPositivo = false;
+            
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (!encontrado) {
+                    esPositivo = true;
+                    descripcion = '⚠️ MATERIAL NO ENCONTRADO EN SAP';
+                    console.warn('⚠️ TALLER: SAP no encontrado (POSITIVO)');
+                } else {
+                    descripcion = encontrado.descripcion;
+                    console.log('✅ TALLER: Descripción encontrada');
+                }
+            }
+            
+            // Buscar UM en Kardex
+            let unidadMedida = 'PZA';
+            if (kardexSAP.length > 0) {
+                const itemKardex = kardexSAP.find(item => item.codigo === sap);
+                if (itemKardex && itemKardex.unidadMedida) {
+                    unidadMedida = itemKardex.unidadMedida;
+                    console.log('✅ TALLER: UM encontrada:', unidadMedida);
+                }
+            }
+            
+            // Actualizar campos del formulario
+            const descDiv = document.getElementById('taller-desc');
+            descDiv.textContent = descripcion;
+            descDiv.style.color = esPositivo ? '#e65100' : '#424242';
+            descDiv.style.fontWeight = esPositivo ? '700' : 'normal';
+            
+            document.getElementById('taller-unidad').value = unidadMedida;
+            
+            // Guardar datos
+            tallerScanData = {
+                sap: sap,
+                descripcion: descripcion,
+                unidadMedida: unidadMedida,
+                esPositivo: esPositivo
+            };
+            
+            console.log('📦 TALLER: Datos preparados:', tallerScanData);
+            
+            // Enfocar en cantidad
+            setTimeout(() => {
+                document.getElementById('taller-cantidad').focus();
+            }, 100);
+        }
+        
+        // Guardar registro de Taller
+        async function guardarRegistroTaller() {
+            console.log('💾 TALLER: Intentando guardar registro...');
+            
+            // Validar almacén bloqueado
+            if (!esSegundoConteo && almacenesBloqueados['33']) {
+                alert('⚠️ Almacén 33 cerrado\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+            
+            // Obtener valores del formulario
+            const folio = document.getElementById('taller-folio').value.trim().toUpperCase();
+            const sap = document.getElementById('taller-sap').value.trim();
+            const cantidad = parseFloat(document.getElementById('taller-cantidad').value);
+            const ubicacion = document.getElementById('taller-ubicacion').value.trim();
+            const contador = document.getElementById('taller-contador').value.trim();
+            
+            // Validaciones
+            if (!folio) {
+                alert('⚠️ Falta el FOLIO del marbete');
+                document.getElementById('taller-folio').focus();
+                return;
+            }
+            
+            if (!sap) {
+                alert('⚠️ Falta escanear el CÓDIGO SAP\n\nPresiona el botón 📷 Escanear');
+                return;
+            }
+            
+            if (!cantidad || cantidad <= 0) {
+                alert('⚠️ Ingresa una CANTIDAD válida');
+                document.getElementById('taller-cantidad').focus();
+                return;
+            }
+            
+            if (!ubicacion) {
+                alert('⚠️ Falta la UBICACIÓN');
+                document.getElementById('taller-ubicacion').focus();
+                return;
+            }
+            
+            if (!contador) {
+                alert('⚠️ Falta el nombre de quien contó');
+                document.getElementById('taller-contador').focus();
+                return;
+            }
+            
+            // Validar duplicados
+            const duplicado = registrosGuardados.find(
+                r => r.folio === folio && 
+                     r.almacen === '33' && 
+                     r.sap === sap && 
+                     !r.eliminado && 
+                     !r.modificado
+            );
+            
+            if (duplicado) {
+                const confirmar = confirm(`⚠️ YA EXISTE un registro con:\n\nFolio: ${folio}\nAlmacén: 33\nSAP: ${sap}\n\n¿Deseas guardarlo de todos modos?`);
+                if (!confirmar) return;
+            }
+            
+            // Crear registro
+            const registro = {
+                folio: folio,
+                almacen: '33',
+                sap: sap,
+                desc: tallerScanData.descripcion,
+                cantidad: cantidad,
+                unidadMedida: tallerScanData.unidadMedida,
+                ubicacion: ubicacion,
+                usuario: selectedUser || 'Taller',
+                nombreContador: contador,
+                metodo: 'QR SAP (Alm 33)',
+                fecha: new Date().toISOString(),
+                timestamp: new Date().toISOString(),
+                eliminado: false,
+                modificado: false,
+                esDuplicado: duplicado ? true : false,
+                esPositivo: tallerScanData.esPositivo,
+                areaMaquila: false,
+                sincronizado: false
+            };
+            
+            console.log('📦 TALLER: Registro a guardar:', registro);
+            
+            try {
+                // Guardar en Firebase
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                
+                await addDoc(collection(db, coleccion), registro);
+                console.log('✅ TALLER: Guardado en Firebase');
+                
+                // Enviar a Google Sheets
+                if (!esSegundoConteo) {
+                    await enviarAGoogleSheets(registro);
+                    console.log('✅ TALLER: Enviado a Google Sheets');
+                }
+                
+                // Guardar en memoria local
+                registrosGuardados.push(registro);
+                
+                // Limpiar formulario
+                limpiarFormularioTaller();
+                
+                // Mensaje de éxito
+                alert('✅ Registro guardado correctamente\n\nFolio: ' + folio + '\nSAP: ' + sap);
+                
+                // Enfocar en folio para siguiente
+                document.getElementById('taller-folio').focus();
+                
+            } catch (error) {
+                console.error('❌ TALLER: Error al guardar:', error);
+                alert('❌ Error al guardar:\n\n' + error.message);
+            }
+        }
+        
+        // Limpiar formulario de Taller
+        function limpiarFormularioTaller() {
+            console.log('🗑️ TALLER: Limpiando formulario');
+            
+            document.getElementById('taller-folio').value = '';
+            document.getElementById('taller-sap').value = '';
+            document.getElementById('taller-desc').textContent = 'Escanea el código SAP para ver la descripción';
+            document.getElementById('taller-desc').style.color = '#666';
+            document.getElementById('taller-desc').style.fontWeight = 'normal';
+            document.getElementById('taller-cantidad').value = '';
+            document.getElementById('taller-unidad').value = 'PZA';
+            document.getElementById('taller-ubicacion').value = '';
+            document.getElementById('taller-contador').value = '';
+            
+            tallerScanData = {
+                sap: '',
+                descripcion: '',
+                unidadMedida: 'PZA',
+                esPositivo: false
+            };
+            
+            document.getElementById('taller-folio').focus();
+        }
+        
+        // ========== FUNCIONES ANTIGUAS DE TALLER (MANTENER POR COMPATIBILIDAD) ==========
         function procesarQRAlmacen33(texto) {
             console.log('🔧 TALLER: Procesando código de barras');
             console.log('📄 Texto recibido:', texto);
