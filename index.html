@@ -450,12 +450,24 @@
             width: 100%;
             background: white;
             padding: 16px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
             display: none;
+            z-index: 9999;
+            border-top: 3px solid #4caf50;
         }
 
         .confirm-bar.show {
             display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100%);
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+            }
         }
 
         /* Form manual */
@@ -1349,10 +1361,6 @@
                             <span class="icon">👤</span>
                             YARELLI GUADALUPE HERNANDEZ GARCIA
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'MARIO (CALIDAD)')">
-                            <span class="icon">👤</span>
-                            MARIO (CALIDAD)
-                        </div>
                         <div class="user-option" onclick="selectUser(this, 'USUARIO GENERICO 1')">
                             <span class="icon">👤</span>
                             USUARIO GENERICO 1
@@ -1441,10 +1449,6 @@
                         <div class="user-option" onclick="selectAuditor(this, 'JOSE NAPOLEON PEREZ')">
                             <span class="icon">🔍</span>
                             JOSE NAPOLEON PEREZ
-                        </div>
-                        <div class="user-option" onclick="selectAuditor(this, 'MARIO (CALIDAD)')">
-                            <span class="icon">🔍</span>
-                            MARIO (CALIDAD)
                         </div>
                         <div class="user-option" onclick="selectAuditor(this, 'AUDITOR GENERICO 1')">
                             <span class="icon">🔍</span>
@@ -1720,9 +1724,9 @@
                 </button>
             </div>
 
-            <!-- Barra de confirmación -->
+            <!-- Barra de confirmación FLOTANTE -->
             <div id="confirm-bar" class="confirm-bar">
-                <button class="btn-success" onclick="confirmarEscaneos()">
+                <button class="btn-success" onclick="confirmarEscaneos()" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 700; border-radius: 12px;">
                     ✓ Confirmar Todo (<span id="count-confirm">0</span>)
                 </button>
             </div>
@@ -2628,6 +2632,9 @@
                         startScanning();
                     }
                 }, 300);
+                
+                // MOSTRAR BOTÓN FLOTANTE (aunque esté vacío)
+                actualizarListaEscaneados();
             } else if (screenId === 'dashboard') {
                 // Actualizar dashboard con datos reales
                 actualizarDashboard();
@@ -3305,15 +3312,23 @@
             const count = document.getElementById('count-escaneados');
             const countConfirm = document.getElementById('count-confirm');
             const confirmBar = document.getElementById('confirm-bar');
+            const btnConfirmar = confirmBar.querySelector('button');
             
             count.textContent = escaneados.length;
             countConfirm.textContent = escaneados.length;
             
+            // BOTÓN SIEMPRE VISIBLE, pero disabled si no hay escaneados
+            confirmBar.classList.add('show');
+            
             if (escaneados.length === 0) {
                 lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
-                confirmBar.classList.remove('show');
+                btnConfirmar.disabled = true;
+                btnConfirmar.style.opacity = '0.5';
+                btnConfirmar.style.cursor = 'not-allowed';
             } else {
-                confirmBar.classList.add('show');
+                btnConfirmar.disabled = false;
+                btnConfirmar.style.opacity = '1';
+                btnConfirmar.style.cursor = 'pointer';
                 lista.innerHTML = escaneados.map((item, index) => `
                     <div class="scanned-item">
                         <div class="info">
@@ -3335,6 +3350,16 @@
         // Confirmar escaneos
         async function confirmarEscaneos() {
             if (escaneados.length === 0) return;
+            
+            // DESHABILITAR BOTÓN PARA EVITAR DOBLE CLICK
+            const btnConfirmar = document.querySelector('#confirm-bar button');
+            if (btnConfirmar.disabled) return; // Ya está guardando
+            
+            btnConfirmar.disabled = true;
+            btnConfirmar.style.opacity = '0.6';
+            btnConfirmar.style.cursor = 'not-allowed';
+            const textoOriginal = btnConfirmar.innerHTML;
+            btnConfirmar.innerHTML = '⏳ Guardando...';
             
             try {
                 // Guardar cada registro en Firebase
@@ -3374,6 +3399,12 @@
                     document.getElementById('success-overlay').classList.remove('show');
                     escaneados = [];
                     actualizarListaEscaneados();
+                    
+                    // REHABILITAR BOTÓN
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.style.opacity = '1';
+                    btnConfirmar.style.cursor = 'pointer';
+                    btnConfirmar.innerHTML = textoOriginal;
                 }, 2000);
                 
                 console.log('✅ Registros guardados en Firebase');
@@ -3381,6 +3412,12 @@
             } catch (error) {
                 console.error('Error al guardar en Firebase:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
+                
+                // REHABILITAR BOTÓN EN CASO DE ERROR
+                btnConfirmar.disabled = false;
+                btnConfirmar.style.opacity = '1';
+                btnConfirmar.style.cursor = 'pointer';
+                btnConfirmar.innerHTML = textoOriginal;
             }
         }
         
@@ -5494,7 +5531,7 @@
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
                 'MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
                 '00': [] // Por definir
             };
             
@@ -5542,7 +5579,7 @@
                 '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '00': [] // No se usa (líneas producción)
             };
             
