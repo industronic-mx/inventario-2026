@@ -45,9 +45,17 @@
         
         // Función para escribir en Google Sheets via Apps Script
         async function escribirEnGoogleSheets(registros) {
-            if (!Array.isArray(registros) || registros.length === 0) return false;
+            console.log('🔵 escribirEnGoogleSheets llamada con:', registros.length, 'registros');
+            
+            if (!Array.isArray(registros) || registros.length === 0) {
+                console.log('⚠️ No hay registros para enviar');
+                return false;
+            }
             
             try {
+                console.log('📤 Enviando a:', GOOGLE_SCRIPT_URL);
+                console.log('📦 Datos:', {registros: registros});
+                
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     redirect: 'follow',
@@ -59,6 +67,7 @@
                     })
                 });
                 
+                console.log('✅ Respuesta recibida:', response.status);
                 console.log('✅ Datos enviados a Google Sheets:', registros.length, 'registros');
                 return true;
                 
