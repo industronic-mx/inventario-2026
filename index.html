@@ -2836,13 +2836,16 @@
                         qrReader.style.display = 'none';
                         scanButton.style.display = 'block';
                         
-                        // VALIDAR que sea QR de almacén 33
+                        console.log('🔧 Taller escaneó:', decodedText);
+                        
+                        // VALIDAR que sea código de almacén 33
                         if (!decodedText.includes('CODIGO :') && !decodedText.includes('CODIGO:')) {
-                            alert('⚠️ Este QR no es válido para almacén 33\n\nDebe contener "CODIGO : [número]"\n\nUsa el tab "Escanear QR" para marbetes normales.');
+                            alert('⚠️ Este código no es válido para Taller\n\nDebe contener "CODIGO : [número]"\n\nUsa el tab "Escanear QR" para marbetes normales.');
                             return;
                         }
                         
-                        procesarQR(decodedText, 'QR SAP');
+                        // Llamar directamente a procesarQRAlmacen33
+                        procesarQRAlmacen33(decodedText);
                     },
                     (errorMessage) => {
                         // Ignorar errores de escaneo
