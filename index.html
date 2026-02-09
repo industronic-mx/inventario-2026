@@ -3647,24 +3647,15 @@
             if (registroEnEdicion !== null) {
                 const registroViejo = registrosGuardados[registroEnEdicion];
                 
-                // Notificar a Google Sheets que el original fue EDITADO
-                try {
-                    await fetch(`${GOOGLE_SCRIPT_URL}?action=editar&folio=${encodeURIComponent(registroViejo.folio)}&almacen=${encodeURIComponent(registroViejo.almacen)}&sap=${encodeURIComponent(registroViejo.sap)}&usuario=${encodeURIComponent(currentRole || selectedUser)}`, {
-                        method: 'GET',
-                        redirect: 'follow'
-                    });
-                    console.log('✓ Google Sheets: Registro original marcado como EDITADO');
-                } catch (error) {
-                    console.error('Error al actualizar Sheets:', error);
-                }
-                
                 // Crear NUEVA versión del registro
                 const registroNuevo = {
                     ...registroViejo,
                     cantidad: parseFloat(cantidad),
                     ubicacion: ubicacion,
                     fecha: new Date().toISOString(),
-                    editadoDe: registroViejo.folio // Referencia al original
+                    editadoDe: registroViejo.folio, // Referencia al original
+                    eliminado: false,
+                    modificado: false // El NUEVO registro es ACTIVO
                 };
                 
                 // Agregar nuevo registro a Firebase y Sheets
@@ -3678,25 +3669,45 @@
                         sincronizado: true
                     });
                     
-                    // Enviar a Google Sheets
+                    // Enviar NUEVO registro a Google Sheets como ACTIVO
                     await enviarAGoogleSheets(registroNuevo);
                     
                     registrosGuardados.push(registroNuevo);
                     
                 } catch (error) {
                     console.error('Error al guardar nueva versión:', error);
+                    alert('⚠️ Error al guardar. Verifica tu conexión.');
+                    return;
                 }
                 
-                // Marcar el original como modificado localmente
+                // Marcar el original como EDITADO localmente
                 registroViejo.modificado = true;
                 registroViejo.fechaModificacion = new Date().toISOString();
-
-                alert('✓ Registro actualizado correctamente\n\nSe creó una nueva versión');
-                cerrarModalEditar();
                 
-                // Recargar vista
-                renderizarMisRegistros();
-                renderizarTodosRegistros();
+                // Enviar actualización a Google Sheets: original pasa a EDITADO
+                try {
+                    await enviarAGoogleSheets({
+                        ...registroViejo,
+                        eliminado: false,
+                        modificado: true
+                    });
+                } catch (error) {
+                    console.error('Error al actualizar Sheets:', error);
+                }
+
+                // CONFIRMACIÓN VISUAL
+                document.getElementById('success-overlay').classList.add('show');
+                
+                setTimeout(() => {
+                    document.getElementById('success-overlay').classList.remove('show');
+                    
+                    // CERRAR MODAL AUTOMÁTICAMENTE
+                    cerrarModalEditar();
+                    
+                    // Recargar vista
+                    renderizarMisRegistros();
+                    renderizarTodosRegistros();
+                }, 1500);
             }
         }
 
@@ -5063,20 +5074,34 @@
             const correcto = registrosGuardados[seleccionado];
             
             if (confirm(`¿Confirmar?\n\nSe mantendrá:\n${correcto.cantidad} ${correcto.unidadMedida || 'PZA'} | ${correcto.usuario}\n\nSe eliminarán los demás registros duplicados.`)) {
-                // Marcar correcto como resuelto
+                // Marcar correcto como resuelto (ACTIVO)
                 correcto.duplicadoResuelto = true;
                 correcto.esDuplicado = false;
                 
-                // Eliminar los demás
+                // Enviar actualización a Google Sheets: registro correcto pasa a ACTIVO
+                enviarAGoogleSheets({
+                    ...correcto,
+                    eliminado: false,
+                    modificado: false
+                });
+                
+                // Eliminar los demás y marcarlos como DUPLICADO
                 registrosGuardados.forEach((r, i) => {
                     if (r.folio === correcto.folio && r.almacen === correcto.almacen && r.sap === correcto.sap && i !== seleccionado && !r.eliminado) {
                         r.eliminado = true;
                         r.motivoEliminacion = 'Duplicado resuelto - versión incorrecta';
                         r.eliminadoPor = currentRole || selectedUser;
                         r.fechaEliminacion = new Date().toISOString();
+                        
+                        // Enviar a Google Sheets como DUPLICADO (no ACTIVO)
+                        enviarAGoogleSheets({
+                            ...r,
+                            eliminado: true
+                        });
                     }
                 });
                 
+                alert('✅ Duplicado resuelto correctamente\n\n✓ Registro correcto marcado como ACTIVO\n✓ Duplicados marcados como ELIMINADO');
                 renderizarDuplicadosResolucion();
                 actualizarPanelPorAlmacen();
             }
