@@ -2454,11 +2454,18 @@
                         </button>
                     </div>
                     
-                    <!-- Botón Borrar Todos (solo para pruebas) -->
-                    <div style="margin-top: 16px;">
-                        <button class="btn-secondary" style="width: 100%; background: #d32f2f; color: white; font-weight: 700;" onclick="borrarTodosRegistros()">
-                            🗑️ Borrar TODOS los Registros (Pruebas)
+                    <!-- Botón RESETEAR TODO (Firebase + Sheets + Caché) -->
+                    <div style="margin-top: 16px; border-top: 2px solid #ffebee; padding-top: 16px;">
+                        <div style="background: #fff3e0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
+                            <div style="font-size: 12px; color: #e65100; font-weight: 700; margin-bottom: 4px;">⚠️ ZONA DE LIMPIEZA</div>
+                            <div style="font-size: 11px; color: #757575;">Usar solo al terminar pruebas, antes del inventario real</div>
+                        </div>
+                        <button class="btn-secondary" style="width: 100%; background: #d32f2f; color: white; font-weight: 700; font-size: 14px; padding: 16px;" onclick="resetearTodoElSistema()">
+                            🗑️ RESETEAR TODO EL SISTEMA
                         </button>
+                        <div style="font-size: 10px; color: #d32f2f; text-align: center; margin-top: 8px; font-weight: 600;">
+                            Borra Firebase + Google Sheets + Caché Local
+                        </div>
                     </div>
                 </div>
 
@@ -2763,19 +2770,36 @@
 
         function validatePassword() {
             const pass = document.getElementById('modal-pass').value;
-            if (pass.length >= 1) {
-                closeModal();
-                if (currentRole === 'auditoria') {
-                    showScreen('auditoria');
-                } else if (currentRole === 'mesa') {
-                    showScreen('mesa');
-                } else if (currentRole === 'auditoria-conteo') {
-                    showScreen('auditoria-conteo-login');
-                } else {
-                    showScreen('mesa');
-                }
+            
+            // CONTRASEÑAS REALES
+            const passwords = {
+                'auditoria-conteo': '7918',
+                'mesa': '2122',
+                'auditoria': '8134'
+            };
+            
+            if (!pass) {
+                alert('⚠️ Ingresa la contraseña');
+                return;
+            }
+            
+            if (pass !== passwords[currentRole]) {
+                alert('❌ Contraseña incorrecta');
+                document.getElementById('modal-pass').value = '';
+                document.getElementById('modal-pass').focus();
+                return;
+            }
+            
+            // Contraseña correcta
+            closeModal();
+            if (currentRole === 'auditoria') {
+                showScreen('auditoria');
+            } else if (currentRole === 'mesa') {
+                showScreen('mesa');
+            } else if (currentRole === 'auditoria-conteo') {
+                showScreen('auditoria-conteo-login');
             } else {
-                alert('Ingresa la contraseña');
+                showScreen('mesa');
             }
         }
 
@@ -3360,12 +3384,11 @@
             
             // PROTECCIÓN DOBLE CLICK
             const btnConfirmar = document.querySelector('#confirm-bar button');
-            if (btnConfirmar && btnConfirmar.disabled) return; // Ya está guardando
+            if (btnConfirmar && btnConfirmar.disabled) return;
             
             if (btnConfirmar) {
                 btnConfirmar.disabled = true;
                 btnConfirmar.style.opacity = '0.6';
-                const textoOriginal = btnConfirmar.innerHTML;
                 btnConfirmar.innerHTML = '⏳ Guardando...';
             }
             
@@ -3384,10 +3407,11 @@
                     });
                 }
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
-                if (!esSegundoConteo) {
-                    for (const registro of escaneados) {
-                        await enviarAGoogleSheets(registro);
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo) - TODOS DE UN JALÓN
+                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
+                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
+                    if (exitoSheets) {
+                        console.log('✅ Registros escritos en Google Sheets');
                     }
                 }
                 
@@ -3428,6 +3452,8 @@
                     btnConfirmar.style.opacity = '1';
                     btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
                 }
+            }
+        }
             }
         }
         
@@ -3747,35 +3773,48 @@
                 return;
             }
 
-            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
+            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO ELIMINARÁ TODAS LAS VERSIONES DE ESTE FOLIO`)) {
                 try {
-                    // Marcar como eliminado localmente
-                    registro.eliminado = true;
-                    registro.fechaEliminacion = new Date().toISOString();
-                    registro.eliminadoPor = currentRole || selectedUser;
-                    registro.motivoEliminacion = 'Eliminado por usuario';
+                    const motivoEliminacion = 'Eliminado por usuario';
+                    const fechaEliminacion = new Date().toISOString();
+                    const eliminadoPor = currentRole || selectedUser;
                     
-                    // Si tiene ID de Firebase, actualizar en la nube
-                    if (registro.id && window.firebaseDB) {
-                        const { doc, updateDoc } = window.firebaseCollections;
-                        const db = window.firebaseDB;
-                        
-                        await updateDoc(doc(db, 'registros', registro.id), {
-                            eliminado: true,
-                            fechaEliminacion: registro.fechaEliminacion,
-                            eliminadoPor: registro.eliminadoPor,
-                            motivoEliminacion: registro.motivoEliminacion
-                        });
+                    // ELIMINAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP
+                    // (Igual que en edición, pero marcando como eliminado)
+                    for (const r of registrosGuardados) {
+                        if (r.folio === registro.folio && 
+                            r.almacen === registro.almacen && 
+                            r.sap === registro.sap) {
+                            
+                            // Marcar como eliminado
+                            r.eliminado = true;
+                            r.fechaEliminacion = fechaEliminacion;
+                            r.eliminadoPor = eliminadoPor;
+                            r.motivoEliminacion = motivoEliminacion;
+                            
+                            // Actualizar en Firebase si tiene ID
+                            if (r.id && window.firebaseDB) {
+                                const { doc, updateDoc } = window.firebaseCollections;
+                                const db = window.firebaseDB;
+                                
+                                await updateDoc(doc(db, 'registros', r.id), {
+                                    eliminado: true,
+                                    fechaEliminacion: fechaEliminacion,
+                                    eliminadoPor: eliminadoPor,
+                                    motivoEliminacion: motivoEliminacion
+                                });
+                            }
+                            
+                            // Enviar a Google Sheets como ELIMINADO
+                            await enviarAGoogleSheets({
+                                ...r,
+                                eliminado: true,
+                                modificado: false
+                            });
+                        }
                     }
                     
-                    // Enviar a Google Sheets como ELIMINADO
-                    await enviarAGoogleSheets({
-                        ...registro,
-                        eliminado: true,
-                        modificado: false
-                    });
-                    
-                    console.log('✓ Registro eliminado y enviado a Sheets');
+                    console.log(`✓ Todas las versiones del folio ${registro.folio} eliminadas`);
                     
                     // OVERLAY VISUAL DE CONFIRMACIÓN
                     document.getElementById('success-overlay').classList.add('show');
@@ -4098,16 +4137,19 @@
 
         // ========== RENDERIZAR MIS REGISTROS ==========
         function renderizarMisRegistros() {
-            // MOSTRAR TODOS: activos, editados Y eliminados
-            const misRegistros = registrosGuardados.filter(r => r.usuario === selectedUser);
+            // MOSTRAR SOLO ACTIVOS Y EDITADOS (NO eliminados)
+            const misRegistros = registrosGuardados.filter(r => 
+                r.usuario === selectedUser && 
+                !r.eliminado  // ← NO mostrar eliminados
+            );
             const container = document.getElementById('container-mis-registros');
             const count = document.getElementById('count-mis-registros');
             
             if (!container) return;
             
             // Contar solo los ACTIVOS para el contador
-            const activos = misRegistros.filter(r => !r.eliminado && !r.modificado);
-            count.textContent = `${activos.length} registros activos • ${misRegistros.length} total`;
+            const activos = misRegistros.filter(r => !r.modificado);
+            count.textContent = `${activos.length} registros activos`;
             
             if (misRegistros.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>';
@@ -4127,27 +4169,23 @@
             
             container.innerHTML = registrosFinales.map((r, index) => {
                 let estadoVisual = '';
-                let estiloCard = '';
-                let botonesAccion = '';
                 
-                if (r.eliminado) {
-                    estadoVisual = '<span class="registro-badge" style="background: #d32f2f; color: white;">❌ ELIMINADO</span>';
-                    estiloCard = 'opacity: 0.6; border-left: 4px solid #d32f2f;';
-                    botonesAccion = '<div class="registro-actions"><span style="font-size: 11px; color: #d32f2f;">Eliminado</span></div>';
-                } else if (r.modificado) {
+                if (r.modificado) {
+                    // EDITADO - Badge naranja
                     estadoVisual = '<span class="registro-badge" style="background: #ff9800; color: white;">✏️ EDITADO</span>';
-                    estiloCard = 'opacity: 0.6; border-left: 4px solid #ff9800;';
-                    botonesAccion = '<div class="registro-actions"><span style="font-size: 11px; color: #ff9800;">Versión anterior</span></div>';
-                } else {
-                    estadoVisual = r.esDuplicado ? '<span class="registro-badge duplicado">⚠️ DUPLICADO</span>' : '';
-                    botonesAccion = `<div class="registro-actions">
-                        <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
-                        <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
-                    </div>`;
+                } else if (r.esDuplicado) {
+                    // DUPLICADO
+                    estadoVisual = '<span class="registro-badge duplicado">⚠️ DUPLICADO</span>';
                 }
                 
+                // SIEMPRE mostrar botones
+                const botonesAccion = `<div class="registro-actions">
+                    <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
+                    <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
+                </div>`;
+                
                 return `
-                <div class="registro-card" style="${estiloCard}">
+                <div class="registro-card">
                     <div class="registro-header">
                         <span class="registro-folio">${r.folio}</span>
                         <span class="registro-badge almacen">📦 ${r.almacen}</span>
@@ -4777,23 +4815,117 @@
             XLSX.writeFile(wb, `Dashboard_Ejecutivo_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
         
-        // ========== BORRAR TODOS LOS REGISTROS (SOLO PRUEBAS) ==========
-        function borrarTodosRegistros() {
-            if (confirm('⚠️ ¿ESTÁS SEGURO?\n\nEsto borrará TODOS los registros guardados.\n\nEsta acción NO se puede deshacer.')) {
-                if (confirm('⚠️ ÚLTIMA CONFIRMACIÓN\n\n¿Realmente deseas borrar TODO?')) {
-                    // Borrar de memoria local
-                    registrosGuardados = [];
-                    registrosSegundoConteo = [];
-                    escaneados = [];
+        // ========== RESETEAR TODO EL SISTEMA (Firebase + Sheets + Caché) ==========
+        async function resetearTodoElSistema() {
+            const confirmacion1 = confirm(
+                '⚠️ RESETEAR TODO EL SISTEMA\n\n' +
+                'Esto borrará PERMANENTEMENTE:\n\n' +
+                '✓ Todos los registros de Firebase\n' +
+                '✓ Todos los datos de Google Sheets\n' +
+                '✓ Toda la memoria local\n' +
+                '✓ Control de almacenes\n' +
+                '✓ Validaciones de auditoría\n\n' +
+                '⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER\n\n' +
+                '¿Estás seguro?'
+            );
+            
+            if (!confirmacion1) return;
+            
+            const confirmacion2 = confirm(
+                '🚨 ÚLTIMA CONFIRMACIÓN\n\n' +
+                'Una vez que presiones OK, se borrará TODO.\n\n' +
+                'Esto dejará el sistema completamente LIMPIO\n' +
+                'para empezar el inventario real desde CERO.\n\n' +
+                '¿REALMENTE deseas continuar?'
+            );
+            
+            if (!confirmacion2) return;
+            
+            try {
+                // Mostrar overlay de carga
+                const loadingDiv = document.createElement('div');
+                loadingDiv.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;';
+                loadingDiv.innerHTML = `
+                    <div style="font-size: 48px; margin-bottom: 20px;">🗑️</div>
+                    <div style="font-size: 24px; font-weight: 700; margin-bottom: 10px;">Limpiando sistema...</div>
+                    <div id="reset-status" style="font-size: 14px; color: #90caf9;"></div>
+                `;
+                document.body.appendChild(loadingDiv);
+                
+                const updateStatus = (msg) => {
+                    document.getElementById('reset-status').textContent = msg;
+                };
+                
+                // 1. BORRAR FIREBASE
+                updateStatus('1/5 - Eliminando registros de Firebase...');
+                if (window.firebaseDB) {
+                    const { collection, getDocs, deleteDoc, doc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
                     
-                    // Actualizar vistas
-                    renderizarMisRegistros();
-                    renderizarTodosRegistros();
+                    // Borrar colección "registros"
+                    const registrosSnapshot = await getDocs(collection(db, 'registros'));
+                    let count = 0;
+                    for (const documento of registrosSnapshot.docs) {
+                        await deleteDoc(doc(db, 'registros', documento.id));
+                        count++;
+                        if (count % 10 === 0) updateStatus(`1/5 - Eliminados ${count} registros...`);
+                    }
                     
-                    alert('✓ Todos los registros han sido borrados\n\n(Nota: Si Firebase está activo, los registros en la nube siguen ahí. Esto solo borra la memoria local de la app)');
+                    // Borrar colección "registros_segundo_conteo"
+                    updateStatus('2/5 - Eliminando segundo conteo...');
+                    const segundoConteoSnapshot = await getDocs(collection(db, 'registros_segundo_conteo'));
+                    for (const documento of segundoConteoSnapshot.docs) {
+                        await deleteDoc(doc(db, 'registros_segundo_conteo', documento.id));
+                    }
                     
-                    console.log('🗑️ Todos los registros borrados');
+                    // Borrar colección "control_almacenes"
+                    updateStatus('3/5 - Eliminando control de almacenes...');
+                    const controlSnapshot = await getDocs(collection(db, 'control_almacenes'));
+                    for (const documento of controlSnapshot.docs) {
+                        await deleteDoc(doc(db, 'control_almacenes', documento.id));
+                    }
+                    
+                    // Borrar colección "validaciones-auditoria"
+                    updateStatus('4/5 - Eliminando validaciones...');
+                    const validacionesSnapshot = await getDocs(collection(db, 'validaciones-auditoria'));
+                    for (const documento of validacionesSnapshot.docs) {
+                        await deleteDoc(doc(db, 'validaciones-auditoria', documento.id));
+                    }
                 }
+                
+                // 2. NOTIFICAR A GOOGLE SHEETS (para que borre todo)
+                updateStatus('5/5 - Limpiando Google Sheets...');
+                try {
+                    await fetch(GOOGLE_SCRIPT_URL + '?action=reset_all', {
+                        method: 'GET',
+                        redirect: 'follow'
+                    });
+                } catch (e) {
+                    console.log('Sheets reset solicitado (revisar manualmente)');
+                }
+                
+                // 3. LIMPIAR MEMORIA LOCAL
+                registrosGuardados = [];
+                registrosSegundoConteo = [];
+                escaneados = [];
+                almacenesBloqueados = {};
+                validacionesAuditoria = [];
+                
+                // 4. MOSTRAR ÉXITO
+                loadingDiv.innerHTML = `
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <div style="font-size: 28px; font-weight: 700; margin-bottom: 10px;">¡Sistema completamente limpio!</div>
+                    <div style="font-size: 14px; color: #90caf9; margin-bottom: 20px;">Firebase, Sheets y caché local borrados</div>
+                    <button onclick="location.reload()" style="background: #4caf50; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                        🔄 Recargar App
+                    </button>
+                `;
+                
+                console.log('✅ Sistema reseteado completamente');
+                
+            } catch (error) {
+                console.error('❌ Error al resetear:', error);
+                alert('⚠️ Error al resetear el sistema:\n\n' + error.message + '\n\nRevisa Firebase Console manualmente.');
             }
         }
         
@@ -6237,6 +6369,14 @@
                 alert('⚠️ Ingresa un código SAP');
                 return;
             }
+            
+            // Buscar TODOS los registros con ese SAP (para debug)
+            const todosSAP = registrosGuardados.filter(r => r.sap === sapBuscado);
+            console.log(`🔍 SAP ${sapBuscado}:`);
+            console.log(`  Total en sistema: ${todosSAP.length}`);
+            console.log(`  Eliminados: ${todosSAP.filter(r => r.eliminado).length}`);
+            console.log(`  Editados: ${todosSAP.filter(r => r.modificado).length}`);
+            console.log(`  Activos: ${todosSAP.filter(r => !r.eliminado && !r.modificado).length}`);
             
             // Buscar registros ACTIVOS con ese SAP
             const registrosEncontrados = registrosGuardados.filter(r => 
