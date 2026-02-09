@@ -3336,6 +3336,17 @@
         async function confirmarEscaneos() {
             if (escaneados.length === 0) return;
             
+            // PROTECCIÓN DOBLE CLICK
+            const btnConfirmar = document.querySelector('#confirm-bar button');
+            if (btnConfirmar && btnConfirmar.disabled) return; // Ya está guardando
+            
+            if (btnConfirmar) {
+                btnConfirmar.disabled = true;
+                btnConfirmar.style.opacity = '0.6';
+                const textoOriginal = btnConfirmar.innerHTML;
+                btnConfirmar.innerHTML = '⏳ Guardando...';
+            }
+            
             try {
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
@@ -3374,6 +3385,13 @@
                     document.getElementById('success-overlay').classList.remove('show');
                     escaneados = [];
                     actualizarListaEscaneados();
+                    
+                    // REHABILITAR BOTÓN
+                    if (btnConfirmar) {
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.style.opacity = '1';
+                        btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
+                    }
                 }, 2000);
                 
                 console.log('✅ Registros guardados en Firebase');
@@ -3381,6 +3399,13 @@
             } catch (error) {
                 console.error('Error al guardar en Firebase:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
+                
+                // REHABILITAR BOTÓN EN CASO DE ERROR
+                if (btnConfirmar) {
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.style.opacity = '1';
+                    btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
+                }
             }
         }
         
