@@ -2836,16 +2836,13 @@
                         qrReader.style.display = 'none';
                         scanButton.style.display = 'block';
                         
-                        console.log('🔧 Taller escaneó:', decodedText);
-                        
-                        // VALIDAR que sea código de almacén 33
+                        // VALIDAR que sea QR de almacén 33
                         if (!decodedText.includes('CODIGO :') && !decodedText.includes('CODIGO:')) {
-                            alert('⚠️ Este código no es válido para Taller\n\nDebe contener "CODIGO : [número]"\n\nUsa el tab "Escanear QR" para marbetes normales.');
+                            alert('⚠️ Este QR no es válido para almacén 33\n\nDebe contener "CODIGO : [número]"\n\nUsa el tab "Escanear QR" para marbetes normales.');
                             return;
                         }
                         
-                        // Llamar directamente a procesarQRAlmacen33
-                        procesarQRAlmacen33(decodedText);
+                        procesarQR(decodedText, 'QR SAP');
                     },
                     (errorMessage) => {
                         // Ignorar errores de escaneo
@@ -4979,42 +4976,48 @@
         }
         
         function mostrarFormularioAlmacen33() {
-            console.log('📝 Mostrando formulario Almacén 33');
-            console.log('Datos:', currentScanData);
-            
-            // Ocultar área de escaneo de Taller
-            const tabQrSap = document.getElementById('tab-qr-sap');
-            if (tabQrSap) tabQrSap.style.display = 'none';
-            
-            // Mostrar formulario
-            document.getElementById('scan-form-container').style.display = 'block';
+            // Cambiar a tab de formulario
+            document.getElementById('tab-qr').classList.remove('active');
+            document.getElementById('tab-manual').classList.remove('active');
+            document.getElementById('tab-form').classList.add('active');
+            document.getElementById('tab-scan').style.display = 'none';
+            document.getElementById('tab-manual').style.display = 'none';
+            document.getElementById('tab-form-container').style.display = 'block';
             
             // Llenar campos
             document.getElementById('form-folio').value = ''; // VACÍO para ingreso manual
-            document.getElementById('form-folio').readOnly = false; // HABILITADO
+            document.getElementById('form-folio').disabled = false; // HABILITADO
             document.getElementById('form-folio').placeholder = 'Ej: G-001';
             
+            document.getElementById('form-almacen-display').textContent = currentScanData.almacen;
             document.getElementById('form-almacen-select').value = currentScanData.almacenCod;
-            document.getElementById('form-sap').textContent = currentScanData.sap + (currentScanData.esPositivo ? ' ⚠️ POSITIVO' : '');
+            document.getElementById('form-almacen-select').disabled = true; // Fijo en 33
+            
+            document.getElementById('form-sap').textContent = currentScanData.sap;
             document.getElementById('form-desc').textContent = currentScanData.desc;
             
             // Color especial si es positivo
             if (currentScanData.esPositivo) {
-                document.getElementById('form-sap').style.color = '#e65100';
+                document.getElementById('form-desc').style.color = '#e65100';
+                document.getElementById('form-desc').style.fontWeight = '700';
             } else {
-                document.getElementById('form-sap').style.color = '#1976d2';
+                document.getElementById('form-desc').style.color = '#424242';
+                document.getElementById('form-desc').style.fontWeight = 'normal';
             }
             
-            // Limpiar campos editables
+            // Limpiar y enfocar
             document.getElementById('form-cantidad').value = '';
             document.getElementById('form-ubicacion').value = '';
-            document.getElementById('form-contador').value = '';
+            document.getElementById('form-contador').value = selectedUser || '';
             
             // Enfocar en FOLIO (campo manual)
             setTimeout(() => {
                 document.getElementById('form-folio').focus();
             }, 100);
-        }
+            
+            // Detener escáner
+            if (window.html5QrCode && window.html5QrCode.isScanning) {
+                window.html5QrCode.stop();
             }
         }
         
