@@ -2751,7 +2751,6 @@
 
         // Modal contraseña
         function showPasswordModal(role) {
-            console.log('showPasswordModal llamado con rol:', role);
             currentRole = role;
             const titles = {
                 'mesa': 'Mesa de Control',
@@ -2771,36 +2770,19 @@
 
         function validatePassword() {
             const pass = document.getElementById('modal-pass').value;
-            
-            // CONTRASEÑAS REALES
-            const passwords = {
-                'auditoria-conteo': '7918',
-                'mesa': '2122',
-                'auditoria': '8134'
-            };
-            
-            if (!pass) {
-                alert('⚠️ Ingresa la contraseña');
-                return;
-            }
-            
-            if (pass !== passwords[currentRole]) {
-                alert('❌ Contraseña incorrecta');
-                document.getElementById('modal-pass').value = '';
-                document.getElementById('modal-pass').focus();
-                return;
-            }
-            
-            // Contraseña correcta ✓
-            closeModal();
-            if (currentRole === 'auditoria') {
-                showScreen('auditoria');
-            } else if (currentRole === 'mesa') {
-                showScreen('mesa');
-            } else if (currentRole === 'auditoria-conteo') {
-                showScreen('auditoria-conteo-login');
+            if (pass.length >= 1) {
+                closeModal();
+                if (currentRole === 'auditoria') {
+                    showScreen('auditoria');
+                } else if (currentRole === 'mesa') {
+                    showScreen('mesa');
+                } else if (currentRole === 'auditoria-conteo') {
+                    showScreen('auditoria-conteo-login');
+                } else {
+                    showScreen('mesa');
+                }
             } else {
-                showScreen('mesa');
+                alert('Ingresa la contraseña');
             }
         }
 
@@ -3385,11 +3367,12 @@
             
             // PROTECCIÓN DOBLE CLICK
             const btnConfirmar = document.querySelector('#confirm-bar button');
-            if (btnConfirmar && btnConfirmar.disabled) return;
+            if (btnConfirmar && btnConfirmar.disabled) return; // Ya está guardando
             
             if (btnConfirmar) {
                 btnConfirmar.disabled = true;
                 btnConfirmar.style.opacity = '0.6';
+                const textoOriginal = btnConfirmar.innerHTML;
                 btnConfirmar.innerHTML = '⏳ Guardando...';
             }
             
@@ -3408,11 +3391,10 @@
                     });
                 }
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo) - TODOS DE UN JALÓN
-                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
-                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
-                    if (exitoSheets) {
-                        console.log('✅ Registros escritos en Google Sheets');
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
+                if (!esSegundoConteo) {
+                    for (const registro of escaneados) {
+                        await enviarAGoogleSheets(registro);
                     }
                 }
                 
@@ -3453,8 +3435,6 @@
                     btnConfirmar.style.opacity = '1';
                     btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
                 }
-            }
-        }
             }
         }
         
@@ -3774,48 +3754,35 @@
                 return;
             }
 
-            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO ELIMINARÁ TODAS LAS VERSIONES DE ESTE FOLIO`)) {
+            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
                 try {
-                    const motivoEliminacion = 'Eliminado por usuario';
-                    const fechaEliminacion = new Date().toISOString();
-                    const eliminadoPor = currentRole || selectedUser;
+                    // Marcar como eliminado localmente
+                    registro.eliminado = true;
+                    registro.fechaEliminacion = new Date().toISOString();
+                    registro.eliminadoPor = currentRole || selectedUser;
+                    registro.motivoEliminacion = 'Eliminado por usuario';
                     
-                    // ELIMINAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP
-                    // (Igual que en edición, pero marcando como eliminado)
-                    for (const r of registrosGuardados) {
-                        if (r.folio === registro.folio && 
-                            r.almacen === registro.almacen && 
-                            r.sap === registro.sap) {
-                            
-                            // Marcar como eliminado
-                            r.eliminado = true;
-                            r.fechaEliminacion = fechaEliminacion;
-                            r.eliminadoPor = eliminadoPor;
-                            r.motivoEliminacion = motivoEliminacion;
-                            
-                            // Actualizar en Firebase si tiene ID
-                            if (r.id && window.firebaseDB) {
-                                const { doc, updateDoc } = window.firebaseCollections;
-                                const db = window.firebaseDB;
-                                
-                                await updateDoc(doc(db, 'registros', r.id), {
-                                    eliminado: true,
-                                    fechaEliminacion: fechaEliminacion,
-                                    eliminadoPor: eliminadoPor,
-                                    motivoEliminacion: motivoEliminacion
-                                });
-                            }
-                            
-                            // Enviar a Google Sheets como ELIMINADO
-                            await enviarAGoogleSheets({
-                                ...r,
-                                eliminado: true,
-                                modificado: false
-                            });
-                        }
+                    // Si tiene ID de Firebase, actualizar en la nube
+                    if (registro.id && window.firebaseDB) {
+                        const { doc, updateDoc } = window.firebaseCollections;
+                        const db = window.firebaseDB;
+                        
+                        await updateDoc(doc(db, 'registros', registro.id), {
+                            eliminado: true,
+                            fechaEliminacion: registro.fechaEliminacion,
+                            eliminadoPor: registro.eliminadoPor,
+                            motivoEliminacion: registro.motivoEliminacion
+                        });
                     }
                     
-                    console.log(`✓ Todas las versiones del folio ${registro.folio} eliminadas`);
+                    // Enviar a Google Sheets como ELIMINADO
+                    await enviarAGoogleSheets({
+                        ...registro,
+                        eliminado: true,
+                        modificado: false
+                    });
+                    
+                    console.log('✓ Registro eliminado y enviado a Sheets');
                     
                     // OVERLAY VISUAL DE CONFIRMACIÓN
                     document.getElementById('success-overlay').classList.add('show');
@@ -4816,6 +4783,7 @@
             XLSX.writeFile(wb, `Dashboard_Ejecutivo_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
         
+        // ========== BORRAR TODOS LOS REGISTROS (SOLO PRUEBAS) ==========
         // ========== RESETEAR TODO EL SISTEMA (Firebase + Sheets + Caché) ==========
         async function resetearTodoElSistema() {
             const confirmacion1 = confirm(
@@ -6370,14 +6338,6 @@
                 alert('⚠️ Ingresa un código SAP');
                 return;
             }
-            
-            // Buscar TODOS los registros con ese SAP (para debug)
-            const todosSAP = registrosGuardados.filter(r => r.sap === sapBuscado);
-            console.log(`🔍 SAP ${sapBuscado}:`);
-            console.log(`  Total en sistema: ${todosSAP.length}`);
-            console.log(`  Eliminados: ${todosSAP.filter(r => r.eliminado).length}`);
-            console.log(`  Editados: ${todosSAP.filter(r => r.modificado).length}`);
-            console.log(`  Activos: ${todosSAP.filter(r => !r.eliminado && !r.modificado).length}`);
             
             // Buscar registros ACTIVOS con ese SAP
             const registrosEncontrados = registrosGuardados.filter(r => 
