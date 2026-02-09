@@ -1647,7 +1647,7 @@
             <div id="tab-qr-sap" class="scan-area" style="display: none;">
                 <div style="background: #fff3e0; border-radius: 12px; padding: 16px; margin: 16px; border-left: 4px solid #ff9800;">
                     <h3 style="color: #e65100; margin: 0 0 8px 0;">🔧 MODO TALLER (Almacén 33)</h3>
-                    <p style="font-size: 13px; color: #424242; margin: 0;">Escanea códigos SAP del rack y agrega a la lista. Al final confirma todos los registros.</p>
+                    <p style="font-size: 13px; color: #424242; margin: 0;">Escanea código SAP del rack, llena el formulario y guarda directamente.</p>
                 </div>
                 
                 <!-- FORMULARIO TALLER -->
@@ -1711,27 +1711,9 @@
                         <input type="text" id="taller-contador" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
                     </div>
                     
-                    <!-- Botón Agregar a Lista -->
-                    <button onclick="agregarATaller()" style="width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
-                        ➕ Agregar a Lista
-                    </button>
-                </div>
-                
-                <!-- Lista de escaneados TALLER -->
-                <div class="scanned-list">
-                    <div class="list-header">
-                        <h3>Escaneados - Taller</h3>
-                        <span class="count-badge" id="count-taller">0</span>
-                    </div>
-                    <div id="lista-taller">
-                        <div class="empty-state">Agrega registros a la lista</div>
-                    </div>
-                </div>
-                
-                <!-- Botón Confirmar (aparece cuando hay registros) -->
-                <div id="taller-confirm-container" style="display: none; padding: 16px; margin: 16px; background: white; border-radius: 12px; border: 2px solid #4caf50;">
-                    <button onclick="confirmarTaller()" class="btn-confirm-taller" style="width: 100%; padding: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
-                        ✓ Confirmar <span id="count-confirm-taller">0</span> Registros
+                    <!-- Botón Guardar Directo -->
+                    <button id="btn-guardar-taller" onclick="guardarRegistroTaller()" style="width: 100%; padding: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                        ✓ Guardar Registro
                     </button>
                 </div>
             </div>
@@ -1783,8 +1765,8 @@
                     <input type="text" id="manual-contador" placeholder="Ej: Juan Pérez">
                 </div>
 
-                <button class="btn-primary" onclick="agregarManual()" style="margin-top: 8px;">
-                    ➕ Agregar Marbete
+                <button id="btn-guardar-manual" class="btn-primary" onclick="guardarManualDirecto()" style="margin-top: 8px;">
+                    ✓ Guardar Registro
                 </button>
             </div>
 
@@ -5036,9 +5018,8 @@
             }
         }
         
-        // ========== NUEVO FLUJO TALLER CON LISTA DE ESCANEADOS ==========
+        // ========== TALLER - GUARDAR DIRECTO (SIN LISTA) ==========
         let html5QrCodeTaller = null;
-        let escaneadosTaller = []; // Lista separada para Taller
         let tallerScanData = {
             sap: '',
             descripcion: '',
@@ -5182,9 +5163,9 @@
             }, 100);
         }
         
-        // Agregar registro a lista de Taller
-        function agregarATaller() {
-            console.log('➕ TALLER: Agregando a lista...');
+        // Guardar registro de Taller DIRECTO (sin lista)
+        async function guardarRegistroTaller() {
+            console.log('💾 TALLER: Intentando guardar registro...');
             
             // Validar almacén bloqueado
             if (!esSegundoConteo && almacenesBloqueados['33']) {
@@ -5242,38 +5223,91 @@
                 nombreContador: contador,
                 metodo: 'QR SAP (Alm 33)',
                 fecha: new Date().toISOString(),
+                timestamp: new Date().toISOString(),
+                eliminado: false,
+                modificado: false,
+                esDuplicado: false,
                 esPositivo: tallerScanData.esPositivo,
-                areaMaquila: false
+                areaMaquila: false,
+                sincronizado: false
             };
             
-            console.log('📦 TALLER: Registro creado:', registro);
+            // Obtener botón
+            const btnGuardar = document.getElementById('btn-guardar-taller');
+            if (!btnGuardar) {
+                console.error('❌ No se encontró botón guardar');
+                return;
+            }
             
-            // Agregar a lista
-            escaneadosTaller.push(registro);
+            // BLOQUEAR BOTÓN
+            btnGuardar.disabled = true;
+            const textoOriginal = btnGuardar.textContent;
             
-            // BEEP de confirmación
-            reproducirSonido('scan');
+            try {
+                console.log('📦 TALLER: Guardando registro...');
+                btnGuardar.textContent = '⏳ Guardando...';
+                
+                // Guardar en Firebase
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                
+                await addDoc(collection(db, coleccion), {
+                    ...registro,
+                    sincronizado: true
+                });
+                
+                console.log('✅ TALLER: Guardado en Firebase');
+                
+                // Enviar a Google Sheets (solo primer conteo)
+                if (!esSegundoConteo) {
+                    btnGuardar.textContent = '📊 Sincronizando Sheets...';
+                    await enviarAGoogleSheets(registro);
+                    console.log('✅ TALLER: Enviado a Google Sheets');
+                }
+                
+                // Guardar en memoria local
+                if (esSegundoConteo) {
+                    registrosSegundoConteo.push(registro);
+                } else {
+                    registrosGuardados.push(registro);
+                }
+                
+                // Sonido de éxito
+                reproducirSonido('success');
+                
+                console.log('✅ TALLER: Registro guardado correctamente');
+                
+            } catch (error) {
+                console.error('❌ TALLER: Error al guardar:', error);
+                alert('⚠️ Error al guardar:\n\n' + error.message + '\n\nVerifica tu conexión.');
+                
+            } finally {
+                // SIEMPRE:
+                // 1. Limpiar formulario
+                limpiarFormularioTaller();
+                
+                // 2. Restaurar botón
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = textoOriginal;
+                
+                console.log('🔄 TALLER: Formulario limpiado y botón restaurado');
+            }
+        }
+        
+        // Limpiar formulario de Taller
+        function limpiarFormularioTaller() {
+            console.log('🗑️ TALLER: Limpiando formulario');
             
-            // Actualizar UI
-            actualizarListaTaller();
-            
-            // Limpiar formulario COMPLETO (incluye contador)
             document.getElementById('taller-folio').value = '';
-            
-            // FORZAR limpieza de campo SAP (readonly puede dar problemas)
-            const campoSAP = document.getElementById('taller-sap');
-            campoSAP.value = '';
-            campoSAP.removeAttribute('readonly');
-            campoSAP.value = '';
-            campoSAP.setAttribute('readonly', 'readonly');
-            
+            document.getElementById('taller-sap').value = '';
             document.getElementById('taller-desc').textContent = 'Escanea el código SAP para ver la descripción';
             document.getElementById('taller-desc').style.color = '#666';
             document.getElementById('taller-desc').style.fontWeight = 'normal';
             document.getElementById('taller-cantidad').value = '';
             document.getElementById('taller-unidad').value = 'PZA';
             document.getElementById('taller-ubicacion').value = '';
-            document.getElementById('taller-contador').value = ''; // SÍ limpiar (cada quien pone el suyo)
+            document.getElementById('taller-contador').value = '';
             
             tallerScanData = {
                 sap: '',
@@ -5282,155 +5316,174 @@
                 esPositivo: false
             };
             
-            // Enfocar en folio para siguiente
             document.getElementById('taller-folio').focus();
-            
-            console.log(`✅ TALLER: Registro agregado. Total en lista: ${escaneadosTaller.length}`);
         }
         
-        // Actualizar lista visual de Taller
-        function actualizarListaTaller() {
-            const lista = document.getElementById('lista-taller');
-            const countBadge = document.getElementById('count-taller');
-            const countConfirm = document.getElementById('count-confirm-taller');
-            const confirmContainer = document.getElementById('taller-confirm-container');
+        // ========== MANUAL - GUARDAR DIRECTO (SIN LISTA) ==========
+        async function guardarManualDirecto() {
+            console.log('💾 MANUAL: Intentando guardar registro...');
             
-            countBadge.textContent = escaneadosTaller.length;
-            countConfirm.textContent = escaneadosTaller.length;
-            
-            if (escaneadosTaller.length === 0) {
-                lista.innerHTML = '<div class="empty-state">Agrega registros a la lista</div>';
-                confirmContainer.style.display = 'none';
+            const folio = document.getElementById('manual-folio').value.toUpperCase().trim();
+            const almacenSeleccionado = document.getElementById('manual-almacen').value;
+            const sap = document.getElementById('manual-sap').value.trim();
+            const cantidad = parseFloat(document.getElementById('manual-cantidad').value);
+            const ubicacion = document.getElementById('manual-ubicacion').value.trim();
+            const nombreContador = document.getElementById('manual-contador').value.trim();
+
+            // Convertir MAQUILA a 01
+            const almacen = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
+
+            // Validar campos requeridos
+            if (!folio || !sap || !almacen) {
+                alert('⚠️ Debes llenar Folio, Almacén y Código SAP');
                 return;
             }
             
-            // Mostrar botón confirmar
-            confirmContainer.style.display = 'block';
-            
-            // Renderizar lista
-            let html = '';
-            escaneadosTaller.forEach((item, index) => {
-                const positivo = item.esPositivo ? ' ⚠️ POSITIVO' : '';
-                html += `
-                    <div class="scanned-item">
-                        <div class="item-info">
-                            <div class="item-header">
-                                <span class="item-folio">${item.folio}</span>
-                                <span class="item-sap">${item.sap}${positivo}</span>
-                            </div>
-                            <div class="item-desc">${item.desc}</div>
-                            <div class="item-details">
-                                ${item.cantidad} ${item.unidadMedida} | ${item.ubicacion}
-                            </div>
-                        </div>
-                        <button class="btn-remove" onclick="eliminarDeTaller(${index})">❌</button>
-                    </div>
-                `;
-            });
-            lista.innerHTML = html;
-        }
-        
-        // Eliminar registro de lista Taller
-        function eliminarDeTaller(index) {
-            console.log(`🗑️ TALLER: Eliminando registro ${index}`);
-            escaneadosTaller.splice(index, 1);
-            actualizarListaTaller();
-            reproducirSonido('scan');
-        }
-        
-        // Confirmar todos los registros de Taller
-        async function confirmarTaller() {
-            const total = escaneadosTaller.length;
-            
-            if (total === 0) {
-                alert('⚠️ No hay registros para guardar');
+            if (!nombreContador) {
+                alert('⚠️ Debes indicar quién hizo el conteo');
+                document.getElementById('manual-contador').focus();
                 return;
             }
+            
+            if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
+                alert('⚠️ Ingresa una cantidad válida');
+                return;
+            }
+            
+            if (cantidad < 0) {
+                alert('La cantidad no puede ser negativa');
+                return;
+            }
+            
+            // Confirmación si cantidad es 0
+            if (cantidad === 0) {
+                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
+                    return;
+                }
+            }
+            
+            // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
+            if (!esSegundoConteo && almacenesBloqueados[almacen]) {
+                alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+            
+            // Obtener descripción y UM de la base
+            let descripcion = 'Captura manual';
+            let unidadMedida = 'PZA';
+            let esPositivo = false;
+            
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (!encontrado) {
+                    esPositivo = true;
+                    descripcion = '⚠️ MATERIAL NO ENCONTRADO EN SAP';
+                } else {
+                    descripcion = encontrado.descripcion || 'Captura manual';
+                }
+            }
+            
+            if (kardexSAP.length > 0) {
+                const itemKardex = kardexSAP.find(item => item.codigo === sap);
+                if (itemKardex && itemKardex.unidadMedida) {
+                    unidadMedida = itemKardex.unidadMedida;
+                }
+            }
+
+            const registro = {
+                folio: folio,
+                almacen: almacen,
+                sap: sap,
+                desc: descripcion,
+                cantidad: cantidad,
+                unidadMedida: unidadMedida,
+                ubicacion: ubicacion,
+                nombreContador: nombreContador,
+                usuario: selectedUser,
+                metodo: 'Manual',
+                fecha: new Date().toISOString(),
+                timestamp: new Date().toISOString(),
+                eliminado: false,
+                modificado: false,
+                esDuplicado: false,
+                esPositivo: esPositivo,
+                areaMaquila: almacenSeleccionado === '01-MAQUILA',
+                sincronizado: false
+            };
             
             // Obtener botón
-            const btnConfirmar = document.querySelector('.btn-confirm-taller');
-            if (!btnConfirmar) {
-                console.error('❌ No se encontró botón confirmar');
+            const btnGuardar = document.getElementById('btn-guardar-manual');
+            if (!btnGuardar) {
+                console.error('❌ No se encontró botón guardar');
                 return;
             }
             
             // BLOQUEAR BOTÓN
-            btnConfirmar.disabled = true;
-            const textoOriginal = btnConfirmar.textContent;
+            btnGuardar.disabled = true;
+            const textoOriginal = btnGuardar.textContent;
             
             try {
-                console.log(`📦 TALLER: Guardando ${total} registros...`);
+                console.log('📦 MANUAL: Guardando registro...');
+                btnGuardar.textContent = '⏳ Guardando...';
                 
+                // Guardar en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
                 const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
                 
-                // Guardar cada registro
-                for (let i = 0; i < total; i++) {
-                    btnConfirmar.textContent = `⏳ Guardando ${i + 1}/${total}`;
-                    
-                    const registro = escaneadosTaller[i];
-                    
-                    // Guardar en Firebase
-                    await addDoc(collection(db, coleccion), {
-                        ...registro,
-                        timestamp: new Date().toISOString(),
-                        eliminado: false,
-                        modificado: false,
-                        esDuplicado: false,
-                        sincronizado: true
-                    });
-                    
-                    console.log(`✅ TALLER: Registro ${i + 1}/${total} guardado en Firebase`);
-                }
+                await addDoc(collection(db, coleccion), {
+                    ...registro,
+                    sincronizado: true
+                });
+                
+                console.log('✅ MANUAL: Guardado en Firebase');
                 
                 // Enviar a Google Sheets (solo primer conteo)
                 if (!esSegundoConteo) {
-                    btnConfirmar.textContent = '📊 Sincronizando Sheets...';
-                    
-                    for (let i = 0; i < total; i++) {
-                        await enviarAGoogleSheets(escaneadosTaller[i]);
-                        console.log(`✅ TALLER: Registro ${i + 1}/${total} enviado a Sheets`);
-                    }
+                    btnGuardar.textContent = '📊 Sincronizando Sheets...';
+                    await enviarAGoogleSheets(registro);
+                    console.log('✅ MANUAL: Enviado a Google Sheets');
                 }
                 
                 // Guardar en memoria local
                 if (esSegundoConteo) {
-                    registrosSegundoConteo.push(...escaneadosTaller);
+                    registrosSegundoConteo.push(registro);
                 } else {
-                    registrosGuardados.push(...escaneadosTaller);
+                    registrosGuardados.push(registro);
                 }
                 
                 // Sonido de éxito
                 reproducirSonido('success');
                 
-                // Mostrar overlay de éxito
-                document.getElementById('success-overlay').classList.add('show');
-                setTimeout(() => {
-                    document.getElementById('success-overlay').classList.remove('show');
-                }, 2000);
-                
-                console.log(`✅ TALLER: ${total} registros guardados correctamente`);
+                console.log('✅ MANUAL: Registro guardado correctamente');
                 
             } catch (error) {
-                console.error('❌ TALLER: Error al guardar:', error);
-                alert('⚠️ Error al guardar registros:\n\n' + error.message + '\n\nVerifica tu conexión.');
+                console.error('❌ MANUAL: Error al guardar:', error);
+                alert('⚠️ Error al guardar:\n\n' + error.message + '\n\nVerifica tu conexión.');
                 
             } finally {
                 // SIEMPRE:
-                // 1. Limpiar lista
-                escaneadosTaller = [];
-                actualizarListaTaller();
+                // 1. Limpiar formulario
+                document.getElementById('manual-folio').value = '';
+                document.getElementById('manual-sap').value = '';
+                document.getElementById('manual-descripcion').value = '';
+                document.getElementById('manual-descripcion').style.color = '#000';
+                document.getElementById('manual-cantidad').value = '';
+                document.getElementById('manual-ubicacion').value = '';
+                document.getElementById('manual-contador').value = '';
                 
                 // 2. Restaurar botón
-                btnConfirmar.disabled = false;
-                btnConfirmar.textContent = textoOriginal;
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = textoOriginal;
                 
-                console.log('🔄 TALLER: Lista limpiada y botón restaurado');
+                // 3. Enfocar en folio
+                document.getElementById('manual-folio').focus();
+                
+                console.log('🔄 MANUAL: Formulario limpiado y botón restaurado');
             }
         }
         
-        // ========== FUNCIONES ANTIGUAS DE TALLER (MANTENER POR COMPATIBILIDAD) ==========
+        // ========== FUNCIONES ANTIGUAS DE TALLER (IGNORAR) ==========
         function procesarQRAlmacen33(texto) {
             console.log('🔧 TALLER: Procesando código de barras');
             console.log('📄 Texto recibido:', texto);
