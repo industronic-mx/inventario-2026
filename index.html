@@ -3352,10 +3352,9 @@
                 }
                 
                 // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
-                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
-                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
-                    if (exitoSheets) {
-                        console.log('✅ Registros escritos en Google Sheets');
+                if (!esSegundoConteo) {
+                    for (const registro of escaneados) {
+                        await enviarAGoogleSheets(registro);
                     }
                 }
                 
@@ -3655,9 +3654,7 @@
                     });
                     
                     // Enviar a Google Sheets
-                    if (typeof window.escribirEnGoogleSheets === 'function') {
-                        await window.escribirEnGoogleSheets([registroNuevo]);
-                    }
+                    await enviarAGoogleSheets(registroNuevo);
                     
                     registrosGuardados.push(registroNuevo);
                     
@@ -4802,6 +4799,29 @@
             // Detener escáner
             if (window.html5QrCode && window.html5QrCode.isScanning) {
                 window.html5QrCode.stop();
+            }
+        }
+        
+        // ========== GOOGLE SHEETS INTEGRATION ==========
+        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxaT_mU2y2nQ_0eHPP4fIwa_bEQUtksJcalu35XdhhOlBxmrdKjxmY--XrXBZPOdWDA/exec';
+        
+        async function enviarAGoogleSheets(registro) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'add',
+                        registro: registro
+                    })
+                });
+                
+                console.log('✓ Enviado a Google Sheets');
+            } catch (error) {
+                console.error('Error al enviar a Google Sheets:', error);
             }
         }
         
