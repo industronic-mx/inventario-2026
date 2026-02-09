@@ -584,6 +584,7 @@
 
         .icon-box.blue { background: #e3f2fd; }
         .icon-box.green { background: #e8f5e9; }
+        .icon-box.gray { background: #f5f5f5; }
         .icon-box.orange { background: #fff3e0; }
         .icon-box.purple { background: #f3e5f5; }
 
@@ -1192,10 +1193,10 @@
                         <p>Captura de marbetes</p>
                     </div>
 
-                    <div class="user-card" onclick="showScreen('dashboard')">
-                        <div class="icon">📊</div>
-                        <h3>Dashboard</h3>
-                        <p>Reportes y avance</p>
+                    <div class="user-card needs-password" onclick="showPasswordModal('auditoria-conteo')">
+                        <div class="icon">🔍</div>
+                        <h3>Auditoría de Conteo</h3>
+                        <p>🔒 Clave</p>
                     </div>
 
                     <div class="user-card needs-password" onclick="showPasswordModal('mesa')">
@@ -1205,9 +1206,19 @@
                     </div>
 
                     <div class="user-card needs-password" onclick="showPasswordModal('auditoria')">
-                        <div class="icon">🔍</div>
+                        <div class="icon">⭐</div>
                         <h3>Auditoría</h3>
                         <p>🔒 Clave</p>
+                    </div>
+
+                    <div class="user-card" onclick="showScreen('dashboard')">
+                        <div class="icon">📊</div>
+                        <h3>Dashboard</h3>
+                        <p>Reportes y avance</p>
+                    </div>
+
+                    <div class="user-card" style="cursor: default; pointer-events: none;">
+                        <div class="icon">📦</div>
                     </div>
                 </div>
             </div>
@@ -1223,30 +1234,148 @@
             <div class="content-white">
                 <div class="user-selection">
                     <h3>¿Quién eres?</h3>
-                    <div class="user-list">
-                        <div class="user-option" onclick="selectUser(this, 'Sandra Antonio')">
+                    
+                    <!-- Buscador -->
+                    <input type="text" id="search-user" placeholder="🔍 Buscar por nombre..." 
+                           onkeyup="filtrarUsuarios()" 
+                           style="width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    
+                    <div class="user-list" id="user-list">
+                        <div class="user-option" onclick="selectUser(this, 'ANA CECILIA ESCALANTE HERRERA')">
                             <span class="icon">👤</span>
-                            Sandra Antonio
+                            ANA CECILIA ESCALANTE HERRERA
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'Jahyr Castro')">
+                        <div class="user-option" onclick="selectUser(this, 'ANDREA CASTRO ROMERO')">
                             <span class="icon">👤</span>
-                            Jahyr Castro
+                            ANDREA CASTRO ROMERO
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'Angie Martínez')">
+                        <div class="user-option" onclick="selectUser(this, 'ANGIE NOHEMI MARTINEZ GUEVARA')">
                             <span class="icon">👤</span>
-                            Angie Martínez
+                            ANGIE NOHEMI MARTINEZ GUEVARA
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'Ingrid González')">
+                        <div class="user-option" onclick="selectUser(this, 'BRENDA ABIGAIL AGUIÑAGA GALLARDO')">
                             <span class="icon">👤</span>
-                            Ingrid González
+                            BRENDA ABIGAIL AGUIÑAGA GALLARDO
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'Edson Encinia')">
+                        <div class="user-option" onclick="selectUser(this, 'CARMEN DEL ROCIO CAMARA URIETA')">
                             <span class="icon">👤</span>
-                            Edson Encinia
+                            CARMEN DEL ROCIO CAMARA URIETA
                         </div>
-                        <div class="user-option" onclick="selectUser(this, 'Enrique García')">
+                        <div class="user-option" onclick="selectUser(this, 'DANIEL OMAR ARENAS SOLORIO')">
                             <span class="icon">👤</span>
-                            Enrique García
+                            DANIEL OMAR ARENAS SOLORIO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'EVELIN YAHAIRA RUIZ ESPINOSA')">
+                            <span class="icon">👤</span>
+                            EVELIN YAHAIRA RUIZ ESPINOSA
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'INGRID GONZALEZ SAUCEDO')">
+                            <span class="icon">👤</span>
+                            INGRID GONZALEZ SAUCEDO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'JAHYR CASTRO')">
+                            <span class="icon">👤</span>
+                            JAHYR CASTRO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'JENNIFER GERALDINE FLORES SANCHEZ')">
+                            <span class="icon">👤</span>
+                            JENNIFER GERALDINE FLORES SANCHEZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'MARIO ALBERTO LOPEZ SAUCEDO')">
+                            <span class="icon">👤</span>
+                            MARIO ALBERTO LOPEZ SAUCEDO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'OSCAR BUTANDA')">
+                            <span class="icon">👤</span>
+                            OSCAR BUTANDA
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'PAOLA YAMILETH GARCIA SANCHEZ')">
+                            <span class="icon">👤</span>
+                            PAOLA YAMILETH GARCIA SANCHEZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'PATRICIO MAXIMILIANO CARRILLO RAMIREZ')">
+                            <span class="icon">👤</span>
+                            PATRICIO MAXIMILIANO CARRILLO RAMIREZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'SANDRA ANTONIO BENITO')">
+                            <span class="icon">👤</span>
+                            SANDRA ANTONIO BENITO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'JOSE NAPOLEON PEREZ')">
+                            <span class="icon">👤</span>
+                            JOSE NAPOLEON PEREZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'JESUS GABRIEL FLORES')">
+                            <span class="icon">👤</span>
+                            JESUS GABRIEL FLORES
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'AMALIA DOMINGUEZ')">
+                            <span class="icon">👤</span>
+                            AMALIA DOMINGUEZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'HILARY NAHOMI GARCIA')">
+                            <span class="icon">👤</span>
+                            HILARY NAHOMI GARCIA
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'BLANCA ALICIA AVALOS ROMO')">
+                            <span class="icon">👤</span>
+                            BLANCA ALICIA AVALOS ROMO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'EDSON ALEJANDRO ENCINIA HERNANDEZ')">
+                            <span class="icon">👤</span>
+                            EDSON ALEJANDRO ENCINIA HERNANDEZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'ENRIQUE CORTEZ RIOS')">
+                            <span class="icon">👤</span>
+                            ENRIQUE CORTEZ RIOS
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'ENRIQUE FERNANDO GARCIA MORENO')">
+                            <span class="icon">👤</span>
+                            ENRIQUE FERNANDO GARCIA MORENO
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'ERICK ORLANDO CORTEZ GONZALEZ')">
+                            <span class="icon">👤</span>
+                            ERICK ORLANDO CORTEZ GONZALEZ
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'HIRAM ENRIQUE CORTEZ GARZA')">
+                            <span class="icon">👤</span>
+                            HIRAM ENRIQUE CORTEZ GARZA
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'LOLIS PEREZ SIMANCAS')">
+                            <span class="icon">👤</span>
+                            LOLIS PEREZ SIMANCAS
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'YARELLI GUADALUPE HERNANDEZ GARCIA')">
+                            <span class="icon">👤</span>
+                            YARELLI GUADALUPE HERNANDEZ GARCIA
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'MARIO (CALIDAD)')">
+                            <span class="icon">👤</span>
+                            MARIO (CALIDAD)
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'USUARIO GENERICO 1')">
+                            <span class="icon">👤</span>
+                            USUARIO GENERICO 1
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'USUARIO GENERICO 2')">
+                            <span class="icon">👤</span>
+                            USUARIO GENERICO 2
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'USUARIO GENERICO 3')">
+                            <span class="icon">👤</span>
+                            USUARIO GENERICO 3
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'AUDITOR GENERICO 1')">
+                            <span class="icon">👤</span>
+                            AUDITOR GENERICO 1
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'AUDITOR GENERICO 2')">
+                            <span class="icon">👤</span>
+                            AUDITOR GENERICO 2
+                        </div>
+                        <div class="user-option" onclick="selectUser(this, 'AUDITOR GENERICO 3')">
+                            <span class="icon">👤</span>
+                            AUDITOR GENERICO 3
                         </div>
                     </div>
                 </div>
@@ -1254,6 +1383,125 @@
                 <button class="btn-primary" onclick="enterAsCapturista()">
                     Continuar →
                 </button>
+            </div>
+        </div>
+
+        <!-- ========== LOGIN AUDITORÍA DE CONTEO ========== -->
+        <div id="screen-auditoria-conteo-login" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1>Auditoría de Conteo</h1>
+            </div>
+
+            <div class="content-white">
+                <div class="user-selection">
+                    <h3>Selecciona tu nombre</h3>
+                    
+                    <input type="text" id="search-auditor" placeholder="🔍 Buscar auditor..." 
+                           onkeyup="filtrarAuditores()" 
+                           style="width: 100%; padding: 12px; margin-bottom: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                    
+                    <div class="user-list" id="auditor-list">
+                        <div class="user-option" onclick="selectAuditor(this, 'BLANCA ALICIA AVALOS ROMO')">
+                            <span class="icon">🔍</span>
+                            BLANCA ALICIA AVALOS ROMO
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'EDSON ALEJANDRO ENCINIA HERNANDEZ')">
+                            <span class="icon">🔍</span>
+                            EDSON ALEJANDRO ENCINIA HERNANDEZ
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'ENRIQUE CORTEZ RIOS')">
+                            <span class="icon">🔍</span>
+                            ENRIQUE CORTEZ RIOS
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'ENRIQUE FERNANDO GARCIA MORENO')">
+                            <span class="icon">🔍</span>
+                            ENRIQUE FERNANDO GARCIA MORENO
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'ERICK ORLANDO CORTEZ GONZALEZ')">
+                            <span class="icon">🔍</span>
+                            ERICK ORLANDO CORTEZ GONZALEZ
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'HIRAM ENRIQUE CORTEZ GARZA')">
+                            <span class="icon">🔍</span>
+                            HIRAM ENRIQUE CORTEZ GARZA
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'LOLIS PEREZ SIMANCAS')">
+                            <span class="icon">🔍</span>
+                            LOLIS PEREZ SIMANCAS
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'YARELLI GUADALUPE HERNANDEZ GARCIA')">
+                            <span class="icon">🔍</span>
+                            YARELLI GUADALUPE HERNANDEZ GARCIA
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'DANIEL OMAR ARENAS SOLORIO')">
+                            <span class="icon">🔍</span>
+                            DANIEL OMAR ARENAS SOLORIO
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'JOSE NAPOLEON PEREZ')">
+                            <span class="icon">🔍</span>
+                            JOSE NAPOLEON PEREZ
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'MARIO (CALIDAD)')">
+                            <span class="icon">🔍</span>
+                            MARIO (CALIDAD)
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'AUDITOR GENERICO 1')">
+                            <span class="icon">🔍</span>
+                            AUDITOR GENERICO 1
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'AUDITOR GENERICO 2')">
+                            <span class="icon">🔍</span>
+                            AUDITOR GENERICO 2
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'AUDITOR GENERICO 3')">
+                            <span class="icon">🔍</span>
+                            AUDITOR GENERICO 3
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="enterAsAuditorConteo()">
+                    Continuar →
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== MENÚ AUDITORÍA DE CONTEO ========== -->
+        <div id="screen-menu-auditoria-conteo" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('login')">←</button>
+                <h1 id="auditor-name">Auditoría de Conteo</h1>
+            </div>
+
+            <div class="content-white">
+                <h3 style="padding: 0 16px; margin-bottom: 16px;">Mis SAPs Asignados</h3>
+                <div id="mis-saps-asignados" style="padding: 0 16px;"></div>
+            </div>
+        </div>
+
+        <!-- ========== VALIDAR SAP ========== -->
+        <div id="screen-validar-sap" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('menu-auditoria-conteo')">←</button>
+                <h1 id="validar-sap-titulo">Validar SAP</h1>
+            </div>
+
+            <div class="content-white" style="padding: 20px;">
+                <div id="info-sap-validar"></div>
+                <div id="folios-sap-validar" style="margin-top: 24px;"></div>
+            </div>
+        </div>
+
+        <!-- ========== VALIDAR FOLIO ========== -->
+        <div id="screen-validar-folio" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="volverValidarSAP()">←</button>
+                <h1>Validar Folio</h1>
+            </div>
+
+            <div class="content-white" style="padding: 20px;">
+                <div id="form-validacion-folio"></div>
             </div>
         </div>
 
@@ -1307,6 +1555,9 @@
                 <button class="tab-btn active" onclick="switchTab('escanear')">
                     📱 Escanear QR
                 </button>
+                <button class="tab-btn" onclick="switchTab('qr-sap')">
+                    🔧 QR SAP (Taller)
+                </button>
                 <button class="tab-btn" onclick="switchTab('manual')">
                     ✏️ Manual
                 </button>
@@ -1328,14 +1579,22 @@
                     <div class="scan-form">
                         <h4>Datos del Marbete</h4>
                         
-                        <div class="field-readonly">
-                            <label>Folio</label>
-                            <div class="value" id="form-folio">-</div>
+                        <div class="input-group">
+                            <label>Folio *</label>
+                            <input type="text" id="form-folio" readonly style="background: #f5f5f5; border: 2px solid #e0e0e0; padding: 12px; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box;">
                         </div>
                         
-                        <div class="field-readonly">
-                            <label>Almacén</label>
-                            <div class="value" id="form-almacen">-</div>
+                        <div class="input-group">
+                            <label>Almacén *</label>
+                            <select id="form-almacen-select">
+                                <option value="00">00 - Líneas Producción</option>
+                                <option value="01">01 - Materia Prima</option>
+                                <option value="01-MAQUILA">MAQUILA (Área 01)</option>
+                                <option value="30">30 - Transformadores</option>
+                                <option value="31">31 - Placas</option>
+                                <option value="32">32 - Arneses</option>
+                                <option value="33">33 - Gabinetes</option>
+                            </select>
                         </div>
                         
                         <div class="field-readonly">
@@ -1382,6 +1641,33 @@
                 </div>
             </div>
 
+            <!-- Tab QR SAP (Taller - Solo Almacén 33) -->
+            <div id="tab-qr-sap" class="scan-area" style="display: none;">
+                <div style="background: #fff3e0; border-radius: 12px; padding: 16px; margin: 16px; border-left: 4px solid #ff9800;">
+                    <h3 style="color: #e65100; margin: 0 0 8px 0;">🔧 MODO TALLER (Almacén 33)</h3>
+                    <p style="font-size: 13px; color: #424242; margin: 0;">Este modo es <strong>SOLO para almacén 33 (Gabinetes/Taller)</strong> que usa marbetes físicos de papel.</p>
+                </div>
+                
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 16px; border: 2px solid #e0e0e0;">
+                    <h3 style="color: #1a237e; margin: 0 0 12px 0;">📋 Instrucciones:</h3>
+                    <ol style="font-size: 14px; color: #424242; padding-left: 20px; margin: 0;">
+                        <li style="margin-bottom: 8px;">Escanea el <strong>QR del RACK</strong> (contiene código SAP)</li>
+                        <li style="margin-bottom: 8px;">Sistema extrae el código automáticamente</li>
+                        <li style="margin-bottom: 8px;">Ingresa el <strong>folio del marbete físico</strong> manualmente</li>
+                        <li>Completa cantidad y ubicación</li>
+                    </ol>
+                </div>
+                
+                <div class="scan-box" id="scan-button-taller" onclick="startScanning()">
+                    <div class="scan-icon">🔧</div>
+                    <h3>Escanear QR del Rack</h3>
+                    <p>Toca aquí para activar cámara</p>
+                </div>
+
+                <!-- QR Reader para taller -->
+                <div id="qr-reader-taller" style="display: none;"></div>
+            </div>
+
             <!-- Tab Manual -->
             <div id="tab-manual" class="form-manual" style="display: none;">
                 <div class="input-group">
@@ -1392,7 +1678,9 @@
                 <div class="input-group">
                     <label>Almacén *</label>
                     <select id="manual-almacen">
+                        <option value="00">00 - Líneas Producción</option>
                         <option value="01">01 - Materia Prima</option>
+                        <option value="01-MAQUILA">MAQUILA (Área 01)</option>
                         <option value="30">30 - Transformadores</option>
                         <option value="31">31 - Placas</option>
                         <option value="32">32 - Arneses</option>
@@ -1471,101 +1759,42 @@
             <div class="header-inner">
                 <button class="btn-back" onclick="showScreen('login')">←</button>
                 <h1>Dashboard</h1>
-                <button class="btn-back">🔄</button>
+                <button class="btn-back" onclick="actualizarDashboard()">🔄</button>
             </div>
 
             <div style="background: #f5f5f5; min-height: calc(100vh - 60px); padding-bottom: 20px;">
                 <div class="progress-card">
                     <div style="text-align: center; margin-bottom: 14px;">
-                        <span style="font-size: 38px; font-weight: 800; color: #1a237e;">1,450</span>
-                        <span style="font-size: 18px; color: #9e9e9e;"> / 10,000</span>
+                        <span id="dash-total" style="font-size: 38px; font-weight: 800; color: #1a237e;">0</span>
+                        <span style="font-size: 18px; color: #9e9e9e;"> / <span id="dash-esperado">0</span></span>
                     </div>
                     <div class="progress-bar" style="height: 12px; margin-bottom: 8px;">
-                        <div class="progress-fill" style="width: 14.5%;"></div>
+                        <div id="dash-progress-bar" class="progress-fill" style="width: 0%;"></div>
                     </div>
-                    <p style="text-align: center; color: #1a237e; font-weight: 600; font-size: 14px;">14.5% completado</p>
+                    <p id="dash-porcentaje" style="text-align: center; color: #1a237e; font-weight: 600; font-size: 14px;">0% completado</p>
                 </div>
 
                 <div class="stats-row">
                     <div class="stat-card">
                         <div class="icon">⚠️</div>
-                        <div class="value" style="color: #f57c00;">12</div>
+                        <div id="dash-positivos" class="value" style="color: #f57c00;">0</div>
                         <div class="label">Positivos</div>
                     </div>
                     <div class="stat-card">
                         <div class="icon">📈</div>
-                        <div class="value" style="color: #1976d2;">~45</div>
+                        <div id="dash-velocidad" class="value" style="color: #1976d2;">~0</div>
                         <div class="label">escaneos/hora</div>
                     </div>
                 </div>
 
                 <div class="almacen-card">
                     <h3>📦 Avance por Almacén</h3>
-                    
-                    <div class="almacen-item">
-                        <div class="almacen-header">
-                            <span class="almacen-name">
-                                <span class="almacen-dot" style="background: #fbc02d;"></span>
-                                01 - Materia Prima
-                            </span>
-                            <span class="almacen-percent">500 / 3,800 (13.2%)</span>
-                        </div>
-                        <div class="almacen-bar">
-                            <div class="almacen-fill" style="width: 13.2%; background: #fbc02d;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="almacen-item">
-                        <div class="almacen-header">
-                            <span class="almacen-name">
-                                <span class="almacen-dot" style="background: #1976d2;"></span>
-                                30 - Transformadores
-                            </span>
-                            <span class="almacen-percent">150 / 300 (50%)</span>
-                        </div>
-                        <div class="almacen-bar">
-                            <div class="almacen-fill" style="width: 50%; background: #1976d2;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="almacen-item">
-                        <div class="almacen-header">
-                            <span class="almacen-name">
-                                <span class="almacen-dot" style="background: #388e3c;"></span>
-                                31 - Placas
-                            </span>
-                            <span class="almacen-percent">100 / 200 (50%)</span>
-                        </div>
-                        <div class="almacen-bar">
-                            <div class="almacen-fill" style="width: 50%; background: #388e3c;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="almacen-item">
-                        <div class="almacen-header">
-                            <span class="almacen-name">
-                                <span class="almacen-dot" style="background: #c2185b;"></span>
-                                32 - Arneses
-                            </span>
-                            <span class="almacen-percent">200 / 300 (66.7%)</span>
-                        </div>
-                        <div class="almacen-bar">
-                            <div class="almacen-fill" style="width: 66.7%; background: #c2185b;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="almacen-item">
-                        <div class="almacen-header">
-                            <span class="almacen-name">
-                                <span class="almacen-dot" style="background: #f57c00;"></span>
-                                33 - Gabinetes
-                            </span>
-                            <span class="almacen-percent">500 / 2,000 (25%)</span>
-                        </div>
-                        <div class="almacen-bar">
-                            <div class="almacen-fill" style="width: 25%; background: #f57c00;"></div>
-                        </div>
-                    </div>
+                    <div id="almacenes-dashboard"></div>
+                </div>
+
+                <div class="almacen-card">
+                    <h3>👥 Top Usuarios</h3>
+                    <div id="top-usuarios-dashboard"></div>
                 </div>
 
                 <!-- Botones de acción -->
@@ -1587,6 +1816,78 @@
                 <h1>Mesa de Control</h1>
             </div>
 
+            <!-- Panel de Control de Fases -->
+            <div style="background: white; border-radius: 16px; padding: 20px; margin: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #e3f2fd;">
+                <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #1a237e;">📊 Control de Fases del Inventario</h2>
+                
+                <!-- Selector de Almacén -->
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; color: #757575; margin-bottom: 4px; display: block;">Ver almacén:</label>
+                    <select id="select-almacen-fases" onchange="actualizarPanelPorAlmacen()" style="width: 100%; padding: 10px; border: 2px solid #90caf9; border-radius: 8px; font-size: 14px; color: #1a237e; font-weight: 600;">
+                        <option value="01">01 - Materia Prima + MAQUILA</option>
+                        <option value="30">30 - Transformadores</option>
+                        <option value="31">31 - Placas</option>
+                        <option value="32">32 - Arneses</option>
+                        <option value="33">33 - Gabinetes</option>
+                    </select>
+                </div>
+                
+                <!-- Fase 1: Captura -->
+                <div style="background: #f5f5f5; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 2px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 20px;">📱</span>
+                            <strong style="margin-left: 8px; color: #1a237e;">FASE 1: Captura</strong>
+                        </div>
+                        <span id="status-fase1-alm" style="background: #c8e6c9; color: #2e7d32; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">ACTIVA</span>
+                    </div>
+                    <div style="font-size: 13px; color: #424242; margin-bottom: 12px;">
+                        Capturados: <strong id="count-captura-alm" style="color: #1a237e;">0</strong> registros
+                    </div>
+                    <button id="btn-bloquear-alm" class="btn-secondary" onclick="toggleBloqueoAlmacen()" style="width: 100%; background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; font-size: 13px;">
+                        🔒 Bloquear Captura de Este Almacén
+                    </button>
+                </div>
+                
+                <!-- Fase 2: Duplicados -->
+                <div style="background: #f5f5f5; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 2px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 20px;">⚠️</span>
+                            <strong style="margin-left: 8px; color: #1a237e;">FASE 2: Resolver Duplicados</strong>
+                        </div>
+                        <span id="status-fase2-alm" style="background: #fff9c4; color: #f57f17; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">PENDIENTE</span>
+                    </div>
+                    <div style="font-size: 13px; color: #424242; margin-bottom: 12px;">
+                        Duplicados: <strong id="count-dup-alm" style="color: #1a237e;">0</strong> pendientes
+                    </div>
+                    <button class="btn-secondary" onclick="abrirDuplicadosPorAlmacen()" style="width: 100%; background: #fff3e0; color: #e65100; border: 1px solid #ffb74d; font-size: 13px;">
+                        ⚠️ Resolver Duplicados de Este Almacén
+                    </button>
+                </div>
+                
+                <!-- Fase 3: Auditoría -->
+                <div style="background: #f5f5f5; border-radius: 12px; padding: 16px; border: 2px solid #e0e0e0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div>
+                            <span style="font-size: 20px;">🔍</span>
+                            <strong style="margin-left: 8px; color: #1a237e;">FASE 3: Auditoría de Conteo</strong>
+                        </div>
+                        <span id="status-fase3-alm" style="background: #fff9c4; color: #f57f17; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;">ASIGNADA</span>
+                    </div>
+                    <div style="font-size: 13px; color: #424242; margin-bottom: 12px;">
+                        SAPs asignados: <strong id="count-saps-alm" style="color: #1a237e;">0</strong><br>
+                        <span style="font-size: 12px; color: #757575;">Visibilidad bloqueada hasta resolver duplicados</span>
+                    </div>
+                    <button class="btn-secondary" onclick="abrirAsignarPorAlmacen()" style="width: 100%; background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; font-size: 13px; margin-bottom: 8px;">
+                        🔍 Asignar SAPs a Auditar
+                    </button>
+                    <button id="btn-liberar-alm" class="btn-primary" onclick="liberarAuditoriaPorAlmacen()" style="width: 100%; background: #bdbdbd; color: white; opacity: 0.6; cursor: not-allowed; font-size: 13px; font-weight: 700;" disabled>
+                        🔓 Liberar Visibilidad para Auditores
+                    </button>
+                </div>
+            </div>
+
             <div class="content-white">
                 <div class="menu-grid">
                     <div class="menu-card" onclick="showScreen('registros', 'mesa')">
@@ -1598,20 +1899,29 @@
                         <span class="arrow">›</span>
                     </div>
 
-                    <div class="menu-card" onclick="gestionarDuplicados()">
-                        <div class="icon-box orange">⚠️</div>
-                        <div class="text">
-                            <h3>Duplicados</h3>
-                            <p>Gestionar folios duplicados</p>
-                        </div>
-                        <span class="arrow">›</span>
-                    </div>
-
-                    <div class="menu-card" onclick="verPositivos()">
+                    <div class="menu-card" onclick="abrirPositivos()">
                         <div class="icon-box purple">❓</div>
                         <div class="text">
                             <h3>Positivos</h3>
                             <p>Códigos no encontrados en SAP</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="abrirComparativo()">
+                        <div class="icon-box blue">📊</div>
+                        <div class="text">
+                            <h3>Comparativo</h3>
+                            <p>SAP vs Inventario Físico</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="abrirHistorial('mesa')">
+                        <div class="icon-box gray">📜</div>
+                        <div class="text">
+                            <h3>Historial de Cambios</h3>
+                            <p>Auditoría de modificaciones</p>
                         </div>
                         <span class="arrow">›</span>
                     </div>
@@ -1624,6 +1934,51 @@
                         </div>
                         <span class="arrow">›</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== ASIGNAR SAPS A AUDITAR ========== -->
+        <div id="screen-asignar-saps" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <h1>Asignar SAPs a Auditar</h1>
+            </div>
+
+            <div class="content-white" style="padding: 20px;">
+                <div class="input-group" style="margin-bottom: 16px;">
+                    <label><strong>1. Selecciona el Almacén</strong></label>
+                    <select id="almacen-auditoria" onchange="mostrarAuditoresAlmacen()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                        <option value="">-- Selecciona Almacén --</option>
+                        <option value="01">01 - MP + MAQUILA</option>
+                        <option value="30">30 - Transformadores</option>
+                        <option value="31">31 - Placas</option>
+                        <option value="32">32 - Arneses</option>
+                        <option value="33">33 - Gabinetes</option>
+                    </select>
+                </div>
+
+                <div id="info-auditores-almacen" style="background: #e3f2fd; border-radius: 8px; padding: 12px; margin-bottom: 16px; display: none;">
+                    <h4 style="color: #1565c0; margin-bottom: 8px;">👥 Auditores asignados a este almacén:</h4>
+                    <div id="lista-auditores-almacen" style="font-size: 13px; color: #424242;"></div>
+                </div>
+                
+                <h3 style="margin-bottom: 8px;"><strong>2. Ingresa SAPs a auditar</strong></h3>
+                <p style="font-size: 13px; color: #757575; margin-bottom: 12px;">Un SAP por línea</p>
+                <textarea id="saps-input" rows="10" placeholder="Ej:
+2002398
+2000187
+2001234" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-family: monospace; font-size: 14px;"></textarea>
+                
+                <button class="btn-primary" onclick="asignarSAPsAuditores()" style="margin-top: 16px; width: 100%;">
+                    Asignar a Auditores del Almacén
+                </button>
+
+                <div id="resumen-asignacion" style="margin-top: 24px;"></div>
+                
+                <div style="margin-top: 24px;">
+                    <h3>SAPs Actualmente Asignados</h3>
+                    <div id="lista-saps-asignados" style="margin-top: 12px;"></div>
                 </div>
             </div>
         </div>
@@ -1650,6 +2005,7 @@
 
                 <div id="filter-almacen" class="filter-dropdown">
                     <div class="filter-option selected" onclick="selectAlmacen('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacen('00')">00 - Líneas Producción</div>
                     <div class="filter-option" onclick="selectAlmacen('01')">01 - Materia Prima</div>
                     <div class="filter-option" onclick="selectAlmacen('30')">30 - Transformadores</div>
                     <div class="filter-option" onclick="selectAlmacen('31')">31 - Placas</div>
@@ -1672,6 +2028,196 @@
 
             <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-todos-registros">
                 <div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>
+            </div>
+        </div>
+
+        <!-- ========== DUPLICADOS - RESOLUCIÓN ========== -->
+        <div id="screen-duplicados" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="volverAMesa()">←</button>
+                <h1 id="titulo-duplicados">Duplicados</h1>
+            </div>
+
+            <div style="background: #fff3cd; padding: 16px; border-bottom: 2px solid #ffc107;">
+                <div style="font-size: 13px; color: #856404;">
+                    ⚠️ <strong>Pendientes:</strong> <span id="count-dup-header">0</span> duplicados por resolver
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-duplicados" placeholder="Buscar por folio o SAP..." onkeyup="buscarDuplicados()">
+                    <button onclick="buscarDuplicados()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleFilterDuplicados(this, 'todos')">Todos</div>
+                    <div class="filter-chip" onclick="toggleFilterDuplicados(this, 'almacen')">📦 Almacén</div>
+                    <div class="filter-chip" onclick="toggleFilterDuplicados(this, 'resueltos')">✅ Ver Resueltos</div>
+                </div>
+
+                <div id="filter-almacen-dup" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAlmacenDup('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('01')">01 - Resto MP</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('30')">30 - Transformadores</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('31')">31 - Placas</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('32')">32 - Arneses</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('33')">33 - Gabinetes</div>
+                    <div class="filter-option" onclick="selectAlmacenDup('MAQUILA')">MAQUILA</div>
+                </div>
+            </div>
+
+            <div class="results-count" id="count-duplicados">0 duplicados encontrados</div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-duplicados">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- ========== POSITIVOS - SOLO VISUALIZACIÓN ========== -->
+        <div id="screen-positivos-vista" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="volverAMesa()">←</button>
+                <h1>Positivos (Referencia)</h1>
+            </div>
+
+            <div style="background: #f3e5f5; padding: 16px; border-bottom: 2px solid #9c27b0;">
+                <div style="font-size: 13px; color: #4a148c;">
+                    ℹ️ Solo para referencia. Los positivos se mantienen en el inventario.
+                </div>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-positivos" placeholder="Buscar por SAP..." onkeyup="buscarPositivos()">
+                    <button onclick="buscarPositivos()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleFilterPositivos(this, 'todos')">Todos</div>
+                    <div class="filter-chip" onclick="toggleFilterPositivos(this, 'almacen')">📦 Almacén</div>
+                </div>
+
+                <div id="filter-almacen-pos" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAlmacenPos('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('01')">01 - Resto MP</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('30')">30 - Transformadores</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('31')">31 - Placas</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('32')">32 - Arneses</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('33')">33 - Gabinetes</div>
+                    <div class="filter-option" onclick="selectAlmacenPos('MAQUILA')">MAQUILA</div>
+                </div>
+            </div>
+
+            <div class="results-count" id="count-positivos">0 positivos encontrados</div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-positivos">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">Cargando...</div>
+            </div>
+        </div>
+
+        <!-- ========== COMPARATIVO SAP VS FÍSICO ========== -->
+        <div id="screen-comparativo-vista" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <h1>Comparativo SAP vs Físico</h1>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-comparativo" placeholder="Buscar por SAP..." onkeyup="buscarComparativo()">
+                    <button onclick="buscarComparativo()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleFilterComparativo(this, 'todos')">Top 10</div>
+                    <div class="filter-chip" onclick="toggleFilterComparativo(this, 'almacen')">📦 Almacén</div>
+                    <div class="filter-chip" onclick="toggleFilterComparativo(this, 'ordenar')">📊 Ordenar</div>
+                </div>
+
+                <div id="filter-almacen-comp" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAlmacenComp('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('00')">00 - Líneas Producción</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('01')">01 - Resto MP</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('30')">30 - Transformadores</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('31')">31 - Placas</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('32')">32 - Arneses</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('33')">33 - Gabinetes</div>
+                    <div class="filter-option" onclick="selectAlmacenComp('MAQUILA')">MAQUILA</div>
+                </div>
+
+                <div id="filter-ordenar-comp" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectOrdenComp('costo')">Mayor Dif. en Costo</div>
+                    <div class="filter-option" onclick="selectOrdenComp('cantidad')">Mayor Dif. en Cantidad</div>
+                    <div class="filter-option" onclick="selectOrdenComp('porcentaje')">Mayor Dif. en %</div>
+                </div>
+            </div>
+
+            <div style="padding: 12px 16px; background: #e3f2fd; border-bottom: 1px solid #90caf9;">
+                <div style="font-size: 13px; color: #1565c0;">
+                    <span id="stats-comp-total">0 artículos</span> • 
+                    <span id="stats-comp-dif">0 con diferencias</span>
+                </div>
+            </div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-comparativo">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">Cargando...</div>
+            </div>
+
+            <div style="padding: 16px; background: white; border-top: 2px solid #e0e0e0;">
+                <button class="btn-primary" onclick="descargarComparativoSAP()" style="width: 100%;">
+                    📥 Descargar Comparativo Completo
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== HISTORIAL DE CAMBIOS ========== -->
+        <div id="screen-historial" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="volverDesdeHistorial()">←</button>
+                <h1>Historial de Cambios</h1>
+            </div>
+
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="search-historial" placeholder="Buscar por folio o SAP..." onkeyup="buscarHistorial()">
+                    <button onclick="buscarHistorial()">🔍</button>
+                </div>
+
+                <div class="filter-chips">
+                    <div class="filter-chip active" onclick="toggleFilterHistorial(this, 'todos')">Todos</div>
+                    <div class="filter-chip" onclick="toggleFilterHistorial(this, 'almacen')">📦 Almacén</div>
+                    <div class="filter-chip" onclick="toggleFilterHistorial(this, 'usuario')">👤 Usuario</div>
+                    <div class="filter-chip" onclick="toggleFilterHistorial(this, 'accion')">⚙️ Acción</div>
+                </div>
+
+                <div id="filter-almacen-hist" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAlmacenHist('todos')">Todos los almacenes</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('00')">00 - Líneas Producción</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('01')">01 - Resto MP</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('30')">30 - Transformadores</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('31')">31 - Placas</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('32')">32 - Arneses</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('33')">33 - Gabinetes</div>
+                    <div class="filter-option" onclick="selectAlmacenHist('MAQUILA')">MAQUILA</div>
+                </div>
+
+                <div id="filter-usuario-hist" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectUsuarioHist('todos')">Todos los usuarios</div>
+                    <div id="usuarios-hist-list"></div>
+                </div>
+
+                <div id="filter-accion-hist" class="filter-dropdown">
+                    <div class="filter-option selected" onclick="selectAccionHist('todos')">Todas las acciones</div>
+                    <div class="filter-option" onclick="selectAccionHist('EDITADO')">✏️ Editados</div>
+                    <div class="filter-option" onclick="selectAccionHist('ELIMINADO')">🗑️ Eliminados</div>
+                </div>
+            </div>
+
+            <div class="results-count" id="count-historial">0 cambios encontrados</div>
+
+            <div style="background: #f5f5f5; min-height: calc(100vh - 200px); padding: 8px 0;" id="container-historial">
+                <div style="text-align: center; padding: 40px; color: #9e9e9e;">Cargando...</div>
             </div>
         </div>
 
@@ -1722,6 +2268,13 @@
                     </h3>
                     <div style="background: white; border-radius: 12px; padding: 16px;">
                         <div class="almacen-control-item">
+                            <span>📦 00 - Líneas Producción</span>
+                            <label class="switch">
+                                <input type="checkbox" id="bloqueo-00" onchange="toggleBloqueoAlmacen('00')">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="almacen-control-item">
                             <span>📦 01 - Materia Prima</span>
                             <label class="switch">
                                 <input type="checkbox" id="bloqueo-01" onchange="toggleBloqueoAlmacen('01')">
@@ -1768,6 +2321,17 @@
                         🔄 Segundo Conteo
                     </h3>
                     <div style="background: white; border-radius: 12px; padding: 16px;">
+                        <div class="segundo-conteo-item">
+                            <div>
+                                <strong>📦 00 - Líneas Producción</strong>
+                                <p id="status-2do-00" style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    ❌ No liberado
+                                </p>
+                            </div>
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('00')">
+                                Liberar
+                            </button>
+                        </div>
                         <div class="segundo-conteo-item">
                             <div>
                                 <strong>📦 01 - Materia Prima</strong>
@@ -1828,10 +2392,43 @@
                     <!-- Botones de descarga -->
                     <div style="display: flex; gap: 12px; margin-top: 16px;">
                         <button class="btn-primary" style="flex: 1;" onclick="descargarPrimerConteo()">
-                            📥 Descargar Primer Conteo
+                            📥 Primer Conteo
                         </button>
                         <button class="btn-primary" style="flex: 1;" onclick="descargarSegundoConteo()">
-                            📥 Descargar Segundo Conteo
+                            📥 Segundo Conteo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Reportes Completos -->
+                <div style="padding: 0 16px; margin-top: 32px;">
+                    <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
+                        📊 Reportes de Análisis
+                    </h3>
+                    <div style="background: white; border-radius: 12px; padding: 16px;">
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarDuplicados()">
+                            ⚠️ Reporte de Duplicados
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarPositivos()">
+                            ❓ Reporte de Positivos
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarComparativoSAP()">
+                            📊 Comparativo SAP vs Físico
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarAvancePorAlmacen()">
+                            📦 Avance por Almacén
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarAuditoriasConteo()">
+                            🔍 Auditorías de Conteo
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarDiferenciasSignificativas()">
+                            🚨 Diferencias Significativas
+                        </button>
+                        <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarResumenAuditores()">
+                            👥 Resumen por Auditor
+                        </button>
+                        <button class="btn-primary" style="width: 100%; font-weight: 700;" onclick="descargarDashboardEjecutivo()">
+                            📈 Dashboard Ejecutivo (Todo en Uno)
                         </button>
                     </div>
                     
@@ -1867,6 +2464,15 @@
                         <div class="text">
                             <h3>Positivos</h3>
                             <p>Códigos no encontrados en SAP</p>
+                        </div>
+                        <span class="arrow">›</span>
+                    </div>
+
+                    <div class="menu-card" onclick="abrirHistorial('auditoria')">
+                        <div class="icon-box gray">📜</div>
+                        <div class="text">
+                            <h3>Historial</h3>
+                            <p>Auditoría de cambios</p>
                         </div>
                         <span class="arrow">›</span>
                     </div>
@@ -1978,6 +2584,7 @@
         
         // Control de almacenes y segundo conteo
         let almacenesBloqueados = {
+            '00': false,
             '01': false,
             '30': false,
             '31': false,
@@ -1986,6 +2593,7 @@
         };
         
         let segundoConteoLiberado = {
+            '00': false,
             '01': false,
             '30': false,
             '31': false,
@@ -2012,6 +2620,22 @@
                 renderizarMisRegistros();
             } else if (screenId === 'registros') {
                 renderizarTodosRegistros();
+            } else if (screenId === 'capture') {
+                // Activar cámara automáticamente al entrar a captura
+                setTimeout(() => {
+                    const tabEscanear = document.getElementById('tab-escanear');
+                    if (tabEscanear && tabEscanear.style.display !== 'none') {
+                        startScanning();
+                    }
+                }, 300);
+            } else if (screenId === 'dashboard') {
+                // Actualizar dashboard con datos reales
+                actualizarDashboard();
+            } else if (screenId === 'mesa') {
+                // Actualizar panel de fases por almacén
+                if (typeof actualizarPanelPorAlmacen === 'function') {
+                    actualizarPanelPorAlmacen();
+                }
             }
         }
         
@@ -2025,6 +2649,65 @@
             document.querySelectorAll('.user-option').forEach(o => o.classList.remove('selected'));
             element.classList.add('selected');
             selectedUser = nombre;
+        }
+        
+        // Filtrar usuarios en el buscador
+        function filtrarUsuarios() {
+            const searchValue = document.getElementById('search-user').value.toUpperCase();
+            const userOptions = document.getElementById('user-list').getElementsByClassName('user-option');
+            
+            for (let i = 0; i < userOptions.length; i++) {
+                const nombre = userOptions[i].textContent || userOptions[i].innerText;
+                if (nombre.toUpperCase().indexOf(searchValue) > -1) {
+                    userOptions[i].style.display = '';
+                } else {
+                    userOptions[i].style.display = 'none';
+                }
+            }
+        }
+        
+        // Seleccionar auditor
+        let selectedAuditor = null;
+        function selectAuditor(element, nombre) {
+            document.querySelectorAll('#auditor-list .user-option').forEach(o => o.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedAuditor = nombre;
+        }
+        
+        // Filtrar auditores
+        function filtrarAuditores() {
+            const searchValue = document.getElementById('search-auditor').value.toUpperCase();
+            const auditorOptions = document.getElementById('auditor-list').getElementsByClassName('user-option');
+            
+            for (let i = 0; i < auditorOptions.length; i++) {
+                const nombre = auditorOptions[i].textContent || auditorOptions[i].innerText;
+                if (nombre.toUpperCase().indexOf(searchValue) > -1) {
+                    auditorOptions[i].style.display = '';
+                } else {
+                    auditorOptions[i].style.display = 'none';
+                }
+            }
+        }
+        
+        // Entrar como auditor de conteo
+        function enterAsAuditorConteo() {
+            if (!selectedAuditor) {
+                alert('Por favor selecciona tu nombre');
+                return;
+            }
+            
+            // Verificar si hay ALGUNA auditoría liberada
+            const hayAuditoriaLiberada = Object.values(auditoriasLiberadasPorAlmacen).some(lib => lib === true);
+            
+            if (!hayAuditoriaLiberada) {
+                alert('🔒 Auditoría de Conteo Bloqueada\n\nMesa de Control debe:\n1. Resolver duplicados de los almacenes\n2. Liberar la auditoría\n\nVuelve más tarde.');
+                return;
+            }
+            
+            currentRole = 'auditoria-conteo';
+            selectedUser = selectedAuditor;
+            cargarSAPsAsignados();
+            showScreen('menu-auditoria-conteo');
         }
 
         // Entrar como capturista
@@ -2043,6 +2726,7 @@
             const titles = {
                 'mesa': 'Mesa de Control',
                 'auditoria': 'Auditoría',
+                'auditoria-conteo': 'Auditoría de Conteo',
                 'admin': 'Administrador'
             };
             document.getElementById('modal-title').textContent = titles[role];
@@ -2063,6 +2747,8 @@
                     showScreen('auditoria');
                 } else if (currentRole === 'mesa') {
                     showScreen('mesa');
+                } else if (currentRole === 'auditoria-conteo') {
+                    showScreen('auditoria-conteo-login');
                 } else {
                     showScreen('mesa');
                 }
@@ -2076,12 +2762,66 @@
             document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
             
+            // Ocultar todos los tabs
+            document.getElementById('tab-escanear').style.display = 'none';
+            document.getElementById('tab-qr-sap').style.display = 'none';
+            document.getElementById('tab-manual').style.display = 'none';
+            
             if (tab === 'escanear') {
                 document.getElementById('tab-escanear').style.display = 'block';
-                document.getElementById('tab-manual').style.display = 'none';
-            } else {
-                document.getElementById('tab-escanear').style.display = 'none';
+                setTimeout(() => startScanning(), 300);
+            } else if (tab === 'qr-sap') {
+                document.getElementById('tab-qr-sap').style.display = 'block';
+                setTimeout(() => startScanningTaller(), 300);
+            } else if (tab === 'manual') {
                 document.getElementById('tab-manual').style.display = 'block';
+            }
+        }
+
+        // Iniciar escaneo QR para Taller (Almacén 33)
+        async function startScanningTaller() {
+            const scanButton = document.getElementById('scan-button-taller');
+            const qrReader = document.getElementById('qr-reader-taller');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                
+                stream.getTracks().forEach(track => track.stop());
+                
+                scanButton.style.display = 'none';
+                qrReader.style.display = 'block';
+
+                const html5QrCodeTaller = new Html5Qrcode("qr-reader-taller");
+                
+                await html5QrCodeTaller.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    },
+                    (decodedText) => {
+                        html5QrCodeTaller.stop();
+                        qrReader.style.display = 'none';
+                        scanButton.style.display = 'block';
+                        
+                        // VALIDAR que sea QR de almacén 33
+                        if (!decodedText.includes('CODIGO :') && !decodedText.includes('CODIGO:')) {
+                            alert('⚠️ Este QR no es válido para almacén 33\n\nDebe contener "CODIGO : [número]"\n\nUsa el tab "Escanear QR" para marbetes normales.');
+                            return;
+                        }
+                        
+                        procesarQR(decodedText, 'QR SAP');
+                    },
+                    (errorMessage) => {
+                        // Ignorar errores de escaneo
+                    }
+                );
+            } catch (err) {
+                alert('Error al acceder a la cámara: ' + err.message);
+                scanButton.style.display = 'block';
             }
         }
 
@@ -2149,7 +2889,13 @@
 
         // Procesar QR escaneado
         function procesarQR(texto, metodo = 'QR') {
-            // Formato: F7 Materia Prima 2002398 CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH, MOD.890334027006CS
+            // DETECTAR SI ES QR DE ALMACÉN 33 (formato especial con "CODIGO :")
+            if (texto.includes('CODIGO :') || texto.includes('CODIGO:')) {
+                procesarQRAlmacen33(texto);
+                return;
+            }
+            
+            // Formato normal: F7 Materia Prima 2002398 CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH, MOD.890334027006CS
             const partes = texto.split(' ');
             
             if (partes.length < 3) {
@@ -2246,8 +2992,9 @@
             };
             
             // Mostrar formulario
-            document.getElementById('form-folio').textContent = folio;
-            document.getElementById('form-almacen').textContent = almacen;
+            document.getElementById('form-folio').value = folio;
+            document.getElementById('form-folio').readOnly = true; // Readonly en modo normal
+            document.getElementById('form-almacen-select').value = almacenCod; // Setear select
             document.getElementById('form-sap').textContent = sap + (esPositivo ? ' ⚠️ POSITIVO' : '');
             document.getElementById('form-desc').textContent = descripcionFinal;
             document.getElementById('form-cantidad').value = '';
@@ -2298,6 +3045,18 @@
             const cantidad = parseFloat(document.getElementById('form-cantidad').value);
             const ubicacion = document.getElementById('form-ubicacion').value;
             const nombreContador = document.getElementById('form-contador').value.trim();
+            const almacenSeleccionado = document.getElementById('form-almacen-select').value; // Leer del select
+            
+            // Convertir MAQUILA a 01 (físicamente es área separada pero se suma como almacén 01)
+            const almacenFinal = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
+            
+            // Validar folio si viene vacío en currentScanData (almacén 33)
+            const folioInput = document.getElementById('form-folio').value.trim().toUpperCase();
+            if (!currentScanData.folio && !folioInput) {
+                alert('⚠️ Debes ingresar el folio del marbete');
+                document.getElementById('form-folio').focus();
+                return;
+            }
             
             // Validar que "Quién contó" esté lleno
             if (!nombreContador) {
@@ -2326,8 +3085,8 @@
             }
             
             const item = {
-                folio: currentScanData.folio,
-                almacen: currentScanData.almacenCod,
+                folio: currentScanData.folio || document.getElementById('form-folio').value.trim().toUpperCase(), // Si está vacío, leer del input (almacén 33)
+                almacen: almacenFinal, // Usar almacén convertido (MAQUILA → 01)
                 sap: currentScanData.sap,
                 desc: currentScanData.desc,
                 cantidad: cantidad,
@@ -2339,6 +3098,7 @@
                 esDuplicado: false,
                 continuoDespuesAlerta: false,
                 esPositivo: currentScanData.esPositivo || false,
+                areaMaquila: almacenSeleccionado === '01-MAQUILA', // Marcar si es de maquila
                 fecha: new Date().toISOString()
             };
 
@@ -2408,11 +3168,14 @@
         
         function agregarManual() {
             const folio = document.getElementById('manual-folio').value.toUpperCase().trim();
-            const almacen = document.getElementById('manual-almacen').value;
+            const almacenSeleccionado = document.getElementById('manual-almacen').value;
             const sap = document.getElementById('manual-sap').value.trim();
             const cantidad = parseFloat(document.getElementById('manual-cantidad').value);
             const ubicacion = document.getElementById('manual-ubicacion').value.trim();
             const nombreContador = document.getElementById('manual-contador').value.trim();
+
+            // Convertir MAQUILA a 01
+            const almacen = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
 
             // Validar campos requeridos
             if (!folio || !sap || !almacen) {
@@ -2487,6 +3250,7 @@
                 unidadMedida: unidadMedida,
                 esDuplicado: false,
                 esPositivo: esPositivo,
+                areaMaquila: almacenSeleccionado === '01-MAQUILA',
                 fecha: new Date().toISOString()
             };
             
@@ -2760,7 +3524,7 @@
         function buscarRegistros() {
             const query = document.getElementById('search-registros').value.toLowerCase();
             
-            let registrosFiltrados = registrosGuardados.filter(r => !r.eliminado);
+            let registrosFiltrados = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
             
             // Filtrar por búsqueda
             if (query) {
@@ -3307,7 +4071,7 @@
         
         // ========== RENDERIZAR TODOS LOS REGISTROS (AUDITORÍA/MESA) ==========
         function renderizarTodosRegistros() {
-            const todosRegistros = registrosGuardados.filter(r => !r.eliminado);
+            const todosRegistros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
             const container = document.getElementById('container-todos-registros');
             const count = document.getElementById('count-registros');
             
@@ -3348,14 +4112,14 @@
 
         // ========== DESCARGAS ==========
         function descargarPrimerConteo() {
-            if (registrosGuardados.filter(r => !r.eliminado).length === 0) {
+            if (registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00').length === 0) {
                 alert('⚠️ No hay registros para descargar');
                 return;
             }
             
             try {
                 // Preparar datos para Excel
-                const datos = registrosGuardados.filter(r => !r.eliminado).map(r => ({
+                const datos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00').map(r => ({
                     'Folio': r.folio,
                     'Almacén': r.almacen,
                     'Código SAP': r.sap,
@@ -3407,14 +4171,14 @@
         }
 
         function descargarSegundoConteo() {
-            if (registrosSegundoConteo.filter(r => !r.eliminado).length === 0) {
+            if (registrosSegundoConteo.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00').length === 0) {
                 alert('⚠️ No hay registros de segundo conteo para descargar');
                 return;
             }
             
             try {
                 // Preparar datos para Excel
-                const datos = registrosSegundoConteo.filter(r => !r.eliminado).map(r => ({
+                const datos = registrosSegundoConteo.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00').map(r => ({
                     'Folio': r.folio,
                     'Almacén': r.almacen,
                     'Código SAP': r.sap,
@@ -3453,6 +4217,424 @@
                 console.error('Error al generar Excel:', error);
                 alert('⚠️ Error al generar el archivo. Verifica que XLSX esté cargado.');
             }
+        }
+        
+        // ========== REPORTES NUEVOS ==========
+        
+        // 3. Reporte de Duplicados
+        function descargarDuplicados() {
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Detectar duplicados
+            const duplicados = [];
+            const vistosMap = {};
+            
+            registrosActivos.forEach(r => {
+                const key = `${r.folio}_${r.almacen}_${r.sap}`;
+                if (vistosMap[key]) {
+                    duplicados.push({
+                        'Folio': r.folio,
+                        'Almacén': r.almacen,
+                        'SAP': r.sap,
+                        'Descripción': r.desc,
+                        'Cantidad 1': vistosMap[key].cantidad,
+                        'Usuario 1': vistosMap[key].usuario,
+                        'Fecha 1': new Date(vistosMap[key].fecha).toLocaleString('es-MX'),
+                        'Cantidad 2': r.cantidad,
+                        'Usuario 2': r.usuario,
+                        'Fecha 2': new Date(r.fecha).toLocaleString('es-MX'),
+                        'Diferencia': Math.abs(r.cantidad - vistosMap[key].cantidad)
+                    });
+                } else {
+                    vistosMap[key] = r;
+                }
+            });
+            
+            if (duplicados.length === 0) {
+                alert('✅ No hay duplicados');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(duplicados);
+            ws['!cols'] = [{wch:8},{wch:10},{wch:12},{wch:40},{wch:12},{wch:25},{wch:20},{wch:12},{wch:25},{wch:20},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, ws, "Duplicados");
+            XLSX.writeFile(wb, `Reporte_Duplicados_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 4. Reporte de Positivos
+        function descargarPositivos() {
+            const positivos = registrosGuardados.filter(r => !r.eliminado && r.esPositivo).map(r => ({
+                'SAP': r.sap,
+                'Descripción Capturada': r.desc,
+                'Almacén': r.almacen,
+                'Folio': r.folio,
+                'Cantidad': r.cantidad,
+                'Unidad': r.unidadMedida || 'PZA',
+                'Ubicación': r.ubicacion || '',
+                'Usuario': r.usuario,
+                'Fecha': new Date(r.fecha).toLocaleString('es-MX')
+            }));
+            
+            if (positivos.length === 0) {
+                alert('✅ No hay positivos');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(positivos);
+            ws['!cols'] = [{wch:12},{wch:50},{wch:10},{wch:8},{wch:12},{wch:8},{wch:15},{wch:25},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws, "Positivos");
+            XLSX.writeFile(wb, `Reporte_Positivos_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 5. Reporte de Auditorías de Conteo
+        function descargarAuditoriasConteo() {
+            if (validacionesAuditoria.length === 0) {
+                alert('⚠️ No hay auditorías de conteo registradas');
+                return;
+            }
+            
+            const datos = validacionesAuditoria.map(v => ({
+                'SAP': v.sap,
+                'Descripción': v.desc,
+                'Almacén': v.almacen,
+                'Folio': v.folio,
+                'Cantidad Original': v.cantidadOriginal,
+                'Cantidad Validada': v.cantidadValidada,
+                'Diferencia': v.diferencia,
+                '% Diferencia': v.porcentajeDif + '%',
+                'Estado': v.diferencia === 0 ? 'OK' : 'CON DIFERENCIA',
+                'Auditor': v.auditor,
+                'Observaciones': v.observaciones || '',
+                'Fecha Validación': new Date(v.fecha).toLocaleString('es-MX')
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(datos);
+            ws['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:8},{wch:15},{wch:15},{wch:12},{wch:12},{wch:15},{wch:25},{wch:30},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws, "Auditorías");
+            XLSX.writeFile(wb, `Reporte_Auditorias_Conteo_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 6. Comparativo SAP vs Físico
+        function descargarComparativoSAP() {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Primero carga el Kardex SAP');
+                return;
+            }
+            
+            const comparativo = [];
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Agrupar físico por SAP
+            const fisicoMap = {};
+            registrosActivos.forEach(r => {
+                const key = `${r.sap}_${r.almacen}`;
+                if (!fisicoMap[key]) {
+                    fisicoMap[key] = { cantidad: 0, sap: r.sap, almacen: r.almacen, desc: r.desc };
+                }
+                fisicoMap[key].cantidad += r.cantidad;
+            });
+            
+            // Comparar con Kardex
+            kardexSAP.forEach(k => {
+                const key = `${k.codigo}_${k.almacen}`;
+                const fisico = fisicoMap[key] || { cantidad: 0 };
+                const diferencia = fisico.cantidad - (k.cantidad || 0);
+                const pctDif = k.cantidad > 0 ? ((diferencia / k.cantidad) * 100).toFixed(2) : 0;
+                
+                // Obtener costos
+                const costoUnit = k.costoUnitario || 0;
+                const valorKardex = (k.cantidad || 0) * costoUnit;
+                const valorFisico = fisico.cantidad * costoUnit;
+                const valorDiferencia = diferencia * costoUnit;
+                
+                comparativo.push({
+                    'SAP': k.codigo,
+                    'Descripción': k.descripcion,
+                    'Almacén': k.almacen,
+                    'Unidad': k.unidadMedida || 'PZA',
+                    'Cant. Kardex': k.cantidad || 0,
+                    'Cant. Física': fisico.cantidad,
+                    'Diferencia': diferencia,
+                    '% Diferencia': pctDif + '%',
+                    'Costo Unitario': costoUnit,
+                    'Valor Kardex': valorKardex.toFixed(2),
+                    'Valor Físico': valorFisico.toFixed(2),
+                    'Valor Diferencia': valorDiferencia.toFixed(2),
+                    'Estado': diferencia < 0 ? 'FALTANTE' : diferencia > 0 ? 'SOBRANTE' : 'OK'
+                });
+            });
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(comparativo);
+            ws['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15},{wch:15},{wch:15},{wch:15},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, ws, "Comparativo");
+            XLSX.writeFile(wb, `Comparativo_SAP_vs_Fisico_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 7. Diferencias Significativas
+        function descargarDiferenciasSignificativas() {
+            if (validacionesAuditoria.length === 0) {
+                alert('⚠️ No hay auditorías de conteo registradas');
+                return;
+            }
+            
+            // Filtrar solo diferencias > 5% o > 10 unidades
+            const significativas = validacionesAuditoria.filter(v => 
+                Math.abs(v.diferencia) > 10 || Math.abs(parseFloat(v.porcentajeDif)) > 5
+            ).map(v => {
+                // Buscar costo en Kardex
+                const itemKardex = kardexSAP.find(k => k.codigo === v.sap && k.almacen === v.almacen);
+                const costoUnit = itemKardex ? (itemKardex.costoUnitario || 0) : 0;
+                const valorDif = v.diferencia * costoUnit;
+                
+                return {
+                    'SAP': v.sap,
+                    'Descripción': v.desc,
+                    'Almacén': v.almacen,
+                    'Folio': v.folio,
+                    'Cantidad Capturada': v.cantidadOriginal,
+                    'Cantidad Validada': v.cantidadValidada,
+                    'Diferencia': v.diferencia,
+                    '% Diferencia': v.porcentajeDif + '%',
+                    'Costo Unitario': costoUnit,
+                    'Valor Diferencia': valorDif.toFixed(2),
+                    'Auditor': v.auditor,
+                    'Observaciones': v.observaciones || '',
+                    'Fecha': new Date(v.fecha).toLocaleString('es-MX')
+                };
+            });
+            
+            if (significativas.length === 0) {
+                alert('✅ No hay diferencias significativas (>5% o >10 unidades)');
+                return;
+            }
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(significativas);
+            ws['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:8},{wch:15},{wch:15},{wch:12},{wch:12},{wch:15},{wch:15},{wch:25},{wch:30},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws, "Diferencias");
+            XLSX.writeFile(wb, `Diferencias_Significativas_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 8. Avance por Almacén
+        function descargarAvancePorAlmacen() {
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            const almacenes = {
+                '00': { nombre: '00 - Líneas Producción', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                '01': { nombre: '01 - Resto Materia Prima', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                '30': { nombre: '30 - Transformadores', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                '31': { nombre: '31 - Placas', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                '32': { nombre: '32 - Arneses', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                '33': { nombre: '33 - Gabinetes', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() },
+                'MAQUILA': { nombre: 'MAQUILA', capturados: 0, esperados: 0, positivos: 0, duplicados: 0, usuarios: new Set() }
+            };
+            
+            // Contar capturados
+            registrosActivos.forEach(r => {
+                if (almacenes[r.almacen]) {
+                    almacenes[r.almacen].capturados++;
+                    if (r.esPositivo) almacenes[r.almacen].positivos++;
+                    if (r.esDuplicado) almacenes[r.almacen].duplicados++;
+                    almacenes[r.almacen].usuarios.add(r.usuario);
+                }
+            });
+            
+            // Contar esperados del Kardex
+            if (kardexSAP.length > 0) {
+                kardexSAP.forEach(k => {
+                    if (almacenes[k.almacen]) {
+                        almacenes[k.almacen].esperados++;
+                    }
+                });
+            }
+            
+            const datos = Object.entries(almacenes).map(([cod, a]) => ({
+                'Almacén': a.nombre,
+                'Artículos Capturados': a.capturados,
+                'Artículos Esperados': a.esperados,
+                '% Avance': a.esperados > 0 ? ((a.capturados / a.esperados) * 100).toFixed(1) + '%' : 'N/A',
+                'Positivos': a.positivos,
+                'Duplicados': a.duplicados,
+                'Usuarios Activos': a.usuarios.size
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(datos);
+            ws['!cols'] = [{wch:25},{wch:18},{wch:18},{wch:12},{wch:12},{wch:12},{wch:15}];
+            XLSX.utils.book_append_sheet(wb, ws, "Avance por Almacén");
+            XLSX.writeFile(wb, `Avance_por_Almacen_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 9. Resumen por Auditor
+        function descargarResumenAuditores() {
+            if (sapsAuditoria.length === 0) {
+                alert('⚠️ No hay SAPs asignados a auditores');
+                return;
+            }
+            
+            const resumen = {};
+            
+            sapsAuditoria.forEach(s => {
+                if (!resumen[s.auditor]) {
+                    resumen[s.auditor] = {
+                        auditor: s.auditor,
+                        almacen: s.almacen,
+                        totalAsignados: 0,
+                        validados: 0,
+                        foliosValidados: 0,
+                        foliosConDiferencia: 0
+                    };
+                }
+                resumen[s.auditor].totalAsignados++;
+                if (s.validado) resumen[s.auditor].validados++;
+            });
+            
+            // Contar folios validados
+            validacionesAuditoria.forEach(v => {
+                if (resumen[v.auditor]) {
+                    resumen[v.auditor].foliosValidados++;
+                    if (v.diferencia !== 0) resumen[v.auditor].foliosConDiferencia++;
+                }
+            });
+            
+            const datos = Object.values(resumen).map(r => ({
+                'Auditor': r.auditor,
+                'Almacén': r.almacen,
+                'SAPs Asignados': r.totalAsignados,
+                'SAPs Validados': r.validados,
+                '% Completitud': r.totalAsignados > 0 ? ((r.validados / r.totalAsignados) * 100).toFixed(1) + '%' : '0%',
+                'Folios Validados': r.foliosValidados,
+                'Folios con Diferencia': r.foliosConDiferencia,
+                '% Exactitud': r.foliosValidados > 0 ? (((r.foliosValidados - r.foliosConDiferencia) / r.foliosValidados) * 100).toFixed(1) + '%' : '100%'
+            }));
+            
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(datos);
+            ws['!cols'] = [{wch:35},{wch:25},{wch:15},{wch:15},{wch:15},{wch:15},{wch:18},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, ws, "Resumen Auditores");
+            XLSX.writeFile(wb, `Resumen_Auditores_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // 10. Dashboard Ejecutivo (Todo en Uno)
+        function descargarDashboardEjecutivo() {
+            const wb = XLSX.utils.book_new();
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // PESTAÑA 1: Resumen General
+            const resumenGeneral = [{
+                'Métrica': 'Total Artículos Capturados',
+                'Valor': registrosActivos.length
+            }, {
+                'Métrica': 'Total Esperado (Kardex)',
+                'Valor': kardexSAP.length
+            }, {
+                'Métrica': '% Avance General',
+                'Valor': kardexSAP.length > 0 ? ((registrosActivos.length / kardexSAP.length) * 100).toFixed(1) + '%' : 'N/A'
+            }, {
+                'Métrica': 'Total Positivos',
+                'Valor': registrosActivos.filter(r => r.esPositivo).length
+            }, {
+                'Métrica': 'Total Duplicados',
+                'Valor': registrosActivos.filter(r => r.esDuplicado).length
+            }, {
+                'Métrica': 'Total Auditorías Realizadas',
+                'Valor': validacionesAuditoria.length
+            }, {
+                'Métrica': 'Auditorías con Diferencia',
+                'Valor': validacionesAuditoria.filter(v => v.diferencia !== 0).length
+            }];
+            
+            const ws1 = XLSX.utils.json_to_sheet(resumenGeneral);
+            ws1['!cols'] = [{wch:35},{wch:20}];
+            XLSX.utils.book_append_sheet(wb, ws1, "Resumen General");
+            
+            // PESTAÑA 2: Avance por Almacén (reutilizar lógica)
+            const almacenes = {
+                '00': { nombre: '00 - Líneas', cap: 0, esp: 0 },
+                '01': { nombre: '01 - MP', cap: 0, esp: 0 },
+                '30': { nombre: '30 - Transformadores', cap: 0, esp: 0 },
+                '31': { nombre: '31 - Placas', cap: 0, esp: 0 },
+                '32': { nombre: '32 - Arneses', cap: 0, esp: 0 },
+                '33': { nombre: '33 - Gabinetes', cap: 0, esp: 0 }
+            };
+            
+            registrosActivos.forEach(r => {
+                if (almacenes[r.almacen]) almacenes[r.almacen].cap++;
+            });
+            
+            kardexSAP.forEach(k => {
+                if (almacenes[k.almacen]) almacenes[k.almacen].esp++;
+            });
+            
+            const avanceAlm = Object.values(almacenes).map(a => ({
+                'Almacén': a.nombre,
+                'Capturados': a.cap,
+                'Esperados': a.esp,
+                '% Avance': a.esp > 0 ? ((a.cap / a.esp) * 100).toFixed(1) + '%' : 'N/A'
+            }));
+            
+            const ws2 = XLSX.utils.json_to_sheet(avanceAlm);
+            ws2['!cols'] = [{wch:20},{wch:12},{wch:12},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, ws2, "Avance por Almacén");
+            
+            // PESTAÑA 3: Top 10 Usuarios
+            const usuarioStats = {};
+            registrosActivos.forEach(r => {
+                if (!usuarioStats[r.usuario]) usuarioStats[r.usuario] = 0;
+                usuarioStats[r.usuario]++;
+            });
+            
+            const top10 = Object.entries(usuarioStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(([usuario, cantidad], index) => ({
+                    'Posición': index + 1,
+                    'Usuario': usuario,
+                    'Total Capturado': cantidad,
+                    '% del Total': ((cantidad / registrosActivos.length) * 100).toFixed(1) + '%'
+                }));
+            
+            const ws3 = XLSX.utils.json_to_sheet(top10);
+            ws3['!cols'] = [{wch:10},{wch:35},{wch:15},{wch:12}];
+            XLSX.utils.book_append_sheet(wb, ws3, "Top 10 Usuarios");
+            
+            // PESTAÑA 4: Positivos (resumen)
+            const positivos = registrosActivos.filter(r => r.esPositivo).map(r => ({
+                'SAP': r.sap,
+                'Descripción': r.desc,
+                'Almacén': r.almacen,
+                'Cantidad': r.cantidad
+            }));
+            
+            if (positivos.length > 0) {
+                const ws4 = XLSX.utils.json_to_sheet(positivos);
+                ws4['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:12}];
+                XLSX.utils.book_append_sheet(wb, ws4, "Positivos");
+            }
+            
+            // PESTAÑA 5: Diferencias Auditoría
+            const difSignificativas = validacionesAuditoria.filter(v => 
+                Math.abs(v.diferencia) > 10 || Math.abs(parseFloat(v.porcentajeDif)) > 5
+            ).map(v => ({
+                'SAP': v.sap,
+                'Folio': v.folio,
+                'Original': v.cantidadOriginal,
+                'Validada': v.cantidadValidada,
+                'Diferencia': v.diferencia,
+                '% Dif': v.porcentajeDif + '%'
+            }));
+            
+            if (difSignificativas.length > 0) {
+                const ws5 = XLSX.utils.json_to_sheet(difSignificativas);
+                ws5['!cols'] = [{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:10}];
+                XLSX.utils.book_append_sheet(wb, ws5, "Diferencias Auditoría");
+            }
+            
+            XLSX.writeFile(wb, `Dashboard_Ejecutivo_${new Date().toISOString().split('T')[0]}.xlsx`);
         }
         
         // ========== BORRAR TODOS LOS REGISTROS (SOLO PRUEBAS) ==========
@@ -3517,6 +4699,1306 @@
             } catch (error) {
                 console.error('❌ Error al inicializar Firebase:', error);
             }
+        }
+        
+        // ========== FUNCIÓN ESPECIAL PARA ALMACÉN 33 (QR SAP) ==========
+        function procesarQRAlmacen33(texto) {
+            // Extraer código SAP después de "CODIGO :" o "CODIGO:"
+            const match = texto.match(/CODIGO\s*:\s*(\d+)\.?/i);
+            
+            if (!match) {
+                alert('⚠️ No se pudo extraer el código SAP del QR\n\nFormato esperado: "CODIGO : 123456"');
+                return;
+            }
+            
+            const sap = match[1]; // Código limpio sin punto
+            
+            // FORZAR ALMACÉN 33
+            const almacenCod = '33';
+            
+            // VALIDAR SI ALMACÉN 33 ESTÁ BLOQUEADO
+            if (!esSegundoConteo && almacenesBloqueados[almacenCod]) {
+                alert('⚠️ Almacén 33 (Gabinetes) cerrado\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+            
+            // Buscar descripción y UM
+            let descripcion = 'Sin descripción';
+            let unidadMedida = 'PZA';
+            let esPositivo = false;
+            
+            if (baseDescripciones.length > 0) {
+                const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                if (!encontrado) {
+                    esPositivo = true;
+                    descripcion = '⚠️ MATERIAL NO ENCONTRADO EN SAP';
+                } else {
+                    descripcion = encontrado.descripcion;
+                }
+            }
+            
+            if (kardexSAP.length > 0) {
+                const itemKardex = kardexSAP.find(item => item.codigo === sap);
+                if (itemKardex && itemKardex.unidadMedida) {
+                    unidadMedida = itemKardex.unidadMedida;
+                }
+            }
+            
+            // Mostrar formulario especial para Almacén 33
+            currentScanData = {
+                folio: '', // MANUAL
+                almacen: '33 - Gabinetes',
+                almacenCod: '33',
+                sap: sap,
+                desc: descripcion,
+                metodo: 'QR SAP (Alm 33)',
+                esPositivo: esPositivo,
+                unidadMedida: unidadMedida
+            };
+            
+            mostrarFormularioAlmacen33();
+        }
+        
+        function mostrarFormularioAlmacen33() {
+            // Cambiar a tab de formulario
+            document.getElementById('tab-qr').classList.remove('active');
+            document.getElementById('tab-manual').classList.remove('active');
+            document.getElementById('tab-form').classList.add('active');
+            document.getElementById('tab-scan').style.display = 'none';
+            document.getElementById('tab-manual').style.display = 'none';
+            document.getElementById('tab-form-container').style.display = 'block';
+            
+            // Llenar campos
+            document.getElementById('form-folio').value = ''; // VACÍO para ingreso manual
+            document.getElementById('form-folio').disabled = false; // HABILITADO
+            document.getElementById('form-folio').placeholder = 'Ej: G-001';
+            
+            document.getElementById('form-almacen-display').textContent = currentScanData.almacen;
+            document.getElementById('form-almacen-select').value = currentScanData.almacenCod;
+            document.getElementById('form-almacen-select').disabled = true; // Fijo en 33
+            
+            document.getElementById('form-sap').textContent = currentScanData.sap;
+            document.getElementById('form-desc').textContent = currentScanData.desc;
+            
+            // Color especial si es positivo
+            if (currentScanData.esPositivo) {
+                document.getElementById('form-desc').style.color = '#e65100';
+                document.getElementById('form-desc').style.fontWeight = '700';
+            } else {
+                document.getElementById('form-desc').style.color = '#424242';
+                document.getElementById('form-desc').style.fontWeight = 'normal';
+            }
+            
+            // Limpiar y enfocar
+            document.getElementById('form-cantidad').value = '';
+            document.getElementById('form-ubicacion').value = '';
+            document.getElementById('form-contador').value = selectedUser || '';
+            
+            // Enfocar en FOLIO (campo manual)
+            setTimeout(() => {
+                document.getElementById('form-folio').focus();
+            }, 100);
+            
+            // Detener escáner
+            if (window.html5QrCode && window.html5QrCode.isScanning) {
+                window.html5QrCode.stop();
+            }
+        }
+        
+        // ========== CONTROL DE FASES POR ALMACÉN ==========
+        let almacenSeleccionadoFases = '01';
+        let faseActual = 1;
+        let capturaGeneralBloqueada = false;
+        let auditoriaLiberada = false;
+        let auditoriasLiberadasPorAlmacen = {}; // {almacen: true/false}
+        
+        function actualizarPanelPorAlmacen() {
+            almacenSeleccionadoFases = document.getElementById('select-almacen-fases').value;
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen === almacenSeleccionadoFases);
+            
+            // Detectar duplicados del almacén
+            const duplicadosMap = {};
+            registrosActivos.forEach(r => {
+                const key = `${r.folio}_${r.almacen}_${r.sap}`;
+                if (!duplicadosMap[key]) duplicadosMap[key] = [];
+                duplicadosMap[key].push(r);
+            });
+            
+            let duplicadosPendientes = 0;
+            Object.values(duplicadosMap).forEach(grupo => {
+                if (grupo.length > 1 && !grupo[0].duplicadoResuelto) {
+                    duplicadosPendientes++;
+                }
+            });
+            
+            // SAPs asignados a este almacén
+            const sapsDelAlmacen = sapsAuditoria.filter(s => s.almacen === almacenSeleccionadoFases).length;
+            
+            // Actualizar contadores
+            document.getElementById('count-captura-alm').textContent = registrosActivos.length.toLocaleString();
+            document.getElementById('count-dup-alm').textContent = duplicadosPendientes;
+            document.getElementById('count-saps-alm').textContent = sapsDelAlmacen;
+            
+            // Estado de bloqueo del almacén
+            const btnBloquear = document.getElementById('btn-bloquear-alm');
+            const statusFase1 = document.getElementById('status-fase1-alm');
+            if (almacenesBloqueados[almacenSeleccionadoFases]) {
+                btnBloquear.innerHTML = '🔓 Desbloquear Captura';
+                btnBloquear.style.background = '#ffebee';
+                btnBloquear.style.color = '#c62828';
+                btnBloquear.style.borderColor = '#ef9a9a';
+                statusFase1.textContent = 'BLOQUEADA';
+                statusFase1.style.background = '#ffcdd2';
+                statusFase1.style.color = '#c62828';
+            } else {
+                btnBloquear.innerHTML = '🔒 Bloquear Captura';
+                btnBloquear.style.background = '#e3f2fd';
+                btnBloquear.style.color = '#1565c0';
+                btnBloquear.style.borderColor = '#90caf9';
+                statusFase1.textContent = 'ACTIVA';
+                statusFase1.style.background = '#c8e6c9';
+                statusFase1.style.color = '#2e7d32';
+            }
+            
+            // Estado de duplicados
+            const statusFase2 = document.getElementById('status-fase2-alm');
+            if (duplicadosPendientes === 0) {
+                statusFase2.textContent = 'COMPLETADA';
+                statusFase2.style.background = '#c8e6c9';
+                statusFase2.style.color = '#2e7d32';
+            } else {
+                statusFase2.textContent = `${duplicadosPendientes} PENDIENTES`;
+                statusFase2.style.background = '#fff9c4';
+                statusFase2.style.color = '#f57f17';
+            }
+            
+            // Habilitar botón de liberar si duplicados = 0
+            const btnLiberar = document.getElementById('btn-liberar-alm');
+            const statusFase3 = document.getElementById('status-fase3-alm');
+            if (duplicadosPendientes === 0 && !auditoriasLiberadasPorAlmacen[almacenSeleccionadoFases]) {
+                btnLiberar.disabled = false;
+                btnLiberar.style.opacity = '1';
+                btnLiberar.style.cursor = 'pointer';
+                btnLiberar.style.background = '#1a237e';
+                btnLiberar.style.color = 'white';
+            } else if (auditoriasLiberadasPorAlmacen[almacenSeleccionadoFases]) {
+                btnLiberar.disabled = true;
+                btnLiberar.textContent = '✅ Visibilidad Liberada';
+                btnLiberar.style.background = '#c8e6c9';
+                btnLiberar.style.color = '#2e7d32';
+                btnLiberar.style.cursor = 'default';
+                statusFase3.textContent = 'VISIBLE';
+                statusFase3.style.background = '#c8e6c9';
+                statusFase3.style.color = '#2e7d32';
+            } else {
+                btnLiberar.textContent = '🔓 Liberar Visibilidad para Auditores';
+            }
+        }
+        
+        function toggleBloqueoAlmacen() {
+            const alm = almacenSeleccionadoFases;
+            almacenesBloqueados[alm] = !almacenesBloqueados[alm];
+            
+            if (almacenesBloqueados[alm]) {
+                alert(`✅ Almacén ${alm} BLOQUEADO\n\nNo se permiten más capturas en primer conteo`);
+            } else {
+                alert(`✅ Almacén ${alm} DESBLOQUEADO\n\nSe permite captura nuevamente`);
+            }
+            
+            actualizarPanelPorAlmacen();
+        }
+        
+        function abrirDuplicadosPorAlmacen() {
+            currentAlmacenDup = almacenSeleccionadoFases;
+            showScreen('duplicados');
+            document.getElementById('titulo-duplicados').textContent = `Duplicados - Almacén ${almacenSeleccionadoFases}`;
+            renderizarDuplicadosResolucion();
+        }
+        
+        function abrirAsignarPorAlmacen() {
+            showScreen('asignar-saps');
+            // Pre-seleccionar el almacén en la pantalla de asignar
+            setTimeout(() => {
+                const selectAlm = document.getElementById('almacen-auditoria');
+                if (selectAlm) {
+                    selectAlm.value = almacenSeleccionadoFases;
+                    mostrarAuditoresAlmacen();
+                }
+                mostrarSAPsAsignados(); // Mostrar SAPs ya asignados
+            }, 100);
+        }
+        
+        function liberarAuditoriaPorAlmacen() {
+            const alm = almacenSeleccionadoFases;
+            if (confirm(`🔓 Liberar Visibilidad para Almacén ${alm}\n\nLos auditores de este almacén podrán ver sus SAPs asignados.\n\n¿Continuar?`)) {
+                auditoriasLiberadasPorAlmacen[alm] = true;
+                auditoriaLiberada = true; // Liberar globalmente también
+                alert(`✅ Auditoría del Almacén ${alm} LIBERADA\n\nLos auditores asignados a este almacén ya pueden ver sus SAPs`);
+                actualizarPanelPorAlmacen();
+            }
+        }
+        
+        function volverAMesa() {
+            actualizarPanelPorAlmacen();
+            showScreen('mesa');
+        }
+        
+        // ========== VISTAS CON FILTROS ==========
+        function abrirResolucionDuplicados() {
+            showScreen('duplicados');
+            renderizarDuplicadosResolucion();
+        }
+        
+        function renderizarDuplicadosResolucion() {
+            // FILTRAR SOLO POR ALMACÉN SELECCIONADO
+            const registros = registrosGuardados.filter(r => 
+                !r.eliminado && 
+                !r.modificado && 
+                r.almacen === almacenSeleccionadoFases
+            );
+            const duplicadosMap = {};
+            
+            registros.forEach(r => {
+                const key = `${r.folio}_${r.almacen}_${r.sap}`;
+                if (!duplicadosMap[key]) duplicadosMap[key] = [];
+                duplicadosMap[key].push(r);
+            });
+            
+            let duplicados = [];
+            Object.values(duplicadosMap).forEach(grupo => {
+                if (grupo.length > 1 && !grupo[0].duplicadoResuelto) {
+                    duplicados.push(grupo);
+                }
+            });
+            
+            document.getElementById('count-dup-header').textContent = duplicados.length;
+            document.getElementById('count-duplicados').textContent = `${duplicados.length} duplicados del almacén ${almacenSeleccionadoFases}`;
+            
+            if (duplicados.length === 0) {
+                document.getElementById('container-duplicados').innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 64px; margin-bottom: 16px;">✅</div>
+                        <h3 style="color: #4caf50; margin-bottom: 8px;">¡Sin duplicados en almacén ${almacenSeleccionadoFases}!</h3>
+                        <p style="color: #757575;">Ya puedes liberar la auditoría de este almacén</p>
+                    </div>`;
+                return;
+            }
+            
+            let html = '';
+            duplicados.forEach((grupo, idx) => {
+                const r1 = grupo[0];
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid #ff9800;">
+                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 8px;">⚠️ Folio ${r1.folio} | ${r1.almacen} | SAP ${r1.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-bottom: 12px;">${r1.desc}</div>`;
+                
+                grupo.forEach((r, i) => {
+                    const index = registrosGuardados.indexOf(r);
+                    html += `<label style="display: block; background: #f5f5f5; padding: 12px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 2px solid transparent; transition: all 0.2s;" onmouseover="this.style.borderColor='#2196f3'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='transparent'">
+                        <input type="radio" name="dup-${idx}" value="${index}" style="margin-right: 8px; transform: scale(1.2);" onchange="this.parentElement.style.borderColor='#2196f3'">
+                        <strong>Registro ${i+1}:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'} | ${r.usuario} | ${new Date(r.fecha).toLocaleString('es-MX', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})}
+                    </label>`;
+                });
+                
+                html += `<button class="btn-primary" onclick="resolverDuplicado(${idx})" style="width: 100%; margin-top: 8px; background: #1a237e;">✅ Resolver y Liberar</button></div>`;
+            });
+            
+            document.getElementById('container-duplicados').innerHTML = html;
+        }
+        
+        function resolverDuplicado(grupoIndex) {
+            const radios = document.querySelectorAll(`input[name="dup-${grupoIndex}"]`);
+            let seleccionado = null;
+            radios.forEach(r => { if (r.checked) seleccionado = parseInt(r.value); });
+            
+            if (seleccionado === null) {
+                alert('⚠️ Selecciona cuál es el registro correcto');
+                return;
+            }
+            
+            const correcto = registrosGuardados[seleccionado];
+            
+            if (confirm(`¿Confirmar?\n\nSe mantendrá:\n${correcto.cantidad} ${correcto.unidadMedida || 'PZA'} | ${correcto.usuario}\n\nSe eliminarán los demás registros duplicados.`)) {
+                // Marcar correcto como resuelto
+                correcto.duplicadoResuelto = true;
+                correcto.esDuplicado = false;
+                
+                // Eliminar los demás
+                registrosGuardados.forEach((r, i) => {
+                    if (r.folio === correcto.folio && r.almacen === correcto.almacen && r.sap === correcto.sap && i !== seleccionado && !r.eliminado) {
+                        r.eliminado = true;
+                        r.motivoEliminacion = 'Duplicado resuelto - versión incorrecta';
+                        r.eliminadoPor = currentRole || selectedUser;
+                        r.fechaEliminacion = new Date().toISOString();
+                    }
+                });
+                
+                renderizarDuplicadosResolucion();
+                actualizarPanelPorAlmacen();
+            }
+        }
+        
+        // POSITIVOS - Solo visualización (NO resolución)
+        function abrirResolucionPositivos() {
+            showScreen('positivos-vista');
+            renderizarPositivosVisualizacion();
+        }
+        
+        function renderizarPositivosVisualizacion() {
+            let positivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00' && r.esPositivo);
+            
+            document.getElementById('count-pos-header').textContent = positivos.length;
+            document.getElementById('count-positivos').textContent = `${positivos.length} positivos encontrados`;
+            
+            if (positivos.length === 0) {
+                document.getElementById('container-positivos').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay positivos</div>';
+                return;
+            }
+            
+            let html = '';
+            positivos.forEach(p => {
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid #9c27b0;">
+                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 4px;">❓ SAP ${p.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${p.desc}</div>
+                    <div style="font-size: 12px; color: #424242;">Folio: ${p.folio} | Almacén: ${p.almacen} | Cantidad: ${p.cantidad} ${p.unidadMedida || 'PZA'}</div>
+                    <div style="font-size: 12px; color: #757575; margin-top: 4px;">Usuario: ${p.usuario} | ${new Date(p.fecha).toLocaleString('es-MX')}</div>
+                </div>`;
+            });
+            
+            document.getElementById('container-positivos').innerHTML = html;
+        }
+        
+        // ========== VISTAS CON FILTROS ==========
+        let currentFilterDup = 'todos', currentAlmacenDup = 'todos', currentUsuarioDup = 'todos';
+        let currentFilterPos = 'todos', currentAlmacenPos = 'todos', currentUsuarioPos = 'todos';
+        let currentFilterComp = 'todos', currentAlmacenComp = 'todos', currentOrdenComp = 'costo';
+        let currentFilterHist = 'todos', currentAlmacenHist = 'todos', currentUsuarioHist = 'todos', currentAccionHist = 'todos';
+        let pantallaOrigenHistorial = 'mesa';
+        
+        // DUPLICADOS
+        function abrirDuplicados() {
+            showScreen('duplicados');
+            cargarUsuariosFiltro('dup');
+            renderizarDuplicados();
+        }
+        
+        function toggleFilterDuplicados(el, type) {
+            document.querySelectorAll('#screen-duplicados .filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('#screen-duplicados .filter-dropdown').forEach(d => d.classList.remove('show'));
+            if (type !== 'todos') document.getElementById('filter-' + type + '-dup')?.classList.add('show');
+            currentFilterDup = type;
+            renderizarDuplicados();
+        }
+        
+        function selectAlmacenDup(alm) {
+            currentAlmacenDup = alm;
+            document.querySelectorAll('#filter-almacen-dup .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-almacen-dup').classList.remove('show');
+            renderizarDuplicados();
+        }
+        
+        function selectUsuarioDup(usr) {
+            currentUsuarioDup = usr;
+            document.querySelectorAll('#filter-usuario-dup .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-usuario-dup').classList.remove('show');
+            renderizarDuplicados();
+        }
+        
+        function buscarDuplicados() {
+            renderizarDuplicados();
+        }
+        
+        function renderizarDuplicados() {
+            const query = document.getElementById('search-duplicados').value.toLowerCase();
+            let registros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Detectar duplicados
+            const duplicadosMap = {};
+            registros.forEach(r => {
+                const key = `${r.folio}_${r.almacen}_${r.sap}`;
+                if (!duplicadosMap[key]) duplicadosMap[key] = [];
+                duplicadosMap[key].push(r);
+            });
+            
+            let duplicados = [];
+            Object.values(duplicadosMap).forEach(grupo => {
+                if (grupo.length > 1) {
+                    duplicados.push(...grupo);
+                }
+            });
+            
+            // Filtros
+            if (currentAlmacenDup !== 'todos') duplicados = duplicados.filter(r => r.almacen === currentAlmacenDup);
+            if (currentUsuarioDup !== 'todos') duplicados = duplicados.filter(r => r.usuario === currentUsuarioDup);
+            if (query) duplicados = duplicados.filter(r => r.folio.toLowerCase().includes(query) || r.sap.toLowerCase().includes(query));
+            
+            document.getElementById('count-duplicados').textContent = `${duplicados.length} duplicados encontrados`;
+            
+            if (duplicados.length === 0) {
+                document.getElementById('container-duplicados').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay duplicados</div>';
+                return;
+            }
+            
+            let html = '';
+            const grupos = {};
+            duplicados.forEach(r => {
+                const key = `${r.folio}_${r.almacen}_${r.sap}`;
+                if (!grupos[key]) grupos[key] = [];
+                grupos[key].push(r);
+            });
+            
+            Object.values(grupos).forEach(grupo => {
+                if (grupo.length < 2) return;
+                const r1 = grupo[0];
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid #f57c00;">
+                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 8px;">⚠️ Folio ${r1.folio} | ${r1.almacen} | SAP ${r1.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-bottom: 12px;">${r1.desc}</div>`;
+                
+                grupo.forEach((r, i) => {
+                    html += `<div style="background: #f5f5f5; padding: 8px; border-radius: 6px; margin-bottom: 6px;">
+                        <div style="font-size: 13px;"><strong>Registro ${i+1}:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'}</div>
+                        <div style="font-size: 12px; color: #757575;">Usuario: ${r.usuario} | ${new Date(r.fecha).toLocaleString('es-MX')}</div>
+                    </div>`;
+                });
+                
+                html += `</div>`;
+            });
+            
+            document.getElementById('container-duplicados').innerHTML = html;
+        }
+        
+        // POSITIVOS
+        function abrirPositivos() {
+            showScreen('positivos-vista');
+            cargarUsuariosFiltro('pos');
+            renderizarPositivos();
+        }
+        
+        function toggleFilterPositivos(el, type) {
+            document.querySelectorAll('#screen-positivos-vista .filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('#screen-positivos-vista .filter-dropdown').forEach(d => d.classList.remove('show'));
+            if (type !== 'todos') document.getElementById('filter-' + type + '-pos')?.classList.add('show');
+            currentFilterPos = type;
+            renderizarPositivos();
+        }
+        
+        function selectAlmacenPos(alm) {
+            currentAlmacenPos = alm;
+            document.querySelectorAll('#filter-almacen-pos .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-almacen-pos').classList.remove('show');
+            renderizarPositivos();
+        }
+        
+        function selectUsuarioPos(usr) {
+            currentUsuarioPos = usr;
+            document.querySelectorAll('#filter-usuario-pos .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-usuario-pos').classList.remove('show');
+            renderizarPositivos();
+        }
+        
+        function buscarPositivos() {
+            renderizarPositivos();
+        }
+        
+        function renderizarPositivos() {
+            const query = document.getElementById('search-positivos').value.toLowerCase();
+            let positivos = registrosGuardados.filter(r => !r.eliminado && r.esPositivo);
+            
+            if (currentAlmacenPos !== 'todos') positivos = positivos.filter(r => r.almacen === currentAlmacenPos);
+            if (currentUsuarioPos !== 'todos') positivos = positivos.filter(r => r.usuario === currentUsuarioPos);
+            if (query) positivos = positivos.filter(r => r.sap.toLowerCase().includes(query));
+            
+            document.getElementById('count-positivos').textContent = `${positivos.length} positivos encontrados`;
+            
+            if (positivos.length === 0) {
+                document.getElementById('container-positivos').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay positivos</div>';
+                return;
+            }
+            
+            let html = '';
+            positivos.forEach(p => {
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid #9c27b0;">
+                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 4px;">❓ SAP ${p.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${p.desc}</div>
+                    <div style="font-size: 12px; color: #424242;">Folio: ${p.folio} | Almacén: ${p.almacen} | Cantidad: ${p.cantidad} ${p.unidadMedida || 'PZA'}</div>
+                    <div style="font-size: 12px; color: #757575; margin-top: 4px;">Usuario: ${p.usuario} | ${new Date(p.fecha).toLocaleString('es-MX')}</div>
+                </div>`;
+            });
+            
+            document.getElementById('container-positivos').innerHTML = html;
+        }
+        
+        // COMPARATIVO
+        function abrirComparativo() {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Debes cargar el Kardex SAP primero en Auditoría');
+                return;
+            }
+            showScreen('comparativo-vista');
+            renderizarComparativo();
+        }
+        
+        function toggleFilterComparativo(el, type) {
+            document.querySelectorAll('#screen-comparativo-vista .filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('#screen-comparativo-vista .filter-dropdown').forEach(d => d.classList.remove('show'));
+            if (type !== 'todos') document.getElementById('filter-' + type + '-comp')?.classList.add('show');
+            currentFilterComp = type;
+            renderizarComparativo();
+        }
+        
+        function selectAlmacenComp(alm) {
+            currentAlmacenComp = alm;
+            document.querySelectorAll('#filter-almacen-comp .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-almacen-comp').classList.remove('show');
+            renderizarComparativo();
+        }
+        
+        function selectOrdenComp(orden) {
+            currentOrdenComp = orden;
+            document.querySelectorAll('#filter-ordenar-comp .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-ordenar-comp').classList.remove('show');
+            renderizarComparativo();
+        }
+        
+        function buscarComparativo() {
+            renderizarComparativo();
+        }
+        
+        function renderizarComparativo() {
+            const query = document.getElementById('search-comparativo').value.toLowerCase();
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            const fisicoMap = {};
+            registrosActivos.forEach(r => {
+                const key = `${r.sap}_${r.almacen}`;
+                if (!fisicoMap[key]) fisicoMap[key] = 0;
+                fisicoMap[key] += r.cantidad;
+            });
+            
+            let diferencias = [];
+            kardexSAP.forEach(k => {
+                const key = `${k.codigo}_${k.almacen}`;
+                const fis = fisicoMap[key] || 0;
+                const dif = fis - (k.cantidad || 0);
+                const costoUnit = k.costoUnitario || 0;
+                const valorDif = dif * costoUnit;
+                const pct = k.cantidad > 0 ? ((dif / k.cantidad) * 100).toFixed(1) : 0;
+                
+                if (Math.abs(dif) > 0) {
+                    diferencias.push({
+                        sap: k.codigo,
+                        desc: k.descripcion,
+                        almacen: k.almacen,
+                        kardex: k.cantidad || 0,
+                        fisico: fis,
+                        dif: dif,
+                        costoUnit: costoUnit,
+                        valorDif: valorDif,
+                        pct: parseFloat(pct)
+                    });
+                }
+            });
+            
+            if (currentAlmacenComp !== 'todos') diferencias = diferencias.filter(d => d.almacen === currentAlmacenComp);
+            if (query) diferencias = diferencias.filter(d => d.sap.toLowerCase().includes(query));
+            
+            if (currentOrdenComp === 'costo') diferencias.sort((a,b) => Math.abs(b.valorDif) - Math.abs(a.valorDif));
+            else if (currentOrdenComp === 'cantidad') diferencias.sort((a,b) => Math.abs(b.dif) - Math.abs(a.dif));
+            else diferencias.sort((a,b) => Math.abs(b.pct) - Math.abs(a.pct));
+            
+            const top10 = diferencias.slice(0, 10);
+            
+            document.getElementById('stats-comp-total').textContent = `${kardexSAP.length} artículos`;
+            document.getElementById('stats-comp-dif').textContent = `${diferencias.length} con diferencias`;
+            
+            if (top10.length === 0) {
+                document.getElementById('container-comparativo').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay diferencias</div>';
+                return;
+            }
+            
+            let html = '';
+            top10.forEach((d, i) => {
+                const color = d.dif < 0 ? '#d32f2f' : '#2e7d32';
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid ${color};">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="font-size: 11px; color: #9e9e9e; margin-bottom: 2px;">TOP ${i+1}</div>
+                            <div style="font-weight: 700; color: #1a237e; margin-bottom: 4px;">SAP ${d.sap} | ${d.almacen}</div>
+                            <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${d.desc}</div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                                <div><span style="color: #9e9e9e;">Kardex:</span> <strong>${d.kardex}</strong></div>
+                                <div><span style="color: #9e9e9e;">Físico:</span> <strong>${d.fisico}</strong></div>
+                                <div><span style="color: #9e9e9e;">Dif Cant:</span> <strong style="color: ${color};">${d.dif > 0 ? '+' : ''}${d.dif.toFixed(2)}</strong></div>
+                                <div><span style="color: #9e9e9e;">Dif %:</span> <strong style="color: ${color};">${d.pct > 0 ? '+' : ''}${d.pct}%</strong></div>
+                            </div>
+                        </div>
+                        <div style="text-align: right; margin-left: 16px;">
+                            <div style="font-size: 11px; color: #9e9e9e;">Valor Diferencia</div>
+                            <div style="font-size: 18px; font-weight: 700; color: ${color};">$${Math.abs(d.valorDif).toFixed(2)}</div>
+                            <div style="font-size: 11px; color: #9e9e9e;">${d.dif < 0 ? 'FALTANTE' : 'SOBRANTE'}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            
+            document.getElementById('container-comparativo').innerHTML = html;
+        }
+        
+        // HISTORIAL
+        function abrirHistorial(origen) {
+            pantallaOrigenHistorial = origen;
+            showScreen('historial');
+            cargarUsuariosFiltro('hist');
+            renderizarHistorial();
+        }
+        
+        function volverDesdeHistorial() {
+            showScreen(pantallaOrigenHistorial);
+        }
+        
+        function toggleFilterHistorial(el, type) {
+            document.querySelectorAll('#screen-historial .filter-chip').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.querySelectorAll('#screen-historial .filter-dropdown').forEach(d => d.classList.remove('show'));
+            if (type !== 'todos') document.getElementById('filter-' + type + '-hist')?.classList.add('show');
+            currentFilterHist = type;
+            renderizarHistorial();
+        }
+        
+        function selectAlmacenHist(alm) {
+            currentAlmacenHist = alm;
+            document.querySelectorAll('#filter-almacen-hist .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-almacen-hist').classList.remove('show');
+            renderizarHistorial();
+        }
+        
+        function selectUsuarioHist(usr) {
+            currentUsuarioHist = usr;
+            document.querySelectorAll('#filter-usuario-hist .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-usuario-hist').classList.remove('show');
+            renderizarHistorial();
+        }
+        
+        function selectAccionHist(acc) {
+            currentAccionHist = acc;
+            document.querySelectorAll('#filter-accion-hist .filter-option').forEach(o => o.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('filter-accion-hist').classList.remove('show');
+            renderizarHistorial();
+        }
+        
+        function buscarHistorial() {
+            renderizarHistorial();
+        }
+        
+        function renderizarHistorial() {
+            const query = document.getElementById('search-historial').value.toLowerCase();
+            let cambios = registrosGuardados.filter(r => r.eliminado || r.editado);
+            
+            if (currentAlmacenHist !== 'todos') cambios = cambios.filter(r => r.almacen === currentAlmacenHist);
+            if (currentUsuarioHist !== 'todos') cambios = cambios.filter(r => (r.editadoPor || r.eliminadoPor) === currentUsuarioHist);
+            if (currentAccionHist !== 'todos') {
+                if (currentAccionHist === 'ELIMINADO') cambios = cambios.filter(r => r.eliminado);
+                else cambios = cambios.filter(r => r.editado && !r.eliminado);
+            }
+            if (query) cambios = cambios.filter(r => r.folio.toLowerCase().includes(query) || r.sap.toLowerCase().includes(query));
+            
+            cambios.sort((a,b) => new Date(b.fechaCambio || b.fecha) - new Date(a.fechaCambio || a.fecha));
+            
+            document.getElementById('count-historial').textContent = `${cambios.length} cambios encontrados`;
+            
+            if (cambios.length === 0) {
+                document.getElementById('container-historial').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay cambios</div>';
+                return;
+            }
+            
+            let html = '';
+            cambios.forEach(r => {
+                const accion = r.eliminado ? 'ELIMINADO' : 'EDITADO';
+                const color = r.eliminado ? '#d32f2f' : '#1976d2';
+                const icon = r.eliminado ? '🗑️' : '✏️';
+                const usuario = r.eliminado ? r.eliminadoPor : r.editadoPor;
+                
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid ${color};">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                        <div><span style="background: ${color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">${icon} ${accion}</span></div>
+                        <div style="font-size: 11px; color: #9e9e9e;">${new Date(r.fechaCambio || r.fecha).toLocaleString('es-MX')}</div>
+                    </div>
+                    <div style="font-weight: 700; color: #1a237e;">Folio ${r.folio} | ${r.almacen} | SAP ${r.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-top: 4px;">${r.desc}</div>
+                    <div style="font-size: 12px; color: #424242; margin-top: 8px;">Cantidad: ${r.cantidad} ${r.unidadMedida || 'PZA'}</div>
+                    <div style="font-size: 12px; color: #9e9e9e; margin-top: 4px;">Modificado por: ${usuario || 'N/A'}</div>
+                </div>`;
+            });
+            
+            document.getElementById('container-historial').innerHTML = html;
+        }
+        
+        function cargarUsuariosFiltro(tipo) {
+            const usuarios = [...new Set(registrosGuardados.map(r => r.usuario))].sort();
+            let html = '';
+            usuarios.forEach(u => {
+                html += `<div class="filter-option" onclick="selectUsuario${tipo.charAt(0).toUpperCase() + tipo.slice(1)}('${u}')">${u}</div>`;
+            });
+            document.getElementById('usuarios-' + tipo + '-list').innerHTML = html;
+        }
+        
+        // ========== AUDITORÍA DE CONTEO ==========
+        let sapsAuditoria = []; // SAPs asignados con sus auditores
+        let validacionesAuditoria = []; // Validaciones realizadas
+        let sapActualValidando = null;
+        let folioActualValidando = null;
+        
+        // Mostrar auditores del almacén seleccionado
+        function mostrarAuditoresAlmacen() {
+            const almacen = document.getElementById('almacen-auditoria').value;
+            
+            if (!almacen) {
+                document.getElementById('info-auditores-almacen').style.display = 'none';
+                return;
+            }
+            
+            const auditoresPorAlmacen = {
+                '31': ['ERICK ORLANDO CORTEZ GONZALEZ'],
+                '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
+                '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
+                'MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
+                '00': [] // Por definir
+            };
+            
+            const auditores = auditoresPorAlmacen[almacen] || [];
+            
+            if (auditores.length === 0) {
+                document.getElementById('lista-auditores-almacen').innerHTML = '<em>No hay auditores asignados a este almacén</em>';
+            } else {
+                let html = '<ul style="margin: 8px 0; padding-left: 20px;">';
+                auditores.forEach(a => {
+                    html += `<li style="margin: 4px 0;">${a}</li>`;
+                });
+                html += '</ul>';
+                document.getElementById('lista-auditores-almacen').innerHTML = html;
+            }
+            
+            document.getElementById('info-auditores-almacen').style.display = 'block';
+        }
+        
+        // Asignar SAPs a auditores
+        async function asignarSAPsAuditores() {
+            const almacen = document.getElementById('almacen-auditoria').value;
+            const input = document.getElementById('saps-input').value.trim();
+            
+            if (!almacen) {
+                alert('Selecciona primero el almacén');
+                return;
+            }
+            
+            if (!input) {
+                alert('Ingresa al menos un SAP');
+                return;
+            }
+            
+            const saps = input.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            
+            if (saps.length === 0) {
+                alert('No se encontraron SAPs válidos');
+                return;
+            }
+            
+            // Lista de auditores POR ALMACÉN
+            const auditoresPorAlmacen = {
+                '31': ['ERICK ORLANDO CORTEZ GONZALEZ'],
+                '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
+                '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
+                '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '00': [] // No se usa (líneas producción)
+            };
+            
+            const auditores = auditoresPorAlmacen[almacen];
+            
+            if (!auditores || auditores.length === 0) {
+                alert('No hay auditores asignados a este almacén');
+                return;
+            }
+            
+            // Asignar equitativamente entre auditores del almacén
+            const sapsAsignados = [];
+            saps.forEach((sap, index) => {
+                const auditorIndex = index % auditores.length;
+                const auditor = auditores[auditorIndex];
+                
+                // Buscar descripción del SAP
+                let descripcion = '';
+                if (baseDescripciones.length > 0) {
+                    const item = baseDescripciones.find(b => b.codigo === sap);
+                    descripcion = item ? item.descripcion : 'Sin descripción';
+                } else if (kardexSAP.length > 0) {
+                    const item = kardexSAP.find(k => k.codigo === sap);
+                    descripcion = item ? item.descripcion : 'Sin descripción';
+                }
+                
+                sapsAsignados.push({
+                    sap: sap,
+                    descripcion: descripcion,
+                    almacen: almacen,
+                    auditor: auditor,
+                    validado: false
+                });
+            });
+            
+            // Agregar a lista existente (no reemplazar)
+            sapsAuditoria = [...sapsAuditoria, ...sapsAsignados];
+            
+            // Guardar en Firebase
+            try {
+                if (window.firebaseDB) {
+                    const { collection, doc, setDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await setDoc(doc(db, 'asignaciones', 'saps-auditoria'), {
+                        saps: sapsAuditoria,
+                        fecha: new Date().toISOString()
+                    });
+                    
+                    console.log('✓ SAPs asignados guardados en Firebase');
+                }
+            } catch (error) {
+                console.error('Error al guardar asignaciones:', error);
+            }
+            
+            // Mostrar resumen
+            const conteo = {};
+            auditores.forEach(a => conteo[a] = 0);
+            sapsAsignados.forEach(s => conteo[s.auditor]++);
+            
+            const nombreAlmacen = document.getElementById('almacen-auditoria').options[document.getElementById('almacen-auditoria').selectedIndex].text;
+            
+            let html = '<div style="background: #e8f5e9; border-radius: 8px; padding: 16px; margin-top: 16px;">';
+            html += '<h4 style="color: #2e7d32; margin-bottom: 12px;">✓ Asignación Completada</h4>';
+            html += `<p style="margin-bottom: 8px;"><strong>Almacén:</strong> ${nombreAlmacen}</p>`;
+            html += `<p style="margin-bottom: 12px;"><strong>Total SAPs:</strong> ${sapsAsignados.length}</p>`;
+            html += '<div style="font-size: 13px;">';
+            Object.entries(conteo).forEach(([auditor, cant]) => {
+                if (cant > 0) {
+                    const nombre = auditor.split(' ')[0] + ' ' + (auditor.split(' ')[1] || '');
+                    html += `<div style="margin: 4px 0;">${nombre}: <strong>${cant} SAPs</strong></div>`;
+                }
+            });
+            html += '</div></div>';
+            
+            document.getElementById('resumen-asignacion').innerHTML = html;
+            document.getElementById('saps-input').value = '';
+            
+            mostrarSAPsAsignados();
+        }
+        
+        // Mostrar SAPs asignados
+        function mostrarSAPsAsignados() {
+            if (sapsAuditoria.length === 0) {
+                document.getElementById('lista-saps-asignados').innerHTML = '<p style="color: #9e9e9e;">No hay SAPs asignados</p>';
+                return;
+            }
+            
+            let html = '<div style="max-height: 400px; overflow-y: auto;">';
+            sapsAuditoria.forEach((s, i) => {
+                const nombreAlm = s.almacen === 'MAQUILA' ? 'MAQUILA' : (s.almacen === '00' ? '00 - Líneas' : 
+                                  s.almacen === '01' ? '01 - MP' : 
+                                  s.almacen === '30' ? '30 - Transformadores' : 
+                                  s.almacen === '31' ? '31 - Placas' : 
+                                  s.almacen === '32' ? '32 - Arneses' : 
+                                  s.almacen === '33' ? '33 - Gabinetes' : s.almacen);
+                
+                html += `
+                    <div style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #1a237e;">${s.sap} <span style="font-size: 12px; color: #757575;">| ${nombreAlm}</span></div>
+                                <div style="font-size: 12px; color: #757575; margin-top: 4px;">${s.descripcion}</div>
+                                <div style="font-size: 12px; color: #2196f3; margin-top: 4px;">👤 ${s.auditor}</div>
+                            </div>
+                            <div>
+                                ${s.validado ? '<span style="color: #4caf50;">✓</span>' : '<span style="color: #9e9e9e;">⏳</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('lista-saps-asignados').innerHTML = html;
+        }
+        
+        // Cargar SAPs asignados (al entrar auditor)
+        async function cargarSAPsAsignados() {
+            try {
+                if (window.firebaseDB) {
+                    const { doc, getDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    const docSnap = await getDoc(doc(db, 'asignaciones', 'saps-auditoria'));
+                    
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        sapsAuditoria = data.saps || [];
+                        console.log('✓ SAPs cargados:', sapsAuditoria.length);
+                    }
+                }
+            } catch (error) {
+                console.error('Error al cargar SAPs:', error);
+            }
+            
+            mostrarMisSAPsAsignados();
+        }
+        
+        // Mostrar MIS SAPs asignados (para auditor)
+        function mostrarMisSAPsAsignados() {
+            const misSAPs = sapsAuditoria.filter(s => s.auditor === selectedUser);
+            
+            if (misSAPs.length === 0) {
+                document.getElementById('mis-saps-asignados').innerHTML = '<p style="color: #9e9e9e; text-align: center; padding: 40px;">No tienes SAPs asignados aún</p>';
+                return;
+            }
+            
+            let html = '';
+            misSAPs.forEach(s => {
+                const progreso = calcularProgresoSAP(s.sap);
+                html += `
+                    <div onclick="abrirValidarSAP('${s.sap}')" style="background: white; border: 2px solid ${s.validado ? '#4caf50' : '#e0e0e0'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer;">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 18px; font-weight: 700; color: #1a237e; margin-bottom: 4px;">${s.sap}</div>
+                                <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${s.descripcion}</div>
+                                <div style="font-size: 12px; color: #2196f3;">
+                                    ${progreso.validados} / ${progreso.total} folios validados (${progreso.porcentaje}%)
+                                </div>
+                            </div>
+                            <div>
+                                ${s.validado ? '✅' : progreso.validados > 0 ? '⏳' : '⬜'}
+                            </div>
+                        </div>
+                        ${progreso.total > 0 ? `
+                        <div style="margin-top: 12px; background: #f5f5f5; border-radius: 8px; height: 8px; overflow: hidden;">
+                            <div style="width: ${progreso.porcentaje}%; height: 100%; background: #4caf50; transition: width 0.3s;"></div>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+            
+            document.getElementById('mis-saps-asignados').innerHTML = html;
+        }
+        
+        // Calcular progreso de validación de un SAP
+        function calcularProgresoSAP(sap) {
+            const foliosConSAP = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            const foliosValidados = validacionesAuditoria.filter(v => v.sap === sap);
+            
+            const total = foliosConSAP.length;
+            const validados = foliosValidados.length;
+            const porcentaje = total > 0 ? Math.round((validados / total) * 100) : 0;
+            
+            return { total, validados, porcentaje };
+        }
+        
+        // Abrir validar SAP
+        function abrirValidarSAP(sap) {
+            sapActualValidando = sap;
+            const sapData = sapsAuditoria.find(s => s.sap === sap);
+            
+            document.getElementById('validar-sap-titulo').textContent = `SAP ${sap}`;
+            
+            // Info del SAP
+            let htmlInfo = `
+                <div style="background: #e3f2fd; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 20px; font-weight: 700; color: #1565c0; margin-bottom: 8px;">${sap}</div>
+                    <div style="font-size: 14px; color: #424242;">${sapData ? sapData.descripcion : 'Sin descripción'}</div>
+                </div>
+            `;
+            
+            document.getElementById('info-sap-validar').innerHTML = htmlInfo;
+            
+            // Folios con este SAP
+            const folios = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            
+            if (folios.length === 0) {
+                document.getElementById('folios-sap-validar').innerHTML = '<p style="text-align: center; color: #9e9e9e; padding: 40px;">No hay folios capturados con este SAP</p>';
+            } else {
+                let htmlFolios = '<h3 style="margin-bottom: 12px;">Folios a Validar:</h3>';
+                folios.forEach(f => {
+                    const validado = validacionesAuditoria.find(v => v.folio === f.folio && v.almacen === f.almacen && v.sap === f.sap);
+                    
+                    htmlFolios += `
+                        <div onclick="abrirValidarFolio('${f.folio}', '${f.almacen}', '${f.sap}')" style="background: white; border: 2px solid ${validado ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600;">Folio: ${f.folio} | Almacén: ${f.almacen}</div>
+                                    <div style="font-size: 13px; color: #757575; margin-top: 4px;">Cantidad capturada: ${f.cantidad} ${f.unidadMedida || 'PZA'}</div>
+                                    <div style="font-size: 12px; color: #9e9e9e; margin-top: 4px;">Ubicación: ${f.ubicacion || 'N/A'} | Contó: ${f.nombreContador}</div>
+                                    ${validado ? `<div style="font-size: 12px; color: #4caf50; margin-top: 4px;">✓ Validado: ${validado.cantidadValidada} ${validado.diferencia !== 0 ? `(Dif: ${validado.diferencia > 0 ? '+' : ''}${validado.diferencia})` : ''}</div>` : ''}
+                                </div>
+                                <div style="font-size: 24px;">
+                                    ${validado ? (validado.diferencia === 0 ? '✅' : '⚠️') : '⬜'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('folios-sap-validar').innerHTML = htmlFolios;
+            }
+            
+            showScreen('validar-sap');
+        }
+        
+        // Abrir validar folio específico
+        function abrirValidarFolio(folio, almacen, sap) {
+            folioActualValidando = { folio, almacen, sap };
+            
+            const registro = registrosGuardados.find(r => r.folio === folio && r.almacen === almacen && r.sap === sap && !r.eliminado);
+            const validacionPrevia = validacionesAuditoria.find(v => v.folio === folio && v.almacen === almacen && v.sap === sap);
+            
+            let html = `
+                <div style="background: #f5f5f5; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                    <h4 style="margin-bottom: 12px;">Información Original</h4>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Folio:</strong> ${folio}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Almacén:</strong> ${almacen}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>SAP:</strong> ${sap}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Descripción:</strong> ${registro.desc}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Cantidad Capturada:</strong> ${registro.cantidad} ${registro.unidadMedida || 'PZA'}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Ubicación:</strong> ${registro.ubicacion || 'N/A'}</div>
+                    <div style="font-size: 14px; margin: 8px 0;"><strong>Contó:</strong> ${registro.nombreContador}</div>
+                </div>
+                
+                <h4 style="margin-bottom: 12px;">Validación</h4>
+                <div class="input-group">
+                    <label>Cantidad Física Validada *</label>
+                    <input type="number" id="cantidad-validada" value="${validacionPrevia ? validacionPrevia.cantidadValidada : registro.cantidad}" step="0.01" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
+                </div>
+                
+                <div class="input-group" style="margin-top: 16px;">
+                    <label>Observaciones (Opcional)</label>
+                    <textarea id="observaciones-validacion" rows="3" placeholder="Ej: Faltan 5 piezas en rack..." style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px;">${validacionPrevia ? validacionPrevia.observaciones : ''}</textarea>
+                </div>
+                
+                <button class="btn-primary" onclick="guardarValidacion()" style="margin-top: 24px; width: 100%;">
+                    ${validacionPrevia ? 'Actualizar Validación' : 'Guardar Validación'}
+                </button>
+            `;
+            
+            document.getElementById('form-validacion-folio').innerHTML = html;
+            showScreen('validar-folio');
+        }
+        
+        // Guardar validación
+        async function guardarValidacion() {
+            const cantidadValidada = parseFloat(document.getElementById('cantidad-validada').value);
+            const observaciones = document.getElementById('observaciones-validacion').value.trim();
+            
+            if (isNaN(cantidadValidada) || cantidadValidada < 0) {
+                alert('Ingresa una cantidad válida');
+                return;
+            }
+            
+            const { folio, almacen, sap } = folioActualValidando;
+            const registro = registrosGuardados.find(r => r.folio === folio && r.almacen === almacen && r.sap === sap && !r.eliminado);
+            
+            const diferencia = cantidadValidada - registro.cantidad;
+            const porcentajeDif = registro.cantidad > 0 ? ((diferencia / registro.cantidad) * 100).toFixed(1) : 0;
+            
+            const validacion = {
+                folio,
+                almacen,
+                sap,
+                desc: registro.desc,
+                cantidadOriginal: registro.cantidad,
+                cantidadValidada,
+                diferencia,
+                porcentajeDif,
+                observaciones,
+                auditor: selectedUser,
+                fecha: new Date().toISOString()
+            };
+            
+            // Actualizar o agregar
+            const index = validacionesAuditoria.findIndex(v => v.folio === folio && v.almacen === almacen && v.sap === sap);
+            if (index >= 0) {
+                validacionesAuditoria[index] = validacion;
+            } else {
+                validacionesAuditoria.push(validacion);
+            }
+            
+            // Guardar en Firebase
+            try {
+                if (window.firebaseDB) {
+                    const { collection, addDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await addDoc(collection(db, 'validaciones-auditoria'), validacion);
+                    console.log('✓ Validación guardada en Firebase');
+                }
+            } catch (error) {
+                console.error('Error al guardar validación:', error);
+            }
+            
+            // Marcar SAP como validado si todos sus folios están validados
+            const folios = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            const validados = validacionesAuditoria.filter(v => v.sap === sap);
+            
+            if (folios.length === validados.length) {
+                const sapIndex = sapsAuditoria.findIndex(s => s.sap === sap);
+                if (sapIndex >= 0) {
+                    sapsAuditoria[sapIndex].validado = true;
+                }
+            }
+            
+            alert(diferencia === 0 ? '✅ Validación correcta - sin diferencias' : `⚠️ Validación guardada - Diferencia: ${diferencia > 0 ? '+' : ''}${diferencia}`);
+            
+            abrirValidarSAP(sap);
+        }
+        
+        // Volver a validar SAP
+        function volverValidarSAP() {
+            if (sapActualValidando) {
+                abrirValidarSAP(sapActualValidando);
+            }
+        }
+        
+        // ========== DASHBOARD DINÁMICO ==========
+        function actualizarDashboard() {
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Total artículos capturados
+            const totalCapturado = registrosActivos.length;
+            
+            // Total esperado (del Kardex si existe)
+            let totalEsperado = kardexSAP.length > 0 ? kardexSAP.length : 10000;
+            
+            // Porcentaje
+            const porcentaje = totalEsperado > 0 ? ((totalCapturado / totalEsperado) * 100).toFixed(1) : 0;
+            
+            // Positivos
+            const totalPositivos = registrosActivos.filter(r => r.esPositivo).length;
+            
+            // Actualizar elementos principales
+            document.getElementById('dash-total').textContent = totalCapturado.toLocaleString();
+            document.getElementById('dash-esperado').textContent = totalEsperado.toLocaleString();
+            document.getElementById('dash-progress-bar').style.width = porcentaje + '%';
+            document.getElementById('dash-porcentaje').textContent = porcentaje + '% completado';
+            document.getElementById('dash-positivos').textContent = totalPositivos;
+            
+            // Calcular velocidad (escaneos/hora aproximado - últimos registros)
+            const ahora = new Date();
+            const hace1Hora = new Date(ahora - 60 * 60 * 1000);
+            const ultimaHora = registrosActivos.filter(r => new Date(r.fecha) > hace1Hora).length;
+            document.getElementById('dash-velocidad').textContent = '~' + ultimaHora;
+            
+            // Avance por almacén
+            const almacenes = {
+                '00': { nombre: '00 - Líneas Producción', color: '#9c27b0', total: 0, esperado: 0 },
+                '01': { nombre: '01 - Materia Prima', color: '#fbc02d', total: 0, esperado: 0 },
+                '30': { nombre: '30 - Transformadores', color: '#1976d2', total: 0, esperado: 0 },
+                '31': { nombre: '31 - Placas', color: '#388e3c', total: 0, esperado: 0 },
+                '32': { nombre: '32 - Arneses', color: '#c2185b', total: 0, esperado: 0 },
+                '33': { nombre: '33 - Gabinetes', color: '#f57c00', total: 0, esperado: 0 }
+            };
+            
+            // Contar capturados por almacén
+            registrosActivos.forEach(r => {
+                if (almacenes[r.almacen]) {
+                    almacenes[r.almacen].total++;
+                }
+            });
+            
+            // Contar esperados por almacén (del Kardex)
+            if (kardexSAP.length > 0) {
+                kardexSAP.forEach(k => {
+                    if (almacenes[k.almacen]) {
+                        almacenes[k.almacen].esperado++;
+                    }
+                });
+            } else {
+                // Si no hay Kardex, distribuir proporcionalmente
+                almacenes['01'].esperado = 3800;
+                almacenes['30'].esperado = 300;
+                almacenes['31'].esperado = 200;
+                almacenes['32'].esperado = 300;
+                almacenes['33'].esperado = 2000;
+                almacenes['00'].esperado = 100;
+            }
+            
+            // Renderizar almacenes
+            let htmlAlmacenes = '';
+            Object.keys(almacenes).forEach(codigo => {
+                const alm = almacenes[codigo];
+                if (alm.esperado === 0 && alm.total === 0) return; // Skip vacíos
+                
+                const pct = alm.esperado > 0 ? ((alm.total / alm.esperado) * 100).toFixed(1) : 0;
+                
+                htmlAlmacenes += `
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span class="almacen-dot" style="background: ${alm.color};"></span>
+                                ${alm.nombre}
+                            </span>
+                            <span class="almacen-percent">${alm.total} / ${alm.esperado} (${pct}%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: ${Math.min(pct, 100)}%; background: ${alm.color};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('almacenes-dashboard').innerHTML = htmlAlmacenes;
+            
+            // Top usuarios
+            const usuarioStats = {};
+            registrosActivos.forEach(r => {
+                if (!usuarioStats[r.usuario]) {
+                    usuarioStats[r.usuario] = 0;
+                }
+                usuarioStats[r.usuario]++;
+            });
+            
+            const topUsuarios = Object.entries(usuarioStats)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            let htmlUsuarios = '';
+            topUsuarios.forEach(([usuario, cantidad], index) => {
+                const pctTotal = totalCapturado > 0 ? ((cantidad / totalCapturado) * 100).toFixed(1) : 0;
+                const medalla = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤';
+                
+                htmlUsuarios += `
+                    <div class="almacen-item">
+                        <div class="almacen-header">
+                            <span class="almacen-name">
+                                <span style="margin-right: 8px;">${medalla}</span>
+                                ${usuario}
+                            </span>
+                            <span class="almacen-percent">${cantidad} (${pctTotal}%)</span>
+                        </div>
+                        <div class="almacen-bar">
+                            <div class="almacen-fill" style="width: ${pctTotal}%; background: #1976d2;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('top-usuarios-dashboard').innerHTML = htmlUsuarios || '<p style="text-align: center; color: #9e9e9e; padding: 20px;">No hay datos aún</p>';
         }
         
         // Inicializar cuando se carga la página
