@@ -1217,8 +1217,10 @@
                         <p>Reportes y avance</p>
                     </div>
 
-                    <div class="user-card" style="cursor: default; pointer-events: none;">
+                    <div class="user-card" onclick="showScreen('buscador-sap')">
                         <div class="icon">📦</div>
+                        <h3>Buscador SAP</h3>
+                        <p>Consulta vs Kardex</p>
                     </div>
                 </div>
             </div>
@@ -1806,6 +1808,26 @@
                         ❓ Ver Códigos Positivos
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- ========== BUSCADOR SAP ========== -->
+        <div id="screen-buscador-sap" class="screen">
+            <div class="header-inner">
+                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <h1>🔍 Buscador SAP</h1>
+            </div>
+
+            <div style="background: white; padding: 20px;">
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <label style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 8px;">Buscar SAP:</label>
+                    <input type="text" id="input-buscar-sap" placeholder="Ej: 2002398" style="width: 100%; padding: 14px; border: 2px solid #90caf9; border-radius: 8px; font-size: 16px;" onkeyup="if(event.key==='Enter') buscarSAP()">
+                    <button class="btn-primary" onclick="buscarSAP()" style="margin-top: 12px; width: 100%;">
+                        🔍 Buscar
+                    </button>
+                </div>
+
+                <div id="resultado-buscador-sap"></div>
             </div>
         </div>
 
@@ -2477,11 +2499,11 @@
                         <span class="arrow">›</span>
                     </div>
 
-                    <div class="menu-card" onclick="alert('Exportar reportes')">
-                        <div class="icon-box green">📥</div>
+                    <div class="menu-card" onclick="showScreen('buscador-sap')">
+                        <div class="icon-box green">🔍</div>
                         <div class="text">
-                            <h3>Exportar</h3>
-                            <p>Generar reportes en Excel</p>
+                            <h3>Buscador SAP</h3>
+                            <p>Consulta y comparativo vs Kardex</p>
                         </div>
                         <span class="arrow">›</span>
                     </div>
@@ -3647,15 +3669,36 @@
             if (registroEnEdicion !== null) {
                 const registroViejo = registrosGuardados[registroEnEdicion];
                 
-                // Crear NUEVA versión del registro
+                // MARCAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP COMO EDITADO
+                registrosGuardados.forEach((r, i) => {
+                    if (r.folio === registroViejo.folio && 
+                        r.almacen === registroViejo.almacen && 
+                        r.sap === registroViejo.sap && 
+                        !r.eliminado && 
+                        !r.modificado) {
+                        
+                        r.modificado = true;
+                        r.fechaModificacion = new Date().toISOString();
+                        
+                        // Enviar a Google Sheets como EDITADO
+                        enviarAGoogleSheets({
+                            ...r,
+                            eliminado: false,
+                            modificado: true
+                        });
+                    }
+                });
+                
+                // Crear NUEVA versión con el MISMO FOLIO
                 const registroNuevo = {
                     ...registroViejo,
+                    folio: registroViejo.folio, // ← MISMO FOLIO
                     cantidad: parseFloat(cantidad),
                     ubicacion: ubicacion,
                     fecha: new Date().toISOString(),
-                    editadoDe: registroViejo.folio, // Referencia al original
                     eliminado: false,
-                    modificado: false // El NUEVO registro es ACTIVO
+                    modificado: false, // El NUEVO es ACTIVO
+                    editadoDe: registroViejo.fecha // Referencia a la versión anterior por fecha
                 };
                 
                 // Agregar nuevo registro a Firebase y Sheets
@@ -3678,21 +3721,6 @@
                     console.error('Error al guardar nueva versión:', error);
                     alert('⚠️ Error al guardar. Verifica tu conexión.');
                     return;
-                }
-                
-                // Marcar el original como EDITADO localmente
-                registroViejo.modificado = true;
-                registroViejo.fechaModificacion = new Date().toISOString();
-                
-                // Enviar actualización a Google Sheets: original pasa a EDITADO
-                try {
-                    await enviarAGoogleSheets({
-                        ...registroViejo,
-                        eliminado: false,
-                        modificado: true
-                    });
-                } catch (error) {
-                    console.error('Error al actualizar Sheets:', error);
                 }
 
                 // CONFIRMACIÓN VISUAL
@@ -4065,55 +4093,129 @@
 
         // ========== RENDERIZAR MIS REGISTROS ==========
         function renderizarMisRegistros() {
-            const misRegistros = registrosGuardados.filter(r => !r.eliminado && r.usuario === selectedUser);
+            // MOSTRAR TODOS: activos, editados Y eliminados
+            const misRegistros = registrosGuardados.filter(r => r.usuario === selectedUser);
             const container = document.getElementById('container-mis-registros');
             const count = document.getElementById('count-mis-registros');
             
             if (!container) return;
             
-            count.textContent = `${misRegistros.length} registros encontrados`;
+            // Contar solo los ACTIVOS para el contador
+            const activos = misRegistros.filter(r => !r.eliminado && !r.modificado);
+            count.textContent = `${activos.length} registros activos • ${misRegistros.length} total`;
             
             if (misRegistros.length === 0) {
                 container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>';
                 return;
             }
             
-            container.innerHTML = misRegistros.map((r, index) => `
-                <div class="registro-card">
+            // Agrupar por folio para mostrar solo el más reciente de cada uno
+            const registrosPorFolio = {};
+            misRegistros.forEach(r => {
+                const key = `${r.folio}-${r.almacen}-${r.sap}`;
+                if (!registrosPorFolio[key] || new Date(r.fecha) > new Date(registrosPorFolio[key].fecha)) {
+                    registrosPorFolio[key] = r;
+                }
+            });
+            
+            const registrosFinales = Object.values(registrosPorFolio);
+            
+            container.innerHTML = registrosFinales.map((r, index) => {
+                let estadoVisual = '';
+                let estiloCard = '';
+                let botonesAccion = '';
+                
+                if (r.eliminado) {
+                    estadoVisual = '<span class="registro-badge" style="background: #d32f2f; color: white;">❌ ELIMINADO</span>';
+                    estiloCard = 'opacity: 0.6; border-left: 4px solid #d32f2f;';
+                    botonesAccion = '<div class="registro-actions"><span style="font-size: 11px; color: #d32f2f;">Eliminado</span></div>';
+                } else if (r.modificado) {
+                    estadoVisual = '<span class="registro-badge" style="background: #ff9800; color: white;">✏️ EDITADO</span>';
+                    estiloCard = 'opacity: 0.6; border-left: 4px solid #ff9800;';
+                    botonesAccion = '<div class="registro-actions"><span style="font-size: 11px; color: #ff9800;">Versión anterior</span></div>';
+                } else {
+                    estadoVisual = r.esDuplicado ? '<span class="registro-badge duplicado">⚠️ DUPLICADO</span>' : '';
+                    botonesAccion = `<div class="registro-actions">
+                        <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
+                        <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
+                    </div>`;
+                }
+                
+                return `
+                <div class="registro-card" style="${estiloCard}">
                     <div class="registro-header">
                         <span class="registro-folio">${r.folio}</span>
                         <span class="registro-badge almacen">📦 ${r.almacen}</span>
+                        ${estadoVisual}
                     </div>
                     <p class="registro-sap">${r.sap}</p>
                     <p class="registro-desc">${r.desc}</p>
                     <div class="registro-meta">
                         <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
                         <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
-                        <div class="registro-actions">
-                            <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})">✏️</button>
-                            <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
-                        </div>
+                        ${botonesAccion}
                     </div>
                     <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">
                         ${r.metodo === 'QR' ? '📱' : '✍️'} ${r.metodo} • ${r.nombreContador || 'N/A'} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
                     </div>
-                    ${r.esDuplicado ? '<div class="registro-nota"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
                 </div>
-            `).join('');
+            `}).join('');
         }
         
         // ========== RENDERIZAR TODOS LOS REGISTROS (AUDITORÍA/MESA) ==========
         function renderizarTodosRegistros() {
-            const todosRegistros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            console.log('🔍 Renderizando Todos los Registros...');
+            console.log('📊 Total en sistema:', registrosGuardados.length);
+            
             const container = document.getElementById('container-todos-registros');
             const count = document.getElementById('count-registros');
             
-            if (!container) return;
+            if (!container) {
+                console.error('❌ Container no encontrado');
+                return;
+            }
             
-            count.textContent = `${todosRegistros.length} registros encontrados`;
+            // Si no hay datos aún, mostrar mensaje de carga
+            if (registrosGuardados.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #9e9e9e;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+                        <div style="font-size: 16px; color: #424242; margin-bottom: 8px;">Cargando registros...</div>
+                        <div style="font-size: 13px;">Si no aparecen datos en 5 segundos, recarga la página.</div>
+                    </div>
+                `;
+                count.textContent = '0 registros';
+                
+                // Reintentar después de 2 segundos
+                setTimeout(() => {
+                    if (document.getElementById('screen-registros').classList.contains('active')) {
+                        renderizarTodosRegistros();
+                    }
+                }, 2000);
+                return;
+            }
+            
+            // Filtrar registros ACTIVOS (no eliminados ni modificados)
+            const todosRegistros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            console.log('✅ Registros activos:', todosRegistros.length);
+            console.log('🗑️ Eliminados:', registrosGuardados.filter(r => r.eliminado).length);
+            console.log('✏️ Modificados:', registrosGuardados.filter(r => r.modificado).length);
+            
+            count.textContent = `${todosRegistros.length} registros activos`;
             
             if (todosRegistros.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay registros aún</div>';
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #9e9e9e;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
+                        <div style="font-size: 16px; color: #424242; margin-bottom: 8px;">No hay registros activos</div>
+                        <div style="font-size: 13px;">Total en sistema: ${registrosGuardados.length}</div>
+                        <div style="font-size: 13px; color: #757575; margin-top: 8px;">
+                            (Eliminados: ${registrosGuardados.filter(r => r.eliminado).length} | 
+                            Editados: ${registrosGuardados.filter(r => r.modificado).length})
+                        </div>
+                    </div>
+                `;
                 return;
             }
             
@@ -5473,41 +5575,91 @@
         
         function renderizarHistorial() {
             const query = document.getElementById('search-historial').value.toLowerCase();
-            let cambios = registrosGuardados.filter(r => r.eliminado || r.editado);
+            // Filtrar por modificados O eliminados
+            let cambios = registrosGuardados.filter(r => r.eliminado || r.modificado);
             
             if (currentAlmacenHist !== 'todos') cambios = cambios.filter(r => r.almacen === currentAlmacenHist);
-            if (currentUsuarioHist !== 'todos') cambios = cambios.filter(r => (r.editadoPor || r.eliminadoPor) === currentUsuarioHist);
+            if (currentUsuarioHist !== 'todos') cambios = cambios.filter(r => (r.eliminadoPor || r.usuario) === currentUsuarioHist);
             if (currentAccionHist !== 'todos') {
                 if (currentAccionHist === 'ELIMINADO') cambios = cambios.filter(r => r.eliminado);
-                else cambios = cambios.filter(r => r.editado && !r.eliminado);
+                else cambios = cambios.filter(r => r.modificado && !r.eliminado);
             }
             if (query) cambios = cambios.filter(r => r.folio.toLowerCase().includes(query) || r.sap.toLowerCase().includes(query));
             
-            cambios.sort((a,b) => new Date(b.fechaCambio || b.fecha) - new Date(a.fechaCambio || a.fecha));
+            cambios.sort((a,b) => new Date(b.fechaModificacion || b.fechaEliminacion || b.fecha) - new Date(a.fechaModificacion || a.fechaEliminacion || a.fecha));
+            
+            console.log('Total cambios:', cambios.length);
+            console.log('Cambios:', cambios);
             
             document.getElementById('count-historial').textContent = `${cambios.length} cambios encontrados`;
             
             if (cambios.length === 0) {
-                document.getElementById('container-historial').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay cambios</div>';
+                document.getElementById('container-historial').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay cambios registrados.<br><br>Se mostrarán aquí los registros editados y eliminados.</div>';
                 return;
             }
             
             let html = '';
             cambios.forEach(r => {
                 const accion = r.eliminado ? 'ELIMINADO' : 'EDITADO';
-                const color = r.eliminado ? '#d32f2f' : '#1976d2';
+                const color = r.eliminado ? '#d32f2f' : '#ff9800';
                 const icon = r.eliminado ? '🗑️' : '✏️';
-                const usuario = r.eliminado ? r.eliminadoPor : r.editadoPor;
+                const usuario = r.eliminado ? r.eliminadoPor : r.usuario;
+                const fecha = r.eliminado ? r.fechaEliminacion : r.fechaModificacion;
+                
+                // Buscar la versión NUEVA (ACTIVA) si está editado
+                let versionNueva = null;
+                if (r.modificado && !r.eliminado) {
+                    versionNueva = registrosGuardados.find(reg => 
+                        reg.folio === r.folio && 
+                        reg.almacen === r.almacen && 
+                        reg.sap === r.sap && 
+                        !reg.eliminado && 
+                        !reg.modificado &&
+                        new Date(reg.fecha) > new Date(r.fecha)
+                    );
+                }
                 
                 html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid ${color};">
                     <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
                         <div><span style="background: ${color}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">${icon} ${accion}</span></div>
-                        <div style="font-size: 11px; color: #9e9e9e;">${new Date(r.fechaCambio || r.fecha).toLocaleString('es-MX')}</div>
+                        <div style="font-size: 11px; color: #9e9e9e;">${new Date(fecha || r.fecha).toLocaleString('es-MX')}</div>
                     </div>
-                    <div style="font-weight: 700; color: #1a237e;">Folio ${r.folio} | ${r.almacen} | SAP ${r.sap}</div>
-                    <div style="font-size: 13px; color: #757575; margin-top: 4px;">${r.desc}</div>
-                    <div style="font-size: 12px; color: #424242; margin-top: 8px;">Cantidad: ${r.cantidad} ${r.unidadMedida || 'PZA'}</div>
-                    <div style="font-size: 12px; color: #9e9e9e; margin-top: 4px;">Modificado por: ${usuario || 'N/A'}</div>
+                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 8px;">Folio ${r.folio} | Almacén ${r.almacen} | SAP ${r.sap}</div>
+                    <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${r.desc}</div>`;
+                
+                if (versionNueva) {
+                    // Mostrar ANTES y DESPUÉS
+                    const diferencia = versionNueva.cantidad - r.cantidad;
+                    const signo = diferencia > 0 ? '+' : '';
+                    html += `
+                    <div style="background: #f5f5f5; border-radius: 8px; padding: 12px; margin-top: 8px;">
+                        <div style="font-size: 12px; color: #424242; margin-bottom: 4px;">
+                            <strong>ANTES:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'}
+                        </div>
+                        <div style="font-size: 12px; color: #424242; margin-bottom: 4px;">
+                            <strong>DESPUÉS:</strong> ${versionNueva.cantidad} ${versionNueva.unidadMedida || 'PZA'}
+                        </div>
+                        <div style="font-size: 12px; color: ${diferencia >= 0 ? '#388e3c' : '#d32f2f'}; font-weight: 700;">
+                            <strong>CAMBIO:</strong> ${signo}${diferencia} ${r.unidadMedida || 'PZA'}
+                        </div>
+                    </div>`;
+                } else if (r.eliminado) {
+                    // Mostrar info del eliminado
+                    html += `
+                    <div style="background: #ffebee; border-radius: 8px; padding: 12px; margin-top: 8px;">
+                        <div style="font-size: 12px; color: #424242; margin-bottom: 4px;">
+                            <strong>Cantidad:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'}
+                        </div>
+                        <div style="font-size: 12px; color: #757575;">
+                            <strong>Motivo:</strong> ${r.motivoEliminacion || 'No especificado'}
+                        </div>
+                    </div>`;
+                } else {
+                    // Solo mostrar cantidad si no se encontró la nueva versión
+                    html += `<div style="font-size: 12px; color: #424242; margin-top: 8px;">Cantidad: ${r.cantidad} ${r.unidadMedida || 'PZA'}</div>`;
+                }
+                
+                html += `<div style="font-size: 12px; color: #9e9e9e; margin-top: 8px;">Modificado por: ${usuario || 'N/A'}</div>
                 </div>`;
             });
             
@@ -6069,6 +6221,105 @@
             });
             
             document.getElementById('top-usuarios-dashboard').innerHTML = htmlUsuarios || '<p style="text-align: center; color: #9e9e9e; padding: 20px;">No hay datos aún</p>';
+        }
+        
+        // ========== BUSCADOR SAP ==========
+        function buscarSAP() {
+            const sapBuscado = document.getElementById('input-buscar-sap').value.trim();
+            const resultado = document.getElementById('resultado-buscador-sap');
+            
+            if (!sapBuscado) {
+                alert('⚠️ Ingresa un código SAP');
+                return;
+            }
+            
+            // Buscar registros ACTIVOS con ese SAP
+            const registrosEncontrados = registrosGuardados.filter(r => 
+                r.sap === sapBuscado && 
+                !r.eliminado && 
+                !r.modificado
+            );
+            
+            if (registrosEncontrados.length === 0) {
+                resultado.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #9e9e9e;">
+                        <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
+                        <div style="font-size: 16px; color: #424242;">No se encontraron registros para el SAP: ${sapBuscado}</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Calcular totales
+            const totalContado = registrosEncontrados.reduce((sum, r) => sum + (r.cantidad || 0), 0);
+            const unidad = registrosEncontrados[0].unidadMedida || 'PZA';
+            const descripcion = registrosEncontrados[0].desc || 'Sin descripción';
+            
+            // Buscar en Kardex SAP
+            const kardexItem = kardexSAP.find(k => k.sap === sapBuscado);
+            const cantidadKardex = kardexItem ? kardexItem.cantidad : 0;
+            const diferencia = totalContado - cantidadKardex;
+            const colorDif = diferencia === 0 ? '#388e3c' : diferencia > 0 ? '#1976d2' : '#d32f2f';
+            const iconoDif = diferencia === 0 ? '✅' : diferencia > 0 ? '📈' : '📉';
+            
+            let html = `
+                <!-- Resumen -->
+                <div style="background: #e3f2fd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                    <div style="font-size: 14px; color: #1565c0; font-weight: 700; margin-bottom: 8px;">SAP: ${sapBuscado}</div>
+                    <div style="font-size: 13px; color: #424242; margin-bottom: 16px;">${descripcion}</div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div style="background: white; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: #757575; margin-bottom: 4px;">REGISTROS</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #1a237e;">${registrosEncontrados.length}</div>
+                        </div>
+                        <div style="background: white; border-radius: 8px; padding: 12px; text-align: center;">
+                            <div style="font-size: 11px; color: #757575; margin-bottom: 4px;">TOTAL CONTADO</div>
+                            <div style="font-size: 20px; font-weight: 700; color: #1976d2;">${totalContado} ${unidad}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: white; border-radius: 8px; padding: 12px;">
+                        <div style="font-size: 11px; color: #757575; margin-bottom: 8px;">KARDEX SAP</div>
+                        <div style="font-size: 18px; font-weight: 700; color: #424242; margin-bottom: 12px;">${cantidadKardex} ${unidad}</div>
+                        
+                        <div style="font-size: 11px; color: #757575; margin-bottom: 4px;">DIFERENCIA</div>
+                        <div style="font-size: 22px; font-weight: 700; color: ${colorDif};">
+                            ${iconoDif} ${diferencia > 0 ? '+' : ''}${diferencia} ${unidad}
+                        </div>
+                        <div style="font-size: 12px; color: ${colorDif}; margin-top: 4px;">
+                            ${diferencia === 0 ? 'Exacto ✓' : diferencia > 0 ? 'Sobrante' : 'Faltante'}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de registros -->
+                <div style="margin-bottom: 8px;">
+                    <strong style="font-size: 14px; color: #1a237e;">Detalle de Registros:</strong>
+                </div>
+            `;
+            
+            registrosEncontrados.forEach(r => {
+                html += `
+                    <div style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #1976d2;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <div style="font-weight: 700; color: #1a237e;">${r.folio}</div>
+                            <div style="background: #e3f2fd; color: #1565c0; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">📦 ${r.almacen}</div>
+                        </div>
+                        <div style="font-size: 14px; color: #424242; margin-bottom: 4px;">
+                            <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong>
+                        </div>
+                        <div style="font-size: 12px; color: #757575;">
+                            Ubicación: ${r.ubicacion || 'N/A'}
+                        </div>
+                        <div style="font-size: 11px; color: #9e9e9e; margin-top: 4px;">
+                            👤 ${r.usuario} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultado.innerHTML = html;
         }
         
         // Inicializar cuando se carga la página
