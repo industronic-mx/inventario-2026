@@ -1647,10 +1647,10 @@
             <div id="tab-qr-sap" class="scan-area" style="display: none;">
                 <div style="background: #fff3e0; border-radius: 12px; padding: 16px; margin: 16px; border-left: 4px solid #ff9800;">
                     <h3 style="color: #e65100; margin: 0 0 8px 0;">🔧 MODO TALLER (Almacén 33)</h3>
-                    <p style="font-size: 13px; color: #424242; margin: 0;">Formulario simplificado con escaneo de código SAP desde rack.</p>
+                    <p style="font-size: 13px; color: #424242; margin: 0;">Escanea códigos SAP del rack y agrega a la lista. Al final confirma todos los registros.</p>
                 </div>
                 
-                <!-- FORMULARIO TALLER - VISIBLE DESDE EL INICIO -->
+                <!-- FORMULARIO TALLER -->
                 <div style="background: white; border-radius: 12px; padding: 20px; margin: 16px; border: 2px solid #e0e0e0;">
                     
                     <!-- Folio -->
@@ -1711,15 +1711,28 @@
                         <input type="text" id="taller-contador" placeholder="Ej: Juan Pérez" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
                     </div>
                     
-                    <!-- Botones -->
-                    <div style="display: flex; gap: 12px;">
-                        <button onclick="limpiarFormularioTaller()" style="flex: 1; padding: 14px; background: #9e9e9e; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
-                            🗑️ Limpiar
-                        </button>
-                        <button onclick="guardarRegistroTaller()" style="flex: 2; padding: 14px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;">
-                            ✓ Guardar Registro
-                        </button>
+                    <!-- Botón Agregar a Lista -->
+                    <button onclick="agregarATaller()" style="width: 100%; padding: 14px; background: #1976d2; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                        ➕ Agregar a Lista
+                    </button>
+                </div>
+                
+                <!-- Lista de escaneados TALLER -->
+                <div class="scanned-list">
+                    <div class="list-header">
+                        <h3>Escaneados - Taller</h3>
+                        <span class="count-badge" id="count-taller">0</span>
                     </div>
+                    <div id="lista-taller">
+                        <div class="empty-state">Agrega registros a la lista</div>
+                    </div>
+                </div>
+                
+                <!-- Botón Confirmar (aparece cuando hay registros) -->
+                <div id="taller-confirm-container" style="display: none; padding: 16px; margin: 16px; background: white; border-radius: 12px; border: 2px solid #4caf50;">
+                    <button onclick="confirmarTaller()" class="btn-confirm-taller" style="width: 100%; padding: 16px; background: #4caf50; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                        ✓ Confirmar <span id="count-confirm-taller">0</span> Registros
+                    </button>
                 </div>
             </div>
 
@@ -2854,10 +2867,7 @@
                 setTimeout(() => startScanning(), 300);
             } else if (tab === 'qr-sap') {
                 document.getElementById('tab-qr-sap').style.display = 'block';
-                // Pre-llenar campo contador con usuario seleccionado
-                if (selectedUser) {
-                    document.getElementById('taller-contador').value = selectedUser;
-                }
+                // Dejar campo contador VACÍO (cada quien llena el suyo)
                 // Enfocar en folio
                 setTimeout(() => {
                     document.getElementById('taller-folio').focus();
@@ -3432,27 +3442,56 @@
 
         // Confirmar escaneos
         async function confirmarEscaneos() {
-            if (escaneados.length === 0) return;
+            const total = escaneados.length;
+            
+            // VALIDAR que haya registros
+            if (total === 0) {
+                alert('⚠️ No hay registros para guardar');
+                return;
+            }
+            
+            // Obtener botón de confirmación
+            const btnConfirmar = document.querySelector('.btn-confirm');
+            if (!btnConfirmar) {
+                console.error('❌ No se encontró botón confirmar');
+                return;
+            }
+            
+            // BLOQUEAR BOTÓN inmediatamente (prevenir doble clic)
+            btnConfirmar.disabled = true;
+            const textoOriginal = btnConfirmar.textContent;
             
             try {
+                console.log(`📦 Guardando ${total} registros...`);
+                
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                
                 const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
                 
-                for (const registro of escaneados) {
+                for (let i = 0; i < total; i++) {
+                    // INDICADOR VISUAL - Mostrar progreso
+                    btnConfirmar.textContent = `⏳ Guardando ${i + 1}/${total}`;
+                    
+                    const registro = escaneados[i];
+                    
+                    // Guardar en Firebase
                     await addDoc(collection(db, coleccion), {
                         ...registro,
                         timestamp: new Date().toISOString(),
                         sincronizado: true
                     });
+                    
+                    console.log(`✅ Registro ${i + 1}/${total} guardado en Firebase`);
                 }
                 
                 // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
                 if (!esSegundoConteo) {
-                    for (const registro of escaneados) {
-                        await enviarAGoogleSheets(registro);
+                    btnConfirmar.textContent = '📊 Sincronizando Sheets...';
+                    
+                    for (let i = 0; i < total; i++) {
+                        await enviarAGoogleSheets(escaneados[i]);
+                        console.log(`✅ Registro ${i + 1}/${total} enviado a Sheets`);
                     }
                 }
                 
@@ -3466,19 +3505,30 @@
                 // Sonido de confirmación
                 reproducirSonido('success');
                 
+                // Mostrar overlay de éxito
                 document.getElementById('success-overlay').classList.add('show');
                 
                 setTimeout(() => {
                     document.getElementById('success-overlay').classList.remove('show');
-                    escaneados = [];
-                    actualizarListaEscaneados();
                 }, 2000);
                 
-                console.log('✅ Registros guardados en Firebase');
+                console.log(`✅ ${total} registros guardados correctamente`);
                 
             } catch (error) {
-                console.error('Error al guardar en Firebase:', error);
-                alert('⚠️ Error al guardar registros. Verifica tu conexión.');
+                console.error('❌ Error al guardar registros:', error);
+                alert('⚠️ Error al guardar registros:\n\n' + error.message + '\n\nVerifica tu conexión.');
+                
+            } finally {
+                // SIEMPRE ejecutar (haya error o no):
+                // 1. Limpiar lista
+                escaneados = [];
+                actualizarListaEscaneados();
+                
+                // 2. Restaurar botón
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = textoOriginal;
+                
+                console.log('🔄 Lista limpiada y botón restaurado');
             }
         }
         
@@ -4986,8 +5036,9 @@
             }
         }
         
-        // ========== NUEVO FLUJO TALLER - FORMULARIO VISIBLE ==========
-        let html5QrCodeTaller = null; // Instancia separada para Taller
+        // ========== NUEVO FLUJO TALLER CON LISTA DE ESCANEADOS ==========
+        let html5QrCodeTaller = null;
+        let escaneadosTaller = []; // Lista separada para Taller
         let tallerScanData = {
             sap: '',
             descripcion: '',
@@ -5075,6 +5126,9 @@
             const sap = match[1];
             console.log('✅ TALLER: SAP extraído:', sap);
             
+            // BEEP al escanear
+            reproducirSonido('scan');
+            
             // Actualizar campo SAP
             document.getElementById('taller-sap').value = sap;
             
@@ -5128,9 +5182,9 @@
             }, 100);
         }
         
-        // Guardar registro de Taller
-        async function guardarRegistroTaller() {
-            console.log('💾 TALLER: Intentando guardar registro...');
+        // Agregar registro a lista de Taller
+        function agregarATaller() {
+            console.log('➕ TALLER: Agregando a lista...');
             
             // Validar almacén bloqueado
             if (!esSegundoConteo && almacenesBloqueados['33']) {
@@ -5175,20 +5229,6 @@
                 return;
             }
             
-            // Validar duplicados
-            const duplicado = registrosGuardados.find(
-                r => r.folio === folio && 
-                     r.almacen === '33' && 
-                     r.sap === sap && 
-                     !r.eliminado && 
-                     !r.modificado
-            );
-            
-            if (duplicado) {
-                const confirmar = confirm(`⚠️ YA EXISTE un registro con:\n\nFolio: ${folio}\nAlmacén: 33\nSAP: ${sap}\n\n¿Deseas guardarlo de todos modos?`);
-                if (!confirmar) return;
-            }
-            
             // Crear registro
             const registro = {
                 folio: folio,
@@ -5202,54 +5242,22 @@
                 nombreContador: contador,
                 metodo: 'QR SAP (Alm 33)',
                 fecha: new Date().toISOString(),
-                timestamp: new Date().toISOString(),
-                eliminado: false,
-                modificado: false,
-                esDuplicado: duplicado ? true : false,
                 esPositivo: tallerScanData.esPositivo,
-                areaMaquila: false,
-                sincronizado: false
+                areaMaquila: false
             };
             
-            console.log('📦 TALLER: Registro a guardar:', registro);
+            console.log('📦 TALLER: Registro creado:', registro);
             
-            try {
-                // Guardar en Firebase
-                const { collection, addDoc } = window.firebaseCollections;
-                const db = window.firebaseDB;
-                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
-                
-                await addDoc(collection(db, coleccion), registro);
-                console.log('✅ TALLER: Guardado en Firebase');
-                
-                // Enviar a Google Sheets
-                if (!esSegundoConteo) {
-                    await enviarAGoogleSheets(registro);
-                    console.log('✅ TALLER: Enviado a Google Sheets');
-                }
-                
-                // Guardar en memoria local
-                registrosGuardados.push(registro);
-                
-                // Limpiar formulario
-                limpiarFormularioTaller();
-                
-                // Mensaje de éxito
-                alert('✅ Registro guardado correctamente\n\nFolio: ' + folio + '\nSAP: ' + sap);
-                
-                // Enfocar en folio para siguiente
-                document.getElementById('taller-folio').focus();
-                
-            } catch (error) {
-                console.error('❌ TALLER: Error al guardar:', error);
-                alert('❌ Error al guardar:\n\n' + error.message);
-            }
-        }
-        
-        // Limpiar formulario de Taller
-        function limpiarFormularioTaller() {
-            console.log('🗑️ TALLER: Limpiando formulario');
+            // Agregar a lista
+            escaneadosTaller.push(registro);
             
+            // BEEP de confirmación
+            reproducirSonido('scan');
+            
+            // Actualizar UI
+            actualizarListaTaller();
+            
+            // Limpiar formulario COMPLETO (incluye contador)
             document.getElementById('taller-folio').value = '';
             document.getElementById('taller-sap').value = '';
             document.getElementById('taller-desc').textContent = 'Escanea el código SAP para ver la descripción';
@@ -5258,7 +5266,7 @@
             document.getElementById('taller-cantidad').value = '';
             document.getElementById('taller-unidad').value = 'PZA';
             document.getElementById('taller-ubicacion').value = '';
-            document.getElementById('taller-contador').value = '';
+            document.getElementById('taller-contador').value = ''; // SÍ limpiar (cada quien pone el suyo)
             
             tallerScanData = {
                 sap: '',
@@ -5267,7 +5275,152 @@
                 esPositivo: false
             };
             
+            // Enfocar en folio para siguiente
             document.getElementById('taller-folio').focus();
+            
+            console.log(`✅ TALLER: Registro agregado. Total en lista: ${escaneadosTaller.length}`);
+        }
+        
+        // Actualizar lista visual de Taller
+        function actualizarListaTaller() {
+            const lista = document.getElementById('lista-taller');
+            const countBadge = document.getElementById('count-taller');
+            const countConfirm = document.getElementById('count-confirm-taller');
+            const confirmContainer = document.getElementById('taller-confirm-container');
+            
+            countBadge.textContent = escaneadosTaller.length;
+            countConfirm.textContent = escaneadosTaller.length;
+            
+            if (escaneadosTaller.length === 0) {
+                lista.innerHTML = '<div class="empty-state">Agrega registros a la lista</div>';
+                confirmContainer.style.display = 'none';
+                return;
+            }
+            
+            // Mostrar botón confirmar
+            confirmContainer.style.display = 'block';
+            
+            // Renderizar lista
+            let html = '';
+            escaneadosTaller.forEach((item, index) => {
+                const positivo = item.esPositivo ? ' ⚠️ POSITIVO' : '';
+                html += `
+                    <div class="scanned-item">
+                        <div class="item-info">
+                            <div class="item-header">
+                                <span class="item-folio">${item.folio}</span>
+                                <span class="item-sap">${item.sap}${positivo}</span>
+                            </div>
+                            <div class="item-desc">${item.desc}</div>
+                            <div class="item-details">
+                                ${item.cantidad} ${item.unidadMedida} | ${item.ubicacion}
+                            </div>
+                        </div>
+                        <button class="btn-remove" onclick="eliminarDeTaller(${index})">❌</button>
+                    </div>
+                `;
+            });
+            lista.innerHTML = html;
+        }
+        
+        // Eliminar registro de lista Taller
+        function eliminarDeTaller(index) {
+            console.log(`🗑️ TALLER: Eliminando registro ${index}`);
+            escaneadosTaller.splice(index, 1);
+            actualizarListaTaller();
+            reproducirSonido('scan');
+        }
+        
+        // Confirmar todos los registros de Taller
+        async function confirmarTaller() {
+            const total = escaneadosTaller.length;
+            
+            if (total === 0) {
+                alert('⚠️ No hay registros para guardar');
+                return;
+            }
+            
+            // Obtener botón
+            const btnConfirmar = document.querySelector('.btn-confirm-taller');
+            if (!btnConfirmar) {
+                console.error('❌ No se encontró botón confirmar');
+                return;
+            }
+            
+            // BLOQUEAR BOTÓN
+            btnConfirmar.disabled = true;
+            const textoOriginal = btnConfirmar.textContent;
+            
+            try {
+                console.log(`📦 TALLER: Guardando ${total} registros...`);
+                
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                
+                // Guardar cada registro
+                for (let i = 0; i < total; i++) {
+                    btnConfirmar.textContent = `⏳ Guardando ${i + 1}/${total}`;
+                    
+                    const registro = escaneadosTaller[i];
+                    
+                    // Guardar en Firebase
+                    await addDoc(collection(db, coleccion), {
+                        ...registro,
+                        timestamp: new Date().toISOString(),
+                        eliminado: false,
+                        modificado: false,
+                        esDuplicado: false,
+                        sincronizado: true
+                    });
+                    
+                    console.log(`✅ TALLER: Registro ${i + 1}/${total} guardado en Firebase`);
+                }
+                
+                // Enviar a Google Sheets (solo primer conteo)
+                if (!esSegundoConteo) {
+                    btnConfirmar.textContent = '📊 Sincronizando Sheets...';
+                    
+                    for (let i = 0; i < total; i++) {
+                        await enviarAGoogleSheets(escaneadosTaller[i]);
+                        console.log(`✅ TALLER: Registro ${i + 1}/${total} enviado a Sheets`);
+                    }
+                }
+                
+                // Guardar en memoria local
+                if (esSegundoConteo) {
+                    registrosSegundoConteo.push(...escaneadosTaller);
+                } else {
+                    registrosGuardados.push(...escaneadosTaller);
+                }
+                
+                // Sonido de éxito
+                reproducirSonido('success');
+                
+                // Mostrar overlay de éxito
+                document.getElementById('success-overlay').classList.add('show');
+                setTimeout(() => {
+                    document.getElementById('success-overlay').classList.remove('show');
+                }, 2000);
+                
+                console.log(`✅ TALLER: ${total} registros guardados correctamente`);
+                
+            } catch (error) {
+                console.error('❌ TALLER: Error al guardar:', error);
+                alert('⚠️ Error al guardar registros:\n\n' + error.message + '\n\nVerifica tu conexión.');
+                
+            } finally {
+                // SIEMPRE:
+                // 1. Limpiar lista
+                escaneadosTaller = [];
+                actualizarListaTaller();
+                
+                // 2. Restaurar botón
+                btnConfirmar.disabled = false;
+                btnConfirmar.textContent = textoOriginal;
+                
+                console.log('🔄 TALLER: Lista limpiada y botón restaurado');
+            }
         }
         
         // ========== FUNCIONES ANTIGUAS DE TALLER (MANTENER POR COMPATIBILIDAD) ==========
