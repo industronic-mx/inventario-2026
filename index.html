@@ -2918,11 +2918,16 @@
 
         // Procesar QR escaneado
         function procesarQR(texto, metodo = 'QR') {
+            console.log('📸 SCAN: Texto escaneado:', texto);
+            
             // DETECTAR SI ES QR DE ALMACÉN 33 (formato especial con "CODIGO :")
             if (texto.includes('CODIGO :') || texto.includes('CODIGO:')) {
+                console.log('🔧 SCAN: Detectado formato TALLER, redirigiendo a procesarQRAlmacen33()');
                 procesarQRAlmacen33(texto);
                 return;
             }
+            
+            console.log('📦 SCAN: Formato normal, procesando...');
             
             // Formato normal: F7 Materia Prima 2002398 CAPACITOR FILM 0.68 Uf 10% 310VAC RAD, MCA. WÜRTH, MOD.890334027006CS
             const partes = texto.split(' ');
@@ -4919,45 +4924,69 @@
         
         // ========== FUNCIÓN ESPECIAL PARA ALMACÉN 33 (QR SAP) ==========
         function procesarQRAlmacen33(texto) {
+            console.log('🔧 TALLER: Procesando código de barras');
+            console.log('📄 Texto recibido:', texto);
+            
             // Extraer código SAP después de "CODIGO :" o "CODIGO:"
             const match = texto.match(/CODIGO\s*:\s*(\d+)\.?/i);
             
             if (!match) {
+                console.error('❌ TALLER: No se pudo extraer SAP del texto');
                 alert('⚠️ No se pudo extraer el código SAP del QR\n\nFormato esperado: "CODIGO : 123456"');
                 return;
             }
             
             const sap = match[1]; // Código limpio sin punto
+            console.log('✅ TALLER: SAP extraído:', sap);
             
             // FORZAR ALMACÉN 33
             const almacenCod = '33';
+            console.log('🏭 TALLER: Almacén forzado a:', almacenCod);
             
             // VALIDAR SI ALMACÉN 33 ESTÁ BLOQUEADO
             if (!esSegundoConteo && almacenesBloqueados[almacenCod]) {
+                console.error('🔒 TALLER: Almacén 33 bloqueado');
                 alert('⚠️ Almacén 33 (Gabinetes) cerrado\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
+            
+            console.log('✅ TALLER: Almacén 33 abierto, continuando...');
             
             // Buscar descripción y UM
             let descripcion = 'Sin descripción';
             let unidadMedida = 'PZA';
             let esPositivo = false;
             
+            console.log('🔍 TALLER: Buscando descripción para SAP:', sap);
+            console.log('📊 TALLER: Base descripciones tiene', baseDescripciones.length, 'registros');
+            
             if (baseDescripciones.length > 0) {
                 const encontrado = baseDescripciones.find(item => item.codigo === sap);
                 if (!encontrado) {
                     esPositivo = true;
                     descripcion = '⚠️ MATERIAL NO ENCONTRADO EN SAP';
+                    console.warn('⚠️ TALLER: SAP no encontrado en base de descripciones (POSITIVO)');
                 } else {
                     descripcion = encontrado.descripcion;
+                    console.log('✅ TALLER: Descripción encontrada:', descripcion);
                 }
+            } else {
+                console.warn('⚠️ TALLER: Base de descripciones vacía');
             }
+            
+            console.log('🔍 TALLER: Buscando UM en Kardex SAP');
+            console.log('📊 TALLER: Kardex tiene', kardexSAP.length, 'registros');
             
             if (kardexSAP.length > 0) {
                 const itemKardex = kardexSAP.find(item => item.codigo === sap);
                 if (itemKardex && itemKardex.unidadMedida) {
                     unidadMedida = itemKardex.unidadMedida;
+                    console.log('✅ TALLER: UM encontrada:', unidadMedida);
+                } else {
+                    console.warn('⚠️ TALLER: UM no encontrada, usando PZA por defecto');
                 }
+            } else {
+                console.warn('⚠️ TALLER: Kardex SAP vacío');
             }
             
             // Mostrar formulario especial para Almacén 33
@@ -4972,19 +5001,28 @@
                 unidadMedida: unidadMedida
             };
             
+            console.log('📦 TALLER: currentScanData preparado:', currentScanData);
+            console.log('🚀 TALLER: Llamando a mostrarFormularioAlmacen33()...');
+            
             mostrarFormularioAlmacen33();
         }
         
         function mostrarFormularioAlmacen33() {
+            console.log('📝 FORMULARIO: Iniciando mostrarFormularioAlmacen33()');
+            console.log('📦 FORMULARIO: currentScanData recibido:', currentScanData);
+            
             // Cambiar a tab de formulario
+            console.log('🔄 FORMULARIO: Cambiando tabs...');
             document.getElementById('tab-qr').classList.remove('active');
             document.getElementById('tab-manual').classList.remove('active');
             document.getElementById('tab-form').classList.add('active');
             document.getElementById('tab-scan').style.display = 'none';
             document.getElementById('tab-manual').style.display = 'none';
             document.getElementById('tab-form-container').style.display = 'block';
+            console.log('✅ FORMULARIO: Tabs actualizados');
             
             // Llenar campos
+            console.log('✍️ FORMULARIO: Llenando campos...');
             document.getElementById('form-folio').value = ''; // VACÍO para ingreso manual
             document.getElementById('form-folio').disabled = false; // HABILITADO
             document.getElementById('form-folio').placeholder = 'Ej: G-001';
@@ -4995,11 +5033,13 @@
             
             document.getElementById('form-sap').textContent = currentScanData.sap;
             document.getElementById('form-desc').textContent = currentScanData.desc;
+            console.log('✅ FORMULARIO: Campos básicos llenados');
             
             // Color especial si es positivo
             if (currentScanData.esPositivo) {
                 document.getElementById('form-desc').style.color = '#e65100';
                 document.getElementById('form-desc').style.fontWeight = '700';
+                console.log('⚠️ FORMULARIO: Aplicado estilo POSITIVO');
             } else {
                 document.getElementById('form-desc').style.color = '#424242';
                 document.getElementById('form-desc').style.fontWeight = 'normal';
@@ -5009,16 +5049,21 @@
             document.getElementById('form-cantidad').value = '';
             document.getElementById('form-ubicacion').value = '';
             document.getElementById('form-contador').value = selectedUser || '';
+            console.log('✅ FORMULARIO: Campos limpiados');
             
             // Enfocar en FOLIO (campo manual)
             setTimeout(() => {
                 document.getElementById('form-folio').focus();
+                console.log('✅ FORMULARIO: Focus en campo FOLIO');
             }, 100);
             
             // Detener escáner
             if (window.html5QrCode && window.html5QrCode.isScanning) {
                 window.html5QrCode.stop();
+                console.log('🛑 FORMULARIO: Escáner detenido');
             }
+            
+            console.log('✅ FORMULARIO: Proceso completado - Formulario visible');
         }
         
         // ========== GOOGLE SHEETS INTEGRATION ==========
