@@ -2632,9 +2632,6 @@
                         startScanning();
                     }
                 }, 300);
-                
-                // MOSTRAR BOTÓN FLOTANTE (aunque esté vacío)
-                actualizarListaEscaneados();
             } else if (screenId === 'dashboard') {
                 // Actualizar dashboard con datos reales
                 actualizarDashboard();
@@ -3312,23 +3309,15 @@
             const count = document.getElementById('count-escaneados');
             const countConfirm = document.getElementById('count-confirm');
             const confirmBar = document.getElementById('confirm-bar');
-            const btnConfirmar = confirmBar.querySelector('button');
             
             count.textContent = escaneados.length;
             countConfirm.textContent = escaneados.length;
             
-            // BOTÓN SIEMPRE VISIBLE, pero disabled si no hay escaneados
-            confirmBar.classList.add('show');
-            
             if (escaneados.length === 0) {
                 lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
-                btnConfirmar.disabled = true;
-                btnConfirmar.style.opacity = '0.5';
-                btnConfirmar.style.cursor = 'not-allowed';
+                confirmBar.classList.remove('show');
             } else {
-                btnConfirmar.disabled = false;
-                btnConfirmar.style.opacity = '1';
-                btnConfirmar.style.cursor = 'pointer';
+                confirmBar.classList.add('show');
                 lista.innerHTML = escaneados.map((item, index) => `
                     <div class="scanned-item">
                         <div class="info">
@@ -3362,28 +3351,27 @@
             btnConfirmar.innerHTML = '⏳ Guardando...';
             
             try {
-                // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                
                 const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
                 
-                for (const registro of escaneados) {
-                    await addDoc(collection(db, coleccion), {
+                // OPTIMIZACIÓN: Guardar todos en PARALELO en lugar de secuencial
+                const promesasFirebase = escaneados.map(registro => 
+                    addDoc(collection(db, coleccion), {
                         ...registro,
                         timestamp: new Date().toISOString(),
                         sincronizado: true
-                    });
-                }
+                    })
+                );
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
-                if (!esSegundoConteo) {
-                    for (const registro of escaneados) {
-                        await enviarAGoogleSheets(registro);
-                    }
-                }
+                const promesasSheets = !esSegundoConteo 
+                    ? escaneados.map(registro => enviarAGoogleSheets(registro))
+                    : [];
                 
-                // Guardar también en memoria local
+                // Ejecutar TODAS las promesas en PARALELO (mucho más rápido)
+                await Promise.all([...promesasFirebase, ...promesasSheets]);
+                
+                // Guardar en memoria local
                 if (esSegundoConteo) {
                     registrosSegundoConteo.push(...escaneados);
                 } else {
@@ -3405,7 +3393,7 @@
                     btnConfirmar.style.opacity = '1';
                     btnConfirmar.style.cursor = 'pointer';
                     btnConfirmar.innerHTML = textoOriginal;
-                }, 2000);
+                }, 1500); // Reducido de 2000 a 1500ms
                 
                 console.log('✅ Registros guardados en Firebase');
                 
