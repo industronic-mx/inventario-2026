@@ -3385,15 +3385,39 @@
                 
                 setTimeout(() => {
                     document.getElementById('success-overlay').classList.remove('show');
+                    
+                    // LIMPIAR TODO EL ESTADO
                     escaneados = [];
                     actualizarListaEscaneados();
                     
-                    // REHABILITAR BOTÓN
+                    // CERRAR FORMULARIO SI ESTÁ ABIERTO
+                    const scanFormContainer = document.getElementById('scan-form-container');
+                    if (scanFormContainer) {
+                        scanFormContainer.style.display = 'none';
+                    }
+                    
+                    // LIMPIAR CAMPOS DEL FORMULARIO
+                    document.getElementById('form-cantidad').value = '';
+                    document.getElementById('form-ubicacion').value = '';
+                    document.getElementById('form-contador').value = '';
+                    
+                    // MOSTRAR BOTÓN DE ESCANEO DE NUEVO
+                    const scanButton = document.getElementById('scan-button');
+                    if (scanButton) {
+                        scanButton.style.display = 'block';
+                    }
+                    
+                    // REHABILITAR BOTÓN CONFIRMAR
                     btnConfirmar.disabled = false;
                     btnConfirmar.style.opacity = '1';
                     btnConfirmar.style.cursor = 'pointer';
                     btnConfirmar.innerHTML = textoOriginal;
-                }, 1500); // Reducido de 2000 a 1500ms
+                    
+                    // LIMPIAR VARIABLE GLOBAL DE ESCANEO ACTUAL
+                    currentScanData = null;
+                    
+                    console.log('✓ Interfaz limpia, lista para nuevo escaneo');
+                }, 1000); // Reducido a 1 segundo
                 
                 console.log('✅ Registros guardados en Firebase');
                 
