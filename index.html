@@ -41,21 +41,13 @@
     <!-- Google Sheets API Configuration -->
     <script>
         // Google Apps Script Web App URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZGN9L6wq3iaNeZRImjRclcKqyFyVyTMHNQ-gxIgSGPllFG8qGRjtUsA6FwRV2CYI_/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxo7Ick23HPDqtThOqkrcddcEZUHe_bS0Npgex_UnegCC7vk9pNpCAufFYYlmU3kPZs/exec';
         
         // Función para escribir en Google Sheets via Apps Script
         async function escribirEnGoogleSheets(registros) {
-            console.log('🔵 escribirEnGoogleSheets llamada con:', registros.length, 'registros');
-            
-            if (!Array.isArray(registros) || registros.length === 0) {
-                console.log('⚠️ No hay registros para enviar');
-                return false;
-            }
+            if (!Array.isArray(registros) || registros.length === 0) return false;
             
             try {
-                console.log('📤 Enviando a:', GOOGLE_SCRIPT_URL);
-                console.log('📦 Datos:', {registros: registros});
-                
                 const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
                     redirect: 'follow',
@@ -67,7 +59,6 @@
                     })
                 });
                 
-                console.log('✅ Respuesta recibida:', response.status);
                 console.log('✅ Datos enviados a Google Sheets:', registros.length, 'registros');
                 return true;
                 
@@ -3344,26 +3335,24 @@
             const countConfirm = document.getElementById('count-confirm');
             const confirmBar = document.getElementById('confirm-bar');
             
-            if (count) count.textContent = escaneados.length;
-            if (countConfirm) countConfirm.textContent = escaneados.length;
+            count.textContent = escaneados.length;
+            countConfirm.textContent = escaneados.length;
             
             if (escaneados.length === 0) {
-                if (lista) lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
-                if (confirmBar) confirmBar.classList.remove('show');
+                lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
+                confirmBar.classList.remove('show');
             } else {
-                if (confirmBar) confirmBar.classList.add('show');
-                if (lista) {
-                    lista.innerHTML = escaneados.map((item, index) => `
-                        <div class="scanned-item">
-                            <div class="info">
-                                <span class="folio">${item.folio}</span>
-                                <span class="details">${item.sap} • Alm ${item.almacen}</span>
-                            </div>
-                            <span class="qty">${item.cantidad}</span>
-                            <button class="btn-remove" onclick="removerEscaneado(${index})">✕</button>
+                confirmBar.classList.add('show');
+                lista.innerHTML = escaneados.map((item, index) => `
+                    <div class="scanned-item">
+                        <div class="info">
+                            <span class="folio">${item.folio}</span>
+                            <span class="details">${item.sap} • Alm ${item.almacen}</span>
                         </div>
-                    `).join('');
-                }
+                        <span class="qty">${item.cantidad}</span>
+                        <button class="btn-remove" onclick="removerEscaneado(${index})">✕</button>
+                    </div>
+                `).join('');
             }
         }
 
@@ -3377,8 +3366,6 @@
             if (escaneados.length === 0) return;
             
             try {
-                console.log('🔵 Iniciando guardado de', escaneados.length, 'registros');
-                
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
@@ -3392,18 +3379,13 @@
                         sincronizado: true
                     });
                 }
-                console.log('✅ Firebase OK');
                 
-                // ESCRIBIR EN GOOGLE SHEETS - SOLO LÍNEA POR LÍNEA
-                if (!esSegundoConteo) {
-                    console.log('📤 Enviando a Google Sheets línea por línea...');
-                    
-                    for (const registro of escaneados) {
-                        console.log('  → Enviando:', registro.folio, registro.sap);
-                        await enviarAGoogleSheets(registro);
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo) - BATCH
+                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
+                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
+                    if (exitoSheets) {
+                        console.log('✅ Registros escritos en Google Sheets');
                     }
-                    
-                    console.log('✅ Google Sheets OK');
                 }
                 
                 // Guardar también en memoria local
@@ -3424,12 +3406,11 @@
                     actualizarListaEscaneados();
                 }, 2000);
                 
-                console.log('✅ TODO COMPLETO');
+                console.log('✅ Registros guardados en Firebase');
                 
             } catch (error) {
-                console.error('❌ Error al guardar:', error);
+                console.error('Error al guardar en Firebase:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
-            }
             }
         }
         
