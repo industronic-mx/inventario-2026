@@ -41,7 +41,7 @@
     <!-- Google Sheets API Configuration -->
     <script>
         // Google Apps Script Web App URL
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxo7Ick23HPDqtThOqkrcddcEZUHe_bS0Npgex_UnegCC7vk9pNpCAufFYYlmU3kPZs/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZGN9L6wq3iaNeZRImjRclcKqyFyVyTMHNQ-gxIgSGPllFG8qGRjtUsA6FwRV2CYI_/exec';
         
         // Función para escribir en Google Sheets via Apps Script
         async function escribirEnGoogleSheets(registros) {
@@ -3344,24 +3344,26 @@
             const countConfirm = document.getElementById('count-confirm');
             const confirmBar = document.getElementById('confirm-bar');
             
-            count.textContent = escaneados.length;
-            countConfirm.textContent = escaneados.length;
+            if (count) count.textContent = escaneados.length;
+            if (countConfirm) countConfirm.textContent = escaneados.length;
             
             if (escaneados.length === 0) {
-                lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
-                confirmBar.classList.remove('show');
+                if (lista) lista.innerHTML = '<div class="empty-state">Escanea marbetes para agregarlos</div>';
+                if (confirmBar) confirmBar.classList.remove('show');
             } else {
-                confirmBar.classList.add('show');
-                lista.innerHTML = escaneados.map((item, index) => `
-                    <div class="scanned-item">
-                        <div class="info">
-                            <span class="folio">${item.folio}</span>
-                            <span class="details">${item.sap} • Alm ${item.almacen}</span>
+                if (confirmBar) confirmBar.classList.add('show');
+                if (lista) {
+                    lista.innerHTML = escaneados.map((item, index) => `
+                        <div class="scanned-item">
+                            <div class="info">
+                                <span class="folio">${item.folio}</span>
+                                <span class="details">${item.sap} • Alm ${item.almacen}</span>
+                            </div>
+                            <span class="qty">${item.cantidad}</span>
+                            <button class="btn-remove" onclick="removerEscaneado(${index})">✕</button>
                         </div>
-                        <span class="qty">${item.cantidad}</span>
-                        <button class="btn-remove" onclick="removerEscaneado(${index})">✕</button>
-                    </div>
-                `).join('');
+                    `).join('');
+                }
             }
         }
 
@@ -3389,12 +3391,23 @@
                     });
                 }
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo) - BATCH
-                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
-                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
-                    if (exitoSheets) {
-                        console.log('✅ Registros escritos en Google Sheets');
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
+                if (!esSegundoConteo) {
+                    console.log('📤 Enviando', escaneados.length, 'registros a Google Sheets...');
+                    
+                    // MÉTODO 1: Intentar BATCH primero
+                    if (typeof window.escribirEnGoogleSheets === 'function') {
+                        const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
+                        if (exitoSheets) {
+                            console.log('✅ Registros enviados en BATCH');
+                        }
                     }
+                    
+                    // MÉTODO 2: También enviar línea por línea (por compatibilidad)
+                    for (const registro of escaneados) {
+                        await enviarAGoogleSheets(registro);
+                    }
+                    console.log('✅ Registros enviados línea por línea');
                 }
                 
                 // Guardar también en memoria local
