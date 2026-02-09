@@ -1626,19 +1626,8 @@
 
                         <div class="two-cols">
                             <button class="btn-secondary" onclick="cancelarFormulario()">Cancelar</button>
-                            <button class="btn-success" onclick="confirmarFormulario()">Agregar</button>
+                            <button id="btn-guardar-qr" class="btn-success" onclick="guardarQRDirecto()">✓ Guardar Registro</button>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Lista de escaneados -->
-                <div class="scanned-list">
-                    <div class="list-header">
-                        <h3>Escaneados</h3>
-                        <span class="count-badge" id="count-escaneados">0</span>
-                    </div>
-                    <div id="lista-escaneados">
-                        <div class="empty-state">Escanea marbetes para agregarlos</div>
                     </div>
                 </div>
             </div>
@@ -1767,13 +1756,6 @@
 
                 <button id="btn-guardar-manual" class="btn-primary" onclick="guardarManualDirecto()" style="margin-top: 8px;">
                     ✓ Guardar Registro
-                </button>
-            </div>
-
-            <!-- Barra de confirmación -->
-            <div id="confirm-bar" class="confirm-bar">
-                <button class="btn-success" onclick="confirmarEscaneos()">
-                    ✓ Confirmar Todo (<span id="count-confirm">0</span>)
                 </button>
             </div>
         </div>
@@ -5480,6 +5462,147 @@
                 document.getElementById('manual-folio').focus();
                 
                 console.log('🔄 MANUAL: Formulario limpiado y botón restaurado');
+            }
+        }
+        
+        // ========== QR NORMAL - GUARDAR DIRECTO (SIN LISTA) ==========
+        async function guardarQRDirecto() {
+            console.log('💾 QR: Intentando guardar registro...');
+            
+            const cantidad = parseFloat(document.getElementById('form-cantidad').value);
+            const ubicacion = document.getElementById('form-ubicacion').value;
+            const nombreContador = document.getElementById('form-contador').value.trim();
+            const almacenSeleccionado = document.getElementById('form-almacen-select').value;
+            
+            // Convertir MAQUILA a 01
+            const almacenFinal = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
+            
+            // Validar folio
+            const folioInput = document.getElementById('form-folio').value.trim().toUpperCase();
+            if (!currentScanData.folio && !folioInput) {
+                alert('⚠️ Debes ingresar el folio del marbete');
+                document.getElementById('form-folio').focus();
+                return;
+            }
+            
+            // Validar contador
+            if (!nombreContador) {
+                alert('⚠️ Debes indicar quién hizo el conteo');
+                document.getElementById('form-contador').focus();
+                return;
+            }
+            
+            // Validar cantidad
+            if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
+                alert('Ingresa una cantidad válida');
+                return;
+            }
+            
+            if (cantidad < 0) {
+                alert('La cantidad no puede ser negativa');
+                return;
+            }
+            
+            // Confirmación si cantidad es 0
+            if (cantidad === 0) {
+                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
+                    return;
+                }
+            }
+            
+            // Validar almacén bloqueado
+            if (!esSegundoConteo && almacenesBloqueados[almacenFinal]) {
+                alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
+                return;
+            }
+            
+            const registro = {
+                folio: currentScanData.folio || folioInput,
+                almacen: almacenFinal,
+                sap: currentScanData.sap,
+                desc: currentScanData.desc,
+                cantidad: cantidad,
+                unidadMedida: currentScanData.unidadMedida || 'PZA',
+                ubicacion: ubicacion,
+                nombreContador: nombreContador,
+                usuario: selectedUser,
+                metodo: currentScanData.metodo,
+                fecha: new Date().toISOString(),
+                timestamp: new Date().toISOString(),
+                eliminado: false,
+                modificado: false,
+                esDuplicado: false,
+                esPositivo: currentScanData.esPositivo || false,
+                areaMaquila: almacenSeleccionado === '01-MAQUILA',
+                sincronizado: false
+            };
+            
+            // Obtener botón
+            const btnGuardar = document.getElementById('btn-guardar-qr');
+            if (!btnGuardar) {
+                console.error('❌ No se encontró botón guardar');
+                return;
+            }
+            
+            // BLOQUEAR BOTÓN
+            btnGuardar.disabled = true;
+            const textoOriginal = btnGuardar.textContent;
+            
+            try {
+                console.log('📦 QR: Guardando registro...');
+                btnGuardar.textContent = '⏳ Guardando...';
+                
+                // Guardar en Firebase
+                const { collection, addDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                
+                await addDoc(collection(db, coleccion), {
+                    ...registro,
+                    sincronizado: true
+                });
+                
+                console.log('✅ QR: Guardado en Firebase');
+                
+                // Enviar a Google Sheets (solo primer conteo)
+                if (!esSegundoConteo) {
+                    btnGuardar.textContent = '📊 Sincronizando Sheets...';
+                    await enviarAGoogleSheets(registro);
+                    console.log('✅ QR: Enviado a Google Sheets');
+                }
+                
+                // Guardar en memoria local
+                if (esSegundoConteo) {
+                    registrosSegundoConteo.push(registro);
+                } else {
+                    registrosGuardados.push(registro);
+                }
+                
+                // Sonido de éxito
+                reproducirSonido('success');
+                
+                console.log('✅ QR: Registro guardado correctamente');
+                
+            } catch (error) {
+                console.error('❌ QR: Error al guardar:', error);
+                alert('⚠️ Error al guardar:\n\n' + error.message + '\n\nVerifica tu conexión.');
+                
+            } finally {
+                // SIEMPRE:
+                // 1. Ocultar formulario
+                document.getElementById('scan-form-container').style.display = 'none';
+                
+                // 2. Limpiar currentScanData
+                currentScanData = null;
+                
+                // 3. Restaurar botón
+                btnGuardar.disabled = false;
+                btnGuardar.textContent = textoOriginal;
+                
+                // 4. Mostrar botón de escanear de nuevo
+                document.getElementById('scan-button').style.display = 'flex';
+                
+                console.log('🔄 QR: Formulario limpiado y listo para siguiente escaneo');
             }
         }
         
