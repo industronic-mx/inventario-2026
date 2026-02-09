@@ -3670,12 +3670,12 @@
                 const registroViejo = registrosGuardados[registroEnEdicion];
                 
                 // MARCAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP COMO EDITADO
+                // (Incluso los que ya están editados)
                 registrosGuardados.forEach((r, i) => {
                     if (r.folio === registroViejo.folio && 
                         r.almacen === registroViejo.almacen && 
                         r.sap === registroViejo.sap && 
-                        !r.eliminado && 
-                        !r.modificado) {
+                        !r.eliminado) {  // ← QUITÉ "&& !r.modificado"
                         
                         r.modificado = true;
                         r.fechaModificacion = new Date().toISOString();
@@ -3747,12 +3747,13 @@
                 return;
             }
 
-            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
+            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
                 try {
                     // Marcar como eliminado localmente
                     registro.eliminado = true;
                     registro.fechaEliminacion = new Date().toISOString();
                     registro.eliminadoPor = currentRole || selectedUser;
+                    registro.motivoEliminacion = 'Eliminado por usuario';
                     
                     // Si tiene ID de Firebase, actualizar en la nube
                     if (registro.id && window.firebaseDB) {
@@ -3762,26 +3763,30 @@
                         await updateDoc(doc(db, 'registros', registro.id), {
                             eliminado: true,
                             fechaEliminacion: registro.fechaEliminacion,
-                            eliminadoPor: registro.eliminadoPor
+                            eliminadoPor: registro.eliminadoPor,
+                            motivoEliminacion: registro.motivoEliminacion
                         });
                     }
                     
-                    // Notificar a Google Sheets
-                    try {
-                        await fetch(`${GOOGLE_SCRIPT_URL}?action=eliminar&folio=${encodeURIComponent(registro.folio)}&almacen=${encodeURIComponent(registro.almacen)}&sap=${encodeURIComponent(registro.sap)}&usuario=${encodeURIComponent(currentRole || selectedUser)}`, {
-                            method: 'GET',
-                            redirect: 'follow'
-                        });
-                        console.log('✓ Google Sheets actualizado: ELIMINADO');
-                    } catch (error) {
-                        console.error('Error al actualizar Sheets:', error);
-                    }
-
-                    alert('✓ Registro eliminado para todos');
+                    // Enviar a Google Sheets como ELIMINADO
+                    await enviarAGoogleSheets({
+                        ...registro,
+                        eliminado: true,
+                        modificado: false
+                    });
                     
-                    // Recargar vistas
-                    renderizarMisRegistros();
-                    renderizarTodosRegistros();
+                    console.log('✓ Registro eliminado y enviado a Sheets');
+                    
+                    // OVERLAY VISUAL DE CONFIRMACIÓN
+                    document.getElementById('success-overlay').classList.add('show');
+                    
+                    setTimeout(() => {
+                        document.getElementById('success-overlay').classList.remove('show');
+                        
+                        // Recargar vistas
+                        renderizarMisRegistros();
+                        renderizarTodosRegistros();
+                    }, 1500);
                     
                 } catch (error) {
                     console.error('Error al eliminar:', error);
