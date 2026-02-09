@@ -3365,17 +3365,6 @@
         async function confirmarEscaneos() {
             if (escaneados.length === 0) return;
             
-            // PROTECCIÓN DOBLE CLICK
-            const btnConfirmar = document.querySelector('#confirm-bar button');
-            if (btnConfirmar && btnConfirmar.disabled) return; // Ya está guardando
-            
-            if (btnConfirmar) {
-                btnConfirmar.disabled = true;
-                btnConfirmar.style.opacity = '0.6';
-                const textoOriginal = btnConfirmar.innerHTML;
-                btnConfirmar.innerHTML = '⏳ Guardando...';
-            }
-            
             try {
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
@@ -3391,10 +3380,11 @@
                     });
                 }
                 
-                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
-                if (!esSegundoConteo) {
-                    for (const registro of escaneados) {
-                        await enviarAGoogleSheets(registro);
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo) - BATCH
+                if (!esSegundoConteo && typeof window.escribirEnGoogleSheets === 'function') {
+                    const exitoSheets = await window.escribirEnGoogleSheets(escaneados);
+                    if (exitoSheets) {
+                        console.log('✅ Registros escritos en Google Sheets');
                     }
                 }
                 
@@ -3414,13 +3404,6 @@
                     document.getElementById('success-overlay').classList.remove('show');
                     escaneados = [];
                     actualizarListaEscaneados();
-                    
-                    // REHABILITAR BOTÓN
-                    if (btnConfirmar) {
-                        btnConfirmar.disabled = false;
-                        btnConfirmar.style.opacity = '1';
-                        btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
-                    }
                 }, 2000);
                 
                 console.log('✅ Registros guardados en Firebase');
@@ -3428,11 +3411,8 @@
             } catch (error) {
                 console.error('Error al guardar en Firebase:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
-                
-                // REHABILITAR BOTÓN EN CASO DE ERROR
-                if (btnConfirmar) {
-                    btnConfirmar.disabled = false;
-                    btnConfirmar.style.opacity = '1';
+            }
+        }
                     btnConfirmar.innerHTML = '✓ Confirmar Todo (<span id="count-confirm">0</span>)';
                 }
             }
@@ -3754,35 +3734,44 @@
                 return;
             }
 
-            if (confirm(`¿Seguro que deseas eliminar este registro?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ ESTO LO BORRARÁ PARA TODOS LOS USUARIOS`)) {
+            if (confirm(`⚠️ ELIMINAR TODAS LAS VERSIONES\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\nEsto eliminará TODAS las versiones de este folio (activas y editadas)\n\n¿Estás seguro?`)) {
                 try {
-                    // Marcar como eliminado localmente
-                    registro.eliminado = true;
-                    registro.fechaEliminacion = new Date().toISOString();
-                    registro.eliminadoPor = currentRole || selectedUser;
-                    registro.motivoEliminacion = 'Eliminado por usuario';
+                    const fechaEliminacion = new Date().toISOString();
+                    const eliminadoPor = currentRole || selectedUser;
                     
-                    // Si tiene ID de Firebase, actualizar en la nube
-                    if (registro.id && window.firebaseDB) {
-                        const { doc, updateDoc } = window.firebaseCollections;
-                        const db = window.firebaseDB;
-                        
-                        await updateDoc(doc(db, 'registros', registro.id), {
-                            eliminado: true,
-                            fechaEliminacion: registro.fechaEliminacion,
-                            eliminadoPor: registro.eliminadoPor,
-                            motivoEliminacion: registro.motivoEliminacion
-                        });
+                    // MARCAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP COMO ELIMINADO
+                    for (const r of registrosGuardados) {
+                        if (r.folio === registro.folio && 
+                            r.almacen === registro.almacen && 
+                            r.sap === registro.sap) {
+                            
+                            r.eliminado = true;
+                            r.fechaEliminacion = fechaEliminacion;
+                            r.eliminadoPor = eliminadoPor;
+                            r.motivoEliminacion = 'Eliminado por usuario';
+                            
+                            // Actualizar en Firebase si tiene ID
+                            if (r.id && window.firebaseDB) {
+                                const { doc, updateDoc } = window.firebaseCollections;
+                                const db = window.firebaseDB;
+                                await updateDoc(doc(db, 'registros', r.id), {
+                                    eliminado: true,
+                                    fechaEliminacion: fechaEliminacion,
+                                    eliminadoPor: eliminadoPor,
+                                    motivoEliminacion: r.motivoEliminacion
+                                }).catch(e => console.error('Error actualizando Firebase:', e));
+                            }
+                            
+                            // Enviar a Google Sheets como ELIMINADO
+                            await enviarAGoogleSheets({
+                                ...r,
+                                eliminado: true,
+                                modificado: false
+                            });
+                        }
                     }
                     
-                    // Enviar a Google Sheets como ELIMINADO
-                    await enviarAGoogleSheets({
-                        ...registro,
-                        eliminado: true,
-                        modificado: false
-                    });
-                    
-                    console.log('✓ Registro eliminado y enviado a Sheets');
+                    console.log('✓ TODOS los registros eliminados y enviados a Sheets');
                     
                     // OVERLAY VISUAL DE CONFIRMACIÓN
                     document.getElementById('success-overlay').classList.add('show');
@@ -5047,23 +5036,29 @@
         }
         
         // ========== GOOGLE SHEETS INTEGRATION ==========
-        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxaT_mU2y2nQ_0eHPP4fIwa_bEQUtksJcalu35XdhhOlBxmrdKjxmY--XrXBZPOdWDA/exec';
-        
         async function enviarAGoogleSheets(registro) {
             try {
-                const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
+                // Determinar acción según estado del registro
+                let action = 'add';
+                if (registro.eliminado) {
+                    action = 'eliminar';
+                } else if (registro.modificado) {
+                    action = 'editar';
+                }
+                
+                const response = await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    redirect: 'follow',
                     headers: {
-                        'Content-Type': 'application/json',
+                        'Content-Type': 'text/plain',
                     },
                     body: JSON.stringify({
-                        action: 'add',
+                        action: action,
                         registro: registro
                     })
                 });
                 
-                console.log('✓ Enviado a Google Sheets');
+                console.log(`✓ Enviado a Google Sheets (${action}):`, registro.folio);
             } catch (error) {
                 console.error('Error al enviar a Google Sheets:', error);
             }
