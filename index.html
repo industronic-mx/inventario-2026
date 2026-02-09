@@ -450,24 +450,12 @@
             width: 100%;
             background: white;
             padding: 16px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.2);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
             display: none;
-            z-index: 9999;
-            border-top: 3px solid #4caf50;
         }
 
         .confirm-bar.show {
             display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateX(-50%) translateY(100%);
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-            }
         }
 
         /* Form manual */
@@ -1361,6 +1349,10 @@
                             <span class="icon">👤</span>
                             YARELLI GUADALUPE HERNANDEZ GARCIA
                         </div>
+                        <div class="user-option" onclick="selectUser(this, 'MARIO (CALIDAD)')">
+                            <span class="icon">👤</span>
+                            MARIO (CALIDAD)
+                        </div>
                         <div class="user-option" onclick="selectUser(this, 'USUARIO GENERICO 1')">
                             <span class="icon">👤</span>
                             USUARIO GENERICO 1
@@ -1449,6 +1441,10 @@
                         <div class="user-option" onclick="selectAuditor(this, 'JOSE NAPOLEON PEREZ')">
                             <span class="icon">🔍</span>
                             JOSE NAPOLEON PEREZ
+                        </div>
+                        <div class="user-option" onclick="selectAuditor(this, 'MARIO (CALIDAD)')">
+                            <span class="icon">🔍</span>
+                            MARIO (CALIDAD)
                         </div>
                         <div class="user-option" onclick="selectAuditor(this, 'AUDITOR GENERICO 1')">
                             <span class="icon">🔍</span>
@@ -1724,9 +1720,9 @@
                 </button>
             </div>
 
-            <!-- Barra de confirmación FLOTANTE -->
+            <!-- Barra de confirmación -->
             <div id="confirm-bar" class="confirm-bar">
-                <button class="btn-success" onclick="confirmarEscaneos()" style="width: 100%; padding: 16px; font-size: 18px; font-weight: 700; border-radius: 12px;">
+                <button class="btn-success" onclick="confirmarEscaneos()">
                     ✓ Confirmar Todo (<span id="count-confirm">0</span>)
                 </button>
             </div>
@@ -3340,38 +3336,29 @@
         async function confirmarEscaneos() {
             if (escaneados.length === 0) return;
             
-            // DESHABILITAR BOTÓN PARA EVITAR DOBLE CLICK
-            const btnConfirmar = document.querySelector('#confirm-bar button');
-            if (btnConfirmar.disabled) return; // Ya está guardando
-            
-            btnConfirmar.disabled = true;
-            btnConfirmar.style.opacity = '0.6';
-            btnConfirmar.style.cursor = 'not-allowed';
-            const textoOriginal = btnConfirmar.innerHTML;
-            btnConfirmar.innerHTML = '⏳ Guardando...';
-            
             try {
+                // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
+                
                 const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
                 
-                // OPTIMIZACIÓN: Guardar todos en PARALELO en lugar de secuencial
-                const promesasFirebase = escaneados.map(registro => 
-                    addDoc(collection(db, coleccion), {
+                for (const registro of escaneados) {
+                    await addDoc(collection(db, coleccion), {
                         ...registro,
                         timestamp: new Date().toISOString(),
                         sincronizado: true
-                    })
-                );
+                    });
+                }
                 
-                const promesasSheets = !esSegundoConteo 
-                    ? escaneados.map(registro => enviarAGoogleSheets(registro))
-                    : [];
+                // ESCRIBIR EN GOOGLE SHEETS (solo primer conteo)
+                if (!esSegundoConteo) {
+                    for (const registro of escaneados) {
+                        await enviarAGoogleSheets(registro);
+                    }
+                }
                 
-                // Ejecutar TODAS las promesas en PARALELO (mucho más rápido)
-                await Promise.all([...promesasFirebase, ...promesasSheets]);
-                
-                // Guardar en memoria local
+                // Guardar también en memoria local
                 if (esSegundoConteo) {
                     registrosSegundoConteo.push(...escaneados);
                 } else {
@@ -3385,51 +3372,15 @@
                 
                 setTimeout(() => {
                     document.getElementById('success-overlay').classList.remove('show');
-                    
-                    // LIMPIAR TODO EL ESTADO
                     escaneados = [];
                     actualizarListaEscaneados();
-                    
-                    // CERRAR FORMULARIO SI ESTÁ ABIERTO
-                    const scanFormContainer = document.getElementById('scan-form-container');
-                    if (scanFormContainer) {
-                        scanFormContainer.style.display = 'none';
-                    }
-                    
-                    // LIMPIAR CAMPOS DEL FORMULARIO
-                    document.getElementById('form-cantidad').value = '';
-                    document.getElementById('form-ubicacion').value = '';
-                    document.getElementById('form-contador').value = '';
-                    
-                    // MOSTRAR BOTÓN DE ESCANEO DE NUEVO
-                    const scanButton = document.getElementById('scan-button');
-                    if (scanButton) {
-                        scanButton.style.display = 'block';
-                    }
-                    
-                    // REHABILITAR BOTÓN CONFIRMAR
-                    btnConfirmar.disabled = false;
-                    btnConfirmar.style.opacity = '1';
-                    btnConfirmar.style.cursor = 'pointer';
-                    btnConfirmar.innerHTML = textoOriginal;
-                    
-                    // LIMPIAR VARIABLE GLOBAL DE ESCANEO ACTUAL
-                    currentScanData = null;
-                    
-                    console.log('✓ Interfaz limpia, lista para nuevo escaneo');
-                }, 1000); // Reducido a 1 segundo
+                }, 2000);
                 
                 console.log('✅ Registros guardados en Firebase');
                 
             } catch (error) {
                 console.error('Error al guardar en Firebase:', error);
                 alert('⚠️ Error al guardar registros. Verifica tu conexión.');
-                
-                // REHABILITAR BOTÓN EN CASO DE ERROR
-                btnConfirmar.disabled = false;
-                btnConfirmar.style.opacity = '1';
-                btnConfirmar.style.cursor = 'pointer';
-                btnConfirmar.innerHTML = textoOriginal;
             }
         }
         
@@ -5543,7 +5494,7 @@
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
                 'MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
                 '00': [] // Por definir
             };
             
@@ -5591,7 +5542,7 @@
                 '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '00': [] // No se usa (líneas producción)
             };
             
