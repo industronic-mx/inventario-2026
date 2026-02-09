@@ -2751,6 +2751,7 @@
 
         // Modal contraseña
         function showPasswordModal(role) {
+            console.log('showPasswordModal llamado con rol:', role);
             currentRole = role;
             const titles = {
                 'mesa': 'Mesa de Control',
@@ -2790,7 +2791,7 @@
                 return;
             }
             
-            // Contraseña correcta
+            // Contraseña correcta ✓
             closeModal();
             if (currentRole === 'auditoria') {
                 showScreen('auditoria');
