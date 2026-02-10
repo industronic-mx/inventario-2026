@@ -2597,6 +2597,7 @@
         let currentScanData = null;
         let html5QrCode = null;
         let isScanning = false;
+        let esSegundoConteo = false; // Control de segundo conteo
         let registrosGuardados = []; // Simulación BD - Primer conteo
         let registrosSegundoConteo = []; // Segundo conteo independiente
         let currentFilter = 'todos';
@@ -107204,7 +107205,7 @@
         }
         
         // ========== GOOGLE SHEETS INTEGRATION ==========
-        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxaT_mU2y2nQ_0eHPP4fIwa_bEQUtksJcalu35XdhhOlBxmrdKjxmY--XrXBZPOdWDA/exec';
+        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxj2ast6F1W2g3VD7D7V1tOj8Q4Ur5amBJWNGOnlTlA0gkQKte_SJ1bEvELHtaFPGcQ/exec';
         
         async function enviarAGoogleSheets(registro) {
             try {
