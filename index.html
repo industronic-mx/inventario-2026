@@ -104036,6 +104036,64 @@
                 otroUsuario: duplicadoOtro ? duplicadoOtro.usuario : null
             };
         }
+        
+        // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01)
+        function validarMultiplesMateriales(item) {
+            // Solo aplica para Almacén 01 y MAQUILA
+            if (item.almacen !== '01') {
+                return { esMultipleMaterial: false };
+            }
+            
+            // Buscar si ya existe el folio con DIFERENTE SAP
+            const registrosConMismoFolio = [
+                ...registrosGuardados.filter(r => !r.eliminado),
+                ...escaneados
+            ].filter(r => 
+                r.folio.startsWith(item.folio.replace(/D\d*$/,'')) && // Mismo folio base (sin D)
+                r.almacen === item.almacen &&
+                r.sap !== item.sap // DIFERENTE SAP
+            );
+            
+            if (registrosConMismoFolio.length > 0) {
+                return {
+                    esMultipleMaterial: true,
+                    registrosExistentes: registrosConMismoFolio,
+                    siguienteSufijo: generarSiguienteSufijo(item.folio, item.almacen)
+                };
+            }
+            
+            return { esMultipleMaterial: false };
+        }
+        
+        // Generar siguiente sufijo disponible (D, D2, D3...)
+        function generarSiguienteSufijo(folioBase, almacen) {
+            // Limpiar sufijos existentes del folio
+            const folio = folioBase.replace(/D\d*$/, '');
+            
+            // Buscar todos los registros con este folio (con o sin D)
+            const todosLosRegistros = [
+                ...registrosGuardados.filter(r => !r.eliminado),
+                ...escaneados
+            ].filter(r => 
+                r.folio.startsWith(folio) && 
+                r.almacen === almacen
+            );
+            
+            // Extraer sufijos existentes
+            const sufijosUsados = todosLosRegistros.map(r => {
+                const match = r.folio.match(/D(\d*)$/);
+                if (!match) return 0; // Sin sufijo = 0
+                if (match[1] === '') return 1; // Solo "D" = 1
+                return parseInt(match[1]); // D2, D3... = 2, 3...
+            });
+            
+            // Encontrar el siguiente disponible
+            const maxSufijo = sufijosUsados.length > 0 ? Math.max(...sufijosUsados) : 0;
+            const siguiente = maxSufijo + 1;
+            
+            if (siguiente === 1) return folio + 'D';
+            return folio + 'D' + siguiente;
+        }
 
         // Confirmar formulario
         function confirmarFormulario() {
@@ -104043,6 +104101,13 @@
             const ubicacion = document.getElementById('form-ubicacion').value;
             const nombreContador = document.getElementById('form-contador').value.trim();
             const almacenSeleccionado = document.getElementById('form-almacen-select').value; // Leer del select
+            
+            // VALIDAR ALMACÉN OBLIGATORIO
+            if (!almacenSeleccionado || almacenSeleccionado === '') {
+                alert('⚠️ Debes seleccionar un almacén');
+                document.getElementById('form-almacen-select').focus();
+                return;
+            }
             
             // Convertir MAQUILA a 01 (físicamente es área separada pero se suma como almacén 01)
             const almacenFinal = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
@@ -104062,23 +104127,25 @@
                 return;
             }
             
-            // Validar cantidad
+            // VALIDAR CANTIDAD OBLIGATORIA Y MAYOR A 0
             if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
-                alert('Ingresa una cantidad válida');
+                alert('⚠️ Debes ingresar una cantidad válida');
+                document.getElementById('form-cantidad').focus();
                 return;
             }
             
             // Validar cantidad negativa
             if (cantidad < 0) {
-                alert('La cantidad no puede ser negativa');
+                alert('⚠️ La cantidad no puede ser negativa');
+                document.getElementById('form-cantidad').focus();
                 return;
             }
             
-            // Confirmación si cantidad es 0
+            // CANTIDAD 0 NO PERMITIDA
             if (cantidad === 0) {
-                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
-                    return;
-                }
+                alert('⚠️ La cantidad no puede ser 0\n\nSi el artículo no existe, NO escanees el marbete.');
+                document.getElementById('form-cantidad').focus();
+                return;
             }
             
             const item = {
@@ -104099,6 +104166,35 @@
                 fecha: new Date().toISOString()
             };
 
+            // PASO 1: Validar múltiples materiales (SOLO ALMACÉN 01)
+            const resultadoMultiple = validarMultiplesMateriales(item);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\nEl folio ${item.folio} ya tiene otro material:\n\n` +
+                    `Material anterior:\nSAP: ${materialAnterior.sap}\n${materialAnterior.desc}\n\n` +
+                    `Material actual:\nSAP: ${item.sap}\n${item.desc}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ = Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO = Se marcará como duplicado`;
+                
+                if (confirm(mensaje)) {
+                    // Usuario confirma que son materiales diferentes
+                    item.folio = resultadoMultiple.siguienteSufijo;
+                    item.multipleMaterial = true;
+                    agregarEscaneado(item);
+                    reproducirSonido('scan');
+                    document.getElementById('scan-form-container').style.display = 'none';
+                    currentScanData = null;
+                    return;
+                } else {
+                    // Usuario dice que NO, entonces es duplicado real
+                    // Continuar con validación normal de duplicados
+                }
+            }
+            
+            // PASO 2: Validar duplicados normales
             const resultadoDuplicado = validarDuplicado(item);
             
             if (resultadoDuplicado.esDuplicado) {
