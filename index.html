@@ -17,7 +17,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
         // Firebase configuration
         const firebaseConfig = {
@@ -35,7 +35,7 @@
         
         // Hacer disponible globalmente
         window.firebaseDB = db;
-        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs };
+        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc };
     </script>
     
     <!-- Google Sheets API Configuration -->
@@ -2761,11 +2761,21 @@
                 return;
             }
             
-            // Verificar si hay ALGUNA auditoría liberada
-            const hayAuditoriaLiberada = Object.values(auditoriasLiberadasPorAlmacen).some(lib => lib === true);
+            // Verificar si el auditor tiene AL MENOS UN almacén liberado
+            const misSAPs = sapsAuditoria.filter(s => s.auditor === selectedAuditor);
             
-            if (!hayAuditoriaLiberada) {
-                alert('🔒 Auditoría de Conteo Bloqueada\n\nMesa de Control debe:\n1. Resolver duplicados de los almacenes\n2. Liberar la auditoría\n\nVuelve más tarde.');
+            if (misSAPs.length === 0) {
+                alert('⚠️ No tienes SAPs asignados\n\nMesa de Control debe asignar SAPs primero.\n\nVuelve más tarde.');
+                return;
+            }
+            
+            // Verificar si AL MENOS UNO de sus almacenes está liberado
+            const misAlmacenes = [...new Set(misSAPs.map(s => s.almacen))];
+            const hayAlgunAlmacenLiberado = misAlmacenes.some(alm => auditoriasLiberadasPorAlmacen[alm] === true);
+            
+            if (!hayAlgunAlmacenLiberado) {
+                const almacenesTexto = misAlmacenes.join(', ');
+                alert(`🔒 Almacenes Bloqueados\n\nTienes SAPs asignados en: ${almacenesTexto}\n\nPero Mesa de Control aún no ha liberado ninguno.\n\nVuelve más tarde.`);
                 return;
             }
             
@@ -4533,17 +4543,39 @@
                 return;
             }
             
-            container.innerHTML = todosRegistros.map((r, index) => `
-                <div class="registro-card">
-                    <div class="registro-header">
+            container.innerHTML = todosRegistros.map((r, index) => {
+                // Determinar ícono de estado
+                let iconoEstado = '🟢'; // ACTIVO por defecto
+                let estadoVisual = '';
+                
+                // Buscar si hay versión más nueva de este registro
+                const hayVersionNueva = registrosGuardados.some(newer => 
+                    newer.folio === r.folio && 
+                    newer.almacen === r.almacen && 
+                    newer.sap === r.sap && 
+                    !newer.eliminado && 
+                    !newer.modificado &&
+                    new Date(newer.fecha) > new Date(r.fecha)
+                );
+                
+                if (hayVersionNueva) {
+                    iconoEstado = '🟡';
+                    estadoVisual = '<span class="registro-badge" style="background: #ff9800; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">✏️ EDITADO</span>';
+                }
+                
+                return `
+                <div class="registro-card" style="position: relative;">
+                    <div style="position: absolute; top: 12px; left: 12px; font-size: 24px;">${iconoEstado}</div>
+                    <div class="registro-header" style="padding-left: 40px;">
                         <span class="registro-folio">${r.folio}</span>
                         <span class="registro-badge almacen">📦 ${r.almacen}</span>
+                        ${estadoVisual}
                         ${r.esDuplicado ? '<span class="registro-badge duplicado">DUPLICADO</span>' : ''}
                         ${r.esPositivo ? '<span class="registro-badge positivo">POSITIVO</span>' : ''}
                     </div>
-                    <p class="registro-sap">${r.sap}</p>
-                    <p class="registro-desc">${r.desc}</p>
-                    <div class="registro-meta">
+                    <p class="registro-sap" style="padding-left: 40px;">${r.sap}</p>
+                    <p class="registro-desc" style="padding-left: 40px;">${r.desc}</p>
+                    <div class="registro-meta" style="padding-left: 40px;">
                         <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
                         <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
                         <div class="registro-actions">
@@ -4551,12 +4583,22 @@
                             <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})">🗑️</button>
                         </div>
                     </div>
-                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px;">
+                    ${r.razonEdicion ? `
+                        <div style="background: #fff3e0; border-radius: 8px; padding: 8px; margin: 8px 0 0 40px; font-size: 12px; border-left: 3px solid #ff9800;">
+                            <strong>Razón de edición:</strong> ${r.razonEdicion}
+                        </div>
+                    ` : ''}
+                    ${r.razonEliminacion ? `
+                        <div style="background: #ffebee; border-radius: 8px; padding: 8px; margin: 8px 0 0 40px; font-size: 12px; border-left: 3px solid #f44336;">
+                            <strong>Razón de eliminación:</strong> ${r.razonEliminacion}
+                        </div>
+                    ` : ''}
+                    <div style="font-size: 11px; color: #9e9e9e; margin-top: 8px; padding-left: 40px;">
                         👤 ${r.usuario} • ${r.metodo === 'QR' ? '📱' : '✍️'} ${r.metodo} • ${r.nombreContador || 'N/A'} • ${new Date(r.fecha).toLocaleString('es-MX', {day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'})}
                     </div>
-                    ${r.esDuplicado ? '<div class="registro-nota"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
+                    ${r.esDuplicado ? '<div class="registro-nota" style="margin-left: 40px;"><strong>⚠️ DUPLICADO</strong> - Usuario continuó después de alerta</div>' : ''}
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // ========== DESCARGAS ==========
@@ -5204,7 +5246,7 @@
         // ========== INICIALIZACIÓN FIREBASE ==========
         async function inicializarFirebase() {
             try {
-                const { collection, onSnapshot, query, orderBy } = window.firebaseCollections;
+                const { collection, onSnapshot, query, orderBy, doc } = window.firebaseCollections;
                 const db = window.firebaseDB;
                 
                 // Escuchar cambios en registros en tiempo real
@@ -5217,7 +5259,7 @@
                     console.log('📥 Registros sincronizados:', registrosGuardados.length);
                     
                     // Actualizar vista si está abierta
-                    if (document.getElementById('screen-mis-registros').classList.contains('active')) {
+                    if (document.getElementById('screen-mis-registros')?.classList.contains('active')) {
                         renderizarMisRegistros();
                     }
                 });
@@ -5238,7 +5280,45 @@
                     console.log('🔒 Control de almacenes sincronizado');
                 });
                 
-                console.log('✅ Firebase inicializado correctamente');
+                // NUEVO: Escuchar asignaciones de SAPs para auditores
+                onSnapshot(doc(db, 'asignaciones', 'saps-auditoria'), (docSnapshot) => {
+                    if (docSnapshot.exists()) {
+                        const data = docSnapshot.data();
+                        sapsAuditoria = data.saps || [];
+                        console.log('📋 SAPs asignados sincronizados:', sapsAuditoria.length);
+                        
+                        // Actualizar vista si auditor está viendo sus SAPs
+                        if (document.getElementById('screen-menu-auditoria-conteo')?.classList.contains('active')) {
+                            cargarSAPsAsignados();
+                        }
+                        
+                        // Actualizar lista en Mesa de Control si está viendo
+                        if (document.getElementById('screen-asignar-saps')?.classList.contains('active')) {
+                            mostrarSAPsAsignados();
+                        }
+                    } else {
+                        console.log('📋 No hay asignaciones aún');
+                        sapsAuditoria = [];
+                    }
+                });
+                
+                // NUEVO: Escuchar liberaciones de auditoría por almacén
+                const qLiberaciones = query(collection(db, 'liberaciones_auditoria'), orderBy('timestamp', 'desc'));
+                onSnapshot(qLiberaciones, (snapshot) => {
+                    auditoriasLiberadasPorAlmacen = {};
+                    snapshot.forEach((doc) => {
+                        const data = doc.data();
+                        auditoriasLiberadasPorAlmacen[data.almacen] = data.liberado;
+                    });
+                    console.log('🔓 Liberaciones sincronizadas:', auditoriasLiberadasPorAlmacen);
+                    
+                    // Actualizar panel de Mesa Control si está abierto
+                    if (document.getElementById('screen-mesa')?.classList.contains('active')) {
+                        actualizarPanelPorAlmacen();
+                    }
+                });
+                
+                console.log('✅ Firebase inicializado correctamente con todos los listeners');
                 
             } catch (error) {
                 console.error('❌ Error al inicializar Firebase:', error);
@@ -6187,13 +6267,39 @@
             }, 100);
         }
         
-        function liberarAuditoriaPorAlmacen() {
+        async function liberarAuditoriaPorAlmacen() {
             const alm = almacenSeleccionadoFases;
-            if (confirm(`🔓 Liberar Visibilidad para Almacén ${alm}\n\nLos auditores de este almacén podrán ver sus SAPs asignados.\n\n¿Continuar?`)) {
+            
+            if (!confirm(`🔓 Liberar Visibilidad para Almacén ${alm}\n\nLos auditores de este almacén podrán ver sus SAPs asignados.\n\n¿Continuar?`)) {
+                return;
+            }
+            
+            try {
+                // Actualizar estado local
                 auditoriasLiberadasPorAlmacen[alm] = true;
-                auditoriaLiberada = true; // Liberar globalmente también
+                auditoriaLiberada = true;
+                
+                // Guardar en Firebase
+                if (window.firebaseDB) {
+                    const { setDoc, doc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await setDoc(doc(db, 'liberaciones_auditoria', alm), {
+                        almacen: alm,
+                        liberado: true,
+                        liberadoPor: selectedUser || 'Mesa Control',
+                        timestamp: new Date().toISOString()
+                    });
+                    
+                    console.log(`✅ Auditoría del almacén ${alm} liberada en Firebase`);
+                }
+                
                 alert(`✅ Auditoría del Almacén ${alm} LIBERADA\n\nLos auditores asignados a este almacén ya pueden ver sus SAPs`);
                 actualizarPanelPorAlmacen();
+                
+            } catch (error) {
+                console.error('❌ Error al liberar auditoría:', error);
+                alert('⚠️ Error al liberar auditoría. Revisa la consola.');
             }
         }
         
@@ -6743,6 +6849,11 @@
                         <div style="font-size: 12px; color: ${diferencia >= 0 ? '#388e3c' : '#d32f2f'}; font-weight: 700;">
                             <strong>CAMBIO:</strong> ${signo}${diferencia} ${r.unidadMedida || 'PZA'}
                         </div>
+                        ${versionNueva.razonEdicion ? `
+                        <div style="font-size: 12px; color: #424242; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e0e0e0;">
+                            <strong>📝 Razón:</strong> ${versionNueva.razonEdicion}
+                        </div>
+                        ` : ''}
                     </div>`;
                 } else if (r.eliminado) {
                     // Mostrar info del eliminado
@@ -6751,9 +6862,15 @@
                         <div style="font-size: 12px; color: #424242; margin-bottom: 4px;">
                             <strong>Cantidad:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'}
                         </div>
+                        ${r.razonEliminacion ? `
+                        <div style="font-size: 12px; color: #d32f2f; margin-top: 8px; font-weight: 600;">
+                            <strong>🗑️ Razón:</strong> ${r.razonEliminacion}
+                        </div>
+                        ` : `
                         <div style="font-size: 12px; color: #757575;">
                             <strong>Motivo:</strong> ${r.motivoEliminacion || 'No especificado'}
                         </div>
+                        `}
                     </div>`;
                 } else {
                     // Solo mostrar cantidad si no se encontró la nueva versión
@@ -6987,33 +7104,64 @@
         
         // Mostrar MIS SAPs asignados (para auditor)
         function mostrarMisSAPsAsignados() {
-            const misSAPs = sapsAuditoria.filter(s => s.auditor === selectedUser);
+            // Filtrar SAPs del auditor Y que su almacén esté liberado
+            const misSAPs = sapsAuditoria.filter(s => 
+                s.auditor === selectedUser && 
+                auditoriasLiberadasPorAlmacen[s.almacen] === true
+            );
             
             if (misSAPs.length === 0) {
-                document.getElementById('mis-saps-asignados').innerHTML = '<p style="color: #9e9e9e; text-align: center; padding: 40px;">No tienes SAPs asignados aún</p>';
+                const todosmisSAPs = sapsAuditoria.filter(s => s.auditor === selectedUser);
+                
+                if (todosmisSAPs.length === 0) {
+                    document.getElementById('mis-saps-asignados').innerHTML = '<p style="color: #9e9e9e; text-align: center; padding: 40px;">No tienes SAPs asignados aún</p>';
+                } else {
+                    const almacenesBloqueados = [...new Set(todosmisSAPs.map(s => s.almacen))];
+                    document.getElementById('mis-saps-asignados').innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+                            <h3 style="color: #ff9800; margin-bottom: 8px;">Almacenes Bloqueados</h3>
+                            <p style="color: #757575; font-size: 14px;">
+                                Tienes ${todosmisSAPs.length} SAPs asignados en:<br>
+                                <strong>${almacenesBloqueados.join(', ')}</strong>
+                            </p>
+                            <p style="color: #9e9e9e; font-size: 13px; margin-top: 12px;">
+                                Mesa de Control debe liberar primero.
+                            </p>
+                        </div>
+                    `;
+                }
                 return;
             }
             
             let html = '';
             misSAPs.forEach(s => {
                 const progreso = calcularProgresoSAP(s.sap);
+                const estaCompleto = progreso.validados === progreso.total && progreso.total > 0;
+                
                 html += `
-                    <div onclick="abrirValidarSAP('${s.sap}')" style="background: white; border: 2px solid ${s.validado ? '#4caf50' : '#e0e0e0'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer;">
+                    <div onclick="abrirValidarSAP('${s.sap}')" style="background: white; border: 2px solid ${estaCompleto ? '#4caf50' : '#e0e0e0'}; border-radius: 12px; padding: 16px; margin-bottom: 12px; cursor: pointer;">
                         <div style="display: flex; justify-content: space-between; align-items: start;">
                             <div style="flex: 1;">
                                 <div style="font-size: 18px; font-weight: 700; color: #1a237e; margin-bottom: 4px;">${s.sap}</div>
-                                <div style="font-size: 13px; color: #757575; margin-bottom: 8px;">${s.descripcion}</div>
+                                <div style="font-size: 13px; color: #757575; margin-bottom: 4px;">${s.descripcion}</div>
+                                <div style="font-size: 11px; color: #9e9e9e; margin-bottom: 8px;">📦 Almacén ${s.almacen}</div>
                                 <div style="font-size: 12px; color: #2196f3;">
                                     ${progreso.validados} / ${progreso.total} folios validados (${progreso.porcentaje}%)
                                 </div>
                             </div>
-                            <div>
-                                ${s.validado ? '✅' : progreso.validados > 0 ? '⏳' : '⬜'}
+                            <div style="font-size: 32px;">
+                                ${estaCompleto ? '✅' : progreso.validados > 0 ? '⏳' : '⬜'}
                             </div>
                         </div>
                         ${progreso.total > 0 ? `
                         <div style="margin-top: 12px; background: #f5f5f5; border-radius: 8px; height: 8px; overflow: hidden;">
-                            <div style="width: ${progreso.porcentaje}%; height: 100%; background: #4caf50; transition: width 0.3s;"></div>
+                            <div style="width: ${progreso.porcentaje}%; height: 100%; background: ${estaCompleto ? '#4caf50' : '#2196f3'}; transition: width 0.3s;"></div>
+                        </div>
+                        ` : ''}
+                        ${estaCompleto ? `
+                        <div style="margin-top: 8px; text-align: center; font-size: 12px; color: #4caf50; font-weight: 600;">
+                            ✅ SAP COMPLETADO
                         </div>
                         ` : ''}
                     </div>
@@ -7151,7 +7299,8 @@
                 porcentajeDif,
                 observaciones,
                 auditor: selectedUser,
-                fecha: new Date().toISOString()
+                fecha: new Date().toISOString(),
+                tieneDiferencia: diferencia !== 0
             };
             
             // Actualizar o agregar
@@ -7169,10 +7318,34 @@
                     const db = window.firebaseDB;
                     
                     await addDoc(collection(db, 'validaciones-auditoria'), validacion);
-                    console.log('✓ Validación guardada en Firebase');
+                    console.log('✅ Validación guardada en Firebase');
                 }
             } catch (error) {
-                console.error('Error al guardar validación:', error);
+                console.error('❌ Error al guardar validación:', error);
+            }
+            
+            // SI HAY DIFERENCIA, enviar corrección a Google Sheets
+            if (diferencia !== 0) {
+                try {
+                    const correccion = {
+                        folio,
+                        almacen,
+                        sap,
+                        desc: registro.desc,
+                        cantidadOriginal: registro.cantidad,
+                        cantidadCorrecta: cantidadValidada,
+                        diferencia,
+                        observaciones,
+                        auditor: selectedUser,
+                        fecha: new Date().toISOString(),
+                        tipo: 'CORRECCIÓN AUDITORÍA'
+                    };
+                    
+                    await enviarAGoogleSheets(correccion);
+                    console.log('✅ Corrección enviada a Google Sheets');
+                } catch (error) {
+                    console.error('❌ Error al enviar corrección a Sheets:', error);
+                }
             }
             
             // Marcar SAP como validado si todos sus folios están validados
@@ -7183,10 +7356,31 @@
                 const sapIndex = sapsAuditoria.findIndex(s => s.sap === sap);
                 if (sapIndex >= 0) {
                     sapsAuditoria[sapIndex].validado = true;
+                    
+                    // Actualizar en Firebase
+                    try {
+                        if (window.firebaseDB) {
+                            const { setDoc, doc } = window.firebaseCollections;
+                            const db = window.firebaseDB;
+                            
+                            await setDoc(doc(db, 'asignaciones', 'saps-auditoria'), {
+                                saps: sapsAuditoria,
+                                fecha: new Date().toISOString()
+                            });
+                            console.log('✅ SAP marcado como validado en Firebase');
+                        }
+                    } catch (error) {
+                        console.error('❌ Error al actualizar SAP:', error);
+                    }
                 }
             }
             
-            alert(diferencia === 0 ? '✅ Validación correcta - sin diferencias' : `⚠️ Validación guardada - Diferencia: ${diferencia > 0 ? '+' : ''}${diferencia}`);
+            // Mensaje mejorado con emoji y detalles
+            if (diferencia === 0) {
+                alert('✅ VALIDACIÓN CORRECTA\n\nNo hay diferencias.\nFolio verificado correctamente.');
+            } else {
+                alert(`⚠️ DIFERENCIA DETECTADA\n\nDiferencia: ${diferencia > 0 ? '+' : ''}${diferencia}\nCantidad original: ${registro.cantidad}\nCantidad correcta: ${cantidadValidada}\n\n✅ Corrección enviada a Google Sheets`);
+            }
             
             abrirValidarSAP(sap);
         }
