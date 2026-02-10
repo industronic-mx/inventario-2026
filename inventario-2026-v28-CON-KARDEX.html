@@ -2421,91 +2421,6 @@
                     </div>
                 </div>
 
-                <!-- Segundo Conteo -->
-                <div style="padding: 0 16px; margin-top: 32px;">
-                    <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
-                        🔄 Segundo Conteo
-                    </h3>
-                    <div style="background: white; border-radius: 12px; padding: 16px;">
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 00 - Líneas Producción</strong>
-                                <p id="status-2do-00" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('00')">
-                                Liberar
-                            </button>
-                        </div>
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 01 - Materia Prima</strong>
-                                <p id="status-2do-01" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('01')">
-                                Liberar
-                            </button>
-                        </div>
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 30 - Transformadores</strong>
-                                <p id="status-2do-30" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('30')">
-                                Liberar
-                            </button>
-                        </div>
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 31 - Placas</strong>
-                                <p id="status-2do-31" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('31')">
-                                Liberar
-                            </button>
-                        </div>
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 32 - Arneses</strong>
-                                <p id="status-2do-32" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('32')">
-                                Liberar
-                            </button>
-                        </div>
-                        <div class="segundo-conteo-item">
-                            <div>
-                                <strong>📦 33 - Gabinetes</strong>
-                                <p id="status-2do-33" style="font-size: 12px; color: #757575; margin-top: 4px;">
-                                    ❌ No liberado
-                                </p>
-                            </div>
-                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 13px;" onclick="liberarSegundoConteo('33')">
-                                Liberar
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Botones de descarga -->
-                    <div style="display: flex; gap: 12px; margin-top: 16px;">
-                        <button class="btn-primary" style="flex: 1;" onclick="descargarPrimerConteo()">
-                            📥 Primer Conteo
-                        </button>
-                        <button class="btn-primary" style="flex: 1;" onclick="descargarSegundoConteo()">
-                            📥 Segundo Conteo
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Reportes Completos -->
                 <div style="padding: 0 16px; margin-top: 32px;">
                     <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
@@ -103638,7 +103553,6 @@
             '33': false
         };
         
-        let esSegundoConteo = false; // Flag para saber si estamos en modo segundo conteo
         let pantallaAnterior = 'login'; // Rastrear de dónde viene
 
 
@@ -103993,7 +103907,7 @@
             }
 
             // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
-            if (!esSegundoConteo && almacenesBloqueados[almacenCod]) {
+            if (almacenesBloqueados[almacenCod]) {
                 alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
@@ -104300,7 +104214,7 @@
             }
             
             // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
-            if (!esSegundoConteo && almacenesBloqueados[almacen]) {
+            if (almacenesBloqueados[almacen]) {
                 alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
@@ -104449,7 +104363,7 @@
                 // Guardar cada registro en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                const coleccion = 'registros';
                 
                 for (let i = 0; i < total; i++) {
                     // INDICADOR VISUAL - Mostrar progreso
@@ -106664,7 +106578,7 @@
             console.log('💾 TALLER: Intentando guardar registro...');
             
             // Validar almacén bloqueado
-            if (!esSegundoConteo && almacenesBloqueados['33']) {
+            if (almacenesBloqueados['33']) {
                 alert('⚠️ Almacén 33 cerrado\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
@@ -106748,7 +106662,7 @@
                 // Guardar en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                const coleccion = 'registros';
                 
                 await addDoc(collection(db, coleccion), {
                     ...registro,
@@ -106861,7 +106775,7 @@
             }
             
             // VALIDAR SI ALMACÉN ESTÁ BLOQUEADO
-            if (!esSegundoConteo && almacenesBloqueados[almacen]) {
+            if (almacenesBloqueados[almacen]) {
                 alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
@@ -106933,7 +106847,7 @@
                 // Guardar en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                const coleccion = 'registros';
                 
                 await addDoc(collection(db, coleccion), {
                     ...registro,
@@ -107033,7 +106947,7 @@
             }
             
             // Validar almacén bloqueado
-            if (!esSegundoConteo && almacenesBloqueados[almacenFinal]) {
+            if (almacenesBloqueados[almacenFinal]) {
                 alert('⚠️ Este almacén ya fue cerrado por Auditoría\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
             }
@@ -107077,7 +106991,7 @@
                 // Guardar en Firebase
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
-                const coleccion = esSegundoConteo ? 'registros_segundo_conteo' : 'registros';
+                const coleccion = 'registros';
                 
                 await addDoc(collection(db, coleccion), {
                     ...registro,
@@ -107150,7 +107064,7 @@
             console.log('🏭 TALLER: Almacén forzado a:', almacenCod);
             
             // VALIDAR SI ALMACÉN 33 ESTÁ BLOQUEADO
-            if (!esSegundoConteo && almacenesBloqueados[almacenCod]) {
+            if (almacenesBloqueados[almacenCod]) {
                 console.error('🔒 TALLER: Almacén 33 bloqueado');
                 alert('⚠️ Almacén 33 (Gabinetes) cerrado\n\nNo se pueden agregar más registros al primer conteo.');
                 return;
