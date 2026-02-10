@@ -105385,17 +105385,18 @@
         }
         
         function renderizarMisRegistros() {
-            // FILTRAR según pestaña activa
+            // FILTRAR según pestaña activa - INCLUIR eliminados para mostrarlos tachados
             let misRegistros = registrosGuardados.filter(r => 
-                r.usuario === selectedUser && 
-                !r.eliminado
+                r.usuario === selectedUser
             );
             
             // Aplicar filtro de tipo
             if (filtroMisRegistros === 'activos') {
-                misRegistros = misRegistros.filter(r => !r.modificado);
+                misRegistros = misRegistros.filter(r => !r.modificado && !r.eliminado);
             } else if (filtroMisRegistros === 'editados') {
-                misRegistros = misRegistros.filter(r => r.modificado);
+                misRegistros = misRegistros.filter(r => r.modificado && !r.eliminado);
+            } else if (filtroMisRegistros === 'todos') {
+                // Mostrar todos incluyendo eliminados
             }
             
             const container = document.getElementById('container-mis-registros');
@@ -105403,8 +105404,9 @@
             
             if (!container) return;
             
-            // Actualizar contador
-            count.textContent = `${misRegistros.length} registro${misRegistros.length !== 1 ? 's' : ''}`;
+            // Actualizar contador (solo activos)
+            const activos = misRegistros.filter(r => !r.eliminado);
+            count.textContent = `${activos.length} registro${activos.length !== 1 ? 's' : ''} activo${activos.length !== 1 ? 's' : ''}`;
             
             if (misRegistros.length === 0) {
                 const mensaje = filtroMisRegistros === 'editados' 
@@ -105428,8 +105430,13 @@
             container.innerHTML = registrosFinales.map((r, index) => {
                 let estadoVisual = '';
                 let iconoEstado = '';
+                const esEliminado = r.eliminado;
                 
-                if (r.modificado) {
+                if (esEliminado) {
+                    // ELIMINADO/CANCELADO
+                    estadoVisual = '<span class="registro-badge" style="background: #f44336; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">❌ CANCELADO</span>';
+                    iconoEstado = '🔴';
+                } else if (r.modificado) {
                     // EDITADO
                     estadoVisual = '<span class="registro-badge" style="background: #ff9800; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">✏️ EDITADO</span>';
                     iconoEstado = '🟡';
@@ -105438,31 +105445,42 @@
                     iconoEstado = '🟢';
                 }
                 
-                if (r.esDuplicado) {
-                    estadoVisual += ' <span class="registro-badge" style="background: #f44336; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">⚠️ DUPLICADO</span>';
+                if (r.esDuplicado && !esEliminado) {
+                    estadoVisual += ' <span class="registro-badge" style="background: #ff9800; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">⚠️ DUPLICADO</span>';
                 }
                 
-                // Botones de acción
-                const botonesAccion = `<div class="registro-actions">
+                if (r.esCorrectoFinal) {
+                    estadoVisual += ' <span class="registro-badge" style="background: #4caf50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700;">✓ CORRECTO</span>';
+                }
+                
+                // Botones de acción solo si NO está eliminado
+                const botonesAccion = !esEliminado ? `<div class="registro-actions">
                     <button class="btn-icon" onclick="editarRegistro(${registrosGuardados.indexOf(r)})" title="Editar">✏️</button>
                     <button class="btn-icon delete" onclick="eliminarRegistro(${registrosGuardados.indexOf(r)})" title="Eliminar">🗑️</button>
-                </div>`;
+                </div>` : '';
+                
+                const estiloTachado = esEliminado ? 'text-decoration: line-through; opacity: 0.6;' : '';
                 
                 return `
-                <div class="registro-card" style="position: relative;">
+                <div class="registro-card" style="position: relative; ${esEliminado ? 'background: #ffebee; border-left: 4px solid #f44336;' : ''}">
                     <div style="position: absolute; top: 12px; left: 12px; font-size: 24px;">${iconoEstado}</div>
-                    <div class="registro-header" style="padding-left: 40px;">
+                    <div class="registro-header" style="padding-left: 40px; ${estiloTachado}">
                         <span class="registro-folio">${r.folio}</span>
                         <span class="registro-badge almacen">📦 ${r.almacen}</span>
                         ${estadoVisual}
                     </div>
-                    <p class="registro-sap" style="padding-left: 40px;">${r.sap}</p>
-                    <p class="registro-desc" style="padding-left: 40px;">${r.desc}</p>
-                    <div class="registro-meta" style="padding-left: 40px;">
+                    <p class="registro-sap" style="padding-left: 40px; ${estiloTachado}">${r.sap}</p>
+                    <p class="registro-desc" style="padding-left: 40px; ${estiloTachado}">${r.desc}</p>
+                    <div class="registro-meta" style="padding-left: 40px; ${estiloTachado}">
                         <span>Cant: <strong>${r.cantidad} ${r.unidadMedida || 'PZA'}</strong></span>
                         <span>Ubic: <strong>${r.ubicacion || 'N/A'}</strong></span>
                         ${botonesAccion}
                     </div>
+                    ${r.motivoEliminacion ? `
+                        <div style="background: #ffcdd2; border-radius: 8px; padding: 8px; margin: 8px 0 0 40px; font-size: 12px; border-left: 3px solid #f44336;">
+                            <strong>🚫 Motivo de cancelación:</strong> ${r.motivoEliminacion}
+                        </div>
+                    ` : ''}
                     ${r.razonEdicion ? `
                         <div style="background: #fff3e0; border-radius: 8px; padding: 8px; margin: 8px 0 0 40px; font-size: 12px; border-left: 3px solid #ff9800;">
                             <strong>Razón de edición:</strong> ${r.razonEdicion}
@@ -107190,6 +107208,17 @@
         
         async function enviarAGoogleSheets(registro) {
             try {
+                // Determinar a qué pestaña debe ir según el tipo de registro
+                let tipoRegistro = 'REGISTROS'; // Por defecto
+                
+                if (registro.eliminado) {
+                    tipoRegistro = 'ELIMINADOS';
+                } else if (registro.modificado) {
+                    tipoRegistro = 'MODIFICADOS';
+                } else if (registro.enRevision) {
+                    tipoRegistro = 'REVISIONES';
+                }
+                
                 const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -107198,11 +107227,12 @@
                     },
                     body: JSON.stringify({
                         action: 'add',
+                        tipoRegistro: tipoRegistro,
                         registro: registro
                     })
                 });
                 
-                console.log('✅ Enviado a Google Sheets');
+                console.log(`✅ Enviado a Google Sheets → ${tipoRegistro}`);
             } catch (error) {
                 console.error('❌ Error al enviar a Google Sheets:', error);
             }
@@ -107219,6 +107249,7 @@
                     },
                     body: JSON.stringify({
                         action: 'correccion_auditoria',
+                        tipoRegistro: 'CORRECCIONES',
                         correccion: {
                             tipo: 'CORRECCIÓN AUDITORÍA',
                             fecha: new Date().toISOString(),
@@ -107240,6 +107271,60 @@
                 console.log('✅ Corrección enviada a Google Sheets (pestaña CORRECCIONES)');
             } catch (error) {
                 console.error('❌ Error al enviar corrección a Sheets:', error);
+            }
+        }
+        
+        // NUEVA: Enviar registros eliminados
+        async function enviarRegistroEliminado(registro) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'eliminado',
+                        tipoRegistro: 'ELIMINADOS',
+                        registro: {
+                            ...registro,
+                            motivoEliminacion: registro.motivoEliminacion || '',
+                            eliminadoPor: registro.eliminadoPor || '',
+                            fechaEliminacion: registro.fechaEliminacion || new Date().toISOString()
+                        }
+                    })
+                });
+                
+                console.log('✅ Registro eliminado enviado a Google Sheets (pestaña ELIMINADOS)');
+            } catch (error) {
+                console.error('❌ Error al enviar eliminado a Sheets:', error);
+            }
+        }
+        
+        // NUEVA: Enviar registros modificados
+        async function enviarRegistroModificado(registro) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'modificado',
+                        tipoRegistro: 'MODIFICADOS',
+                        registro: {
+                            ...registro,
+                            razonEdicion: registro.razonEdicion || '',
+                            modificadoPor: registro.usuario || '',
+                            fechaModificacion: new Date().toISOString()
+                        }
+                    })
+                });
+                
+                console.log('✅ Registro modificado enviado a Google Sheets (pestaña MODIFICADOS)');
+            } catch (error) {
+                console.error('❌ Error al enviar modificado a Sheets:', error);
             }
         }
         
@@ -108048,6 +108133,128 @@
             renderizarDuplicados();
         }
         
+        // RESOLUCIÓN DE DUPLICADOS
+        async function marcarComoCorrecto(registroId, folio, almacen, sap) {
+            if (!confirm(`✅ ¿Marcar este registro como CORRECTO?\n\nTodos los demás registros de:\nFolio: ${folio}\nAlmacén: ${almacen}\nSAP: ${sap}\n\nSerán ELIMINADOS automáticamente.`)) {
+                return;
+            }
+            
+            try {
+                const { doc, updateDoc, collection, query, where, getDocs } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                
+                // 1. Marcar el correcto
+                await updateDoc(doc(db, 'registros', registroId), {
+                    esCorrectoFinal: true,
+                    duplicadoResuelto: true,
+                    fechaResolucion: new Date().toISOString(),
+                    resueltoPor: selectedUser || 'Mesa de Control'
+                });
+                
+                // 2. Buscar y eliminar todos los demás del mismo grupo
+                const q = query(
+                    collection(db, 'registros'),
+                    where('folio', '==', folio),
+                    where('almacen', '==', almacen),
+                    where('sap', '==', sap)
+                );
+                
+                const snapshot = await getDocs(q);
+                const promises = [];
+                
+                snapshot.forEach((docSnap) => {
+                    if (docSnap.id !== registroId) {
+                        promises.push(
+                            updateDoc(doc(db, 'registros', docSnap.id), {
+                                eliminado: true,
+                                duplicadoResuelto: true,
+                                motivoEliminacion: 'Duplicado resuelto por Mesa de Control',
+                                fechaEliminacion: new Date().toISOString(),
+                                eliminadoPor: selectedUser || 'Mesa de Control'
+                            })
+                        );
+                    }
+                });
+                
+                await Promise.all(promises);
+                
+                // Actualizar local y enviar a Sheets
+                const registrosEliminadosParaSheets = [];
+                registrosGuardados = registrosGuardados.map(r => {
+                    if (r.folio === folio && r.almacen === almacen && r.sap === sap) {
+                        if (r.id === registroId) {
+                            return { ...r, esCorrectoFinal: true, duplicadoResuelto: true };
+                        } else {
+                            const registroEliminado = { 
+                                ...r, 
+                                eliminado: true, 
+                                duplicadoResuelto: true, 
+                                motivoEliminacion: 'Duplicado resuelto por Mesa de Control',
+                                eliminadoPor: selectedUser || 'Mesa de Control',
+                                fechaEliminacion: new Date().toISOString()
+                            };
+                            registrosEliminadosParaSheets.push(registroEliminado);
+                            return registroEliminado;
+                        }
+                    }
+                    return r;
+                });
+                
+                // Enviar eliminados a Google Sheets (pestaña ELIMINADOS)
+                for (const reg of registrosEliminadosParaSheets) {
+                    await enviarRegistroEliminado(reg);
+                }
+                
+                alert(`✅ Duplicado resuelto correctamente\n\nSe mantuvo el registro seleccionado\nLos demás fueron eliminados`);
+                
+                renderizarDuplicados();
+                actualizarContadores();
+                
+            } catch (error) {
+                console.error('Error al resolver duplicado:', error);
+                alert('❌ Error al resolver duplicado: ' + error.message);
+            }
+        }
+        
+        async function eliminarRegistroDuplicado(registroId) {
+            if (!confirm('❌ ¿Eliminar este registro?\n\nEsta acción se puede revertir desde Historial.')) {
+                return;
+            }
+            
+            try {
+                const { doc, updateDoc } = window.firebaseCollections;
+                const db = window.firebaseDB;
+                
+                await updateDoc(doc(db, 'registros', registroId), {
+                    eliminado: true,
+                    motivoEliminacion: 'Eliminado manualmente por Mesa de Control',
+                    fechaEliminacion: new Date().toISOString(),
+                    eliminadoPor: selectedUser || 'Mesa de Control'
+                });
+                
+                // Actualizar local
+                const registro = registrosGuardados.find(r => r.id === registroId);
+                if (registro) {
+                    registro.eliminado = true;
+                    registro.motivoEliminacion = 'Eliminado manualmente por Mesa de Control';
+                    registro.eliminadoPor = selectedUser || 'Mesa de Control';
+                    registro.fechaEliminacion = new Date().toISOString();
+                    
+                    // Enviar a Google Sheets (pestaña ELIMINADOS)
+                    await enviarRegistroEliminado(registro);
+                }
+                
+                alert('✅ Registro eliminado');
+                
+                renderizarDuplicados();
+                actualizarContadores();
+                
+            } catch (error) {
+                console.error('Error al eliminar registro:', error);
+                alert('❌ Error al eliminar: ' + error.message);
+            }
+        }
+        
         function renderizarDuplicados() {
             const query = document.getElementById('search-duplicados').value.toLowerCase();
             let registros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
@@ -108061,9 +108268,14 @@
             });
             
             let duplicados = [];
+            let gruposPendientes = 0;
             Object.values(duplicadosMap).forEach(grupo => {
                 if (grupo.length > 1) {
                     duplicados.push(...grupo);
+                    // Contar como pendiente si NO todos están resueltos
+                    if (!grupo.every(r => r.duplicadoResuelto)) {
+                        gruposPendientes++;
+                    }
                 }
             });
             
@@ -108072,7 +108284,9 @@
             if (currentUsuarioDup !== 'todos') duplicados = duplicados.filter(r => r.usuario === currentUsuarioDup);
             if (query) duplicados = duplicados.filter(r => r.folio.toLowerCase().includes(query) || r.sap.toLowerCase().includes(query));
             
-            document.getElementById('count-duplicados').textContent = `${duplicados.length} duplicados encontrados`;
+            // Actualizar contadores
+            document.getElementById('count-duplicados').textContent = `${duplicados.length} registros duplicados`;
+            document.getElementById('count-dup-header').textContent = gruposPendientes;
             
             if (duplicados.length === 0) {
                 document.getElementById('container-duplicados').innerHTML = '<div style="text-align: center; padding: 40px; color: #9e9e9e;">No hay duplicados</div>';
@@ -108090,14 +108304,47 @@
             Object.values(grupos).forEach(grupo => {
                 if (grupo.length < 2) return;
                 const r1 = grupo[0];
-                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid #f57c00;">
-                    <div style="font-weight: 700; color: #1a237e; margin-bottom: 8px;">⚠️ Folio ${r1.folio} | ${r1.almacen} | SAP ${r1.sap}</div>
+                
+                // Verificar si ya fue resuelto
+                const yaResuelto = grupo.every(r => r.duplicadoResuelto);
+                
+                html += `<div style="background: white; margin: 8px; border-radius: 12px; padding: 16px; border-left: 4px solid ${yaResuelto ? '#4caf50' : '#f57c00'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-weight: 700; color: #1a237e;">⚠️ Folio ${r1.folio} | ${r1.almacen} | SAP ${r1.sap}</div>
+                        ${yaResuelto ? '<div style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 700;">✅ RESUELTO</div>' : ''}
+                    </div>
                     <div style="font-size: 13px; color: #757575; margin-bottom: 12px;">${r1.desc}</div>`;
                 
                 grupo.forEach((r, i) => {
-                    html += `<div style="background: #f5f5f5; padding: 8px; border-radius: 6px; margin-bottom: 6px;">
-                        <div style="font-size: 13px;"><strong>Registro ${i+1}:</strong> ${r.cantidad} ${r.unidadMedida || 'PZA'}</div>
-                        <div style="font-size: 12px; color: #757575;">Usuario: ${r.usuario} | ${new Date(r.fecha).toLocaleString('es-MX')}</div>
+                    const esEliminado = r.eliminado;
+                    const esCorrecto = r.esCorrectoFinal;
+                    
+                    html += `<div style="background: ${esEliminado ? '#ffebee' : esCorrecto ? '#e8f5e9' : '#f5f5f5'}; padding: 12px; border-radius: 8px; margin-bottom: 8px; border: 2px solid ${esEliminado ? '#ef5350' : esCorrecto ? '#4caf50' : 'transparent'};">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                            <div style="flex: 1;">
+                                <div style="font-size: 14px; font-weight: 600; ${esEliminado ? 'text-decoration: line-through; color: #999;' : ''}">
+                                    ${esCorrecto ? '✅ ' : esEliminado ? '❌ ' : ''}Registro ${i+1}: ${r.cantidad} ${r.unidadMedida || 'PZA'}
+                                </div>
+                                <div style="font-size: 12px; color: #757575; margin-top: 4px;">
+                                    Usuario: ${r.usuario} | ${new Date(r.fecha).toLocaleString('es-MX')}
+                                </div>
+                                ${r.ubicacion ? `<div style="font-size: 12px; color: #757575;">Ubicación: ${r.ubicacion}</div>` : ''}
+                                ${esEliminado ? `<div style="font-size: 11px; color: #d32f2f; margin-top: 4px; font-weight: 600;">🚫 ${r.motivoEliminacion || 'Duplicado resuelto por Mesa'}</div>` : ''}
+                                ${esCorrecto ? `<div style="font-size: 11px; color: #2e7d32; margin-top: 4px; font-weight: 600;">✓ Registro correcto seleccionado</div>` : ''}
+                            </div>
+                        </div>
+                        ${!yaResuelto ? `
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
+                            <button onclick="marcarComoCorrecto('${r.id}', '${r.folio}', '${r.almacen}', '${r.sap}')" 
+                                    style="flex: 1; background: #4caf50; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                ✓ Este es correcto
+                            </button>
+                            <button onclick="eliminarRegistroDuplicado('${r.id}')" 
+                                    style="flex: 1; background: #f44336; color: white; border: none; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer;">
+                                ✗ Eliminar este
+                            </button>
+                        </div>
+                        ` : ''}
                     </div>`;
                 });
                 
