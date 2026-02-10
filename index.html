@@ -6324,6 +6324,27 @@
                     const icono = estaCompleto ? '✅' : progreso.validados > 0 ? '⏳' : '⬜';
                     const color = estaCompleto ? '#4caf50' : progreso.validados > 0 ? '#2196f3' : '#bdbdbd';
                     
+                    // Calcular diferencias de este SAP
+                    const validacionesSAP = validacionesAuditoria.filter(v => v.sap === s.sap);
+                    const conDiferencia = validacionesSAP.filter(v => v.diferencia !== 0);
+                    const totalDiferencia = conDiferencia.reduce((sum, v) => sum + v.diferencia, 0);
+                    
+                    let infoDiferencias = '';
+                    if (estaCompleto && conDiferencia.length > 0) {
+                        const signo = totalDiferencia > 0 ? '+' : '';
+                        infoDiferencias = `
+                            <div style="font-size: 10px; color: #ff6f00; margin-top: 4px; font-weight: 600;">
+                                ⚠️ ${conDiferencia.length} difs (Total: ${signo}${totalDiferencia} PZA)
+                            </div>
+                        `;
+                    } else if (estaCompleto && conDiferencia.length === 0) {
+                        infoDiferencias = `
+                            <div style="font-size: 10px; color: #4caf50; margin-top: 4px; font-weight: 600;">
+                                ✓ Sin diferencias
+                            </div>
+                        `;
+                    }
+                    
                     html += `
                         <div style="background: white; border-radius: 6px; padding: 8px; margin-bottom: 6px; border-left: 3px solid ${color};">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -6337,7 +6358,8 @@
                             <div style="font-size: 10px; color: #757575; margin-bottom: 4px;">
                                 ${progreso.validados}/${progreso.total} folios
                             </div>
-                            <div style="background: #e0e0e0; border-radius: 4px; height: 4px; overflow: hidden;">
+                            ${infoDiferencias}
+                            <div style="background: #e0e0e0; border-radius: 4px; height: 4px; overflow: hidden; margin-top: 4px;">
                                 <div style="width: ${progreso.porcentaje}%; height: 100%; background: ${color}; transition: width 0.3s;"></div>
                             </div>
                         </div>
@@ -7342,16 +7364,21 @@
                     const validado = validacionesAuditoria.find(v => v.folio === f.folio && v.almacen === f.almacen && v.sap === f.sap);
                     
                     htmlFolios += `
-                        <div onclick="abrirValidarFolio('${f.folio}', '${f.almacen}', '${f.sap}')" style="background: white; border: 2px solid ${validado ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: pointer;">
+                        <div style="background: white; border: 2px solid ${validado ? '#4caf50' : '#e0e0e0'}; border-radius: 8px; padding: 12px; margin-bottom: 8px; position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div style="flex: 1;">
+                                <div style="flex: 1;" onclick="abrirValidarFolio('${f.folio}', '${f.almacen}', '${f.sap}')" style="cursor: pointer;">
                                     <div style="font-weight: 600;">Folio: ${f.folio} | Almacén: ${f.almacen}</div>
                                     <div style="font-size: 13px; color: #757575; margin-top: 4px;">Cantidad capturada: ${f.cantidad} ${f.unidadMedida || 'PZA'}</div>
                                     <div style="font-size: 12px; color: #9e9e9e; margin-top: 4px;">Ubicación: ${f.ubicacion || 'N/A'} | Contó: ${f.nombreContador}</div>
                                     ${validado ? `<div style="font-size: 12px; color: #4caf50; margin-top: 4px;">✓ Validado: ${validado.cantidadValidada} ${validado.diferencia !== 0 ? `(Dif: ${validado.diferencia > 0 ? '+' : ''}${validado.diferencia})` : ''}</div>` : ''}
                                 </div>
-                                <div style="font-size: 24px;">
-                                    ${validado ? (validado.diferencia === 0 ? '✅' : '⚠️') : '⬜'}
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <div style="font-size: 24px;">
+                                        ${validado ? (validado.diferencia === 0 ? '✅' : '⚠️') : '⬜'}
+                                    </div>
+                                    <button onclick="event.stopPropagation(); eliminarFolioAuditoria(${registrosGuardados.indexOf(f)})" style="background: #ffebee; color: #c62828; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 12px; font-weight: 600;">
+                                        🗑️ Eliminar
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -7515,6 +7542,97 @@
             }
             
             abrirValidarSAP(sap);
+        }
+        
+        // Eliminar folio individual desde auditoría
+        async function eliminarFolioAuditoria(index) {
+            const registro = registrosGuardados[index];
+            if (!registro || registro.eliminado) {
+                alert('Registro no encontrado');
+                return;
+            }
+
+            // Confirmar eliminación
+            if (!confirm(`🗑️ ¿ELIMINAR este folio?\n\nFolio: ${registro.folio}\nSAP: ${registro.sap}\nCantidad: ${registro.cantidad} ${registro.unidadMedida || 'PZA'}\n\n⚠️ Se eliminará de la lista de validación\n⚠️ Esta acción no se puede deshacer`)) {
+                return;
+            }
+            
+            // Pedir RAZÓN (obligatorio)
+            const razon = prompt(
+                `¿POR QUÉ eliminas este folio?\n\n` +
+                `Folio: ${registro.folio}\n` +
+                `SAP: ${registro.sap}\n\n` +
+                `Ejemplos:\n` +
+                `- "Duplicado con F100"\n` +
+                `- "Marbete incorrecto"\n` +
+                `- "Material no corresponde"\n\n` +
+                `Escribe la razón:`
+            );
+            
+            if (!razon || razon.trim() === '') {
+                alert('⚠️ Debes indicar la razón de la eliminación');
+                return;
+            }
+            
+            try {
+                // Guardar en historial
+                if (!registro.versiones) {
+                    registro.versiones = [];
+                }
+                
+                registro.versiones.push({
+                    version: registro.versiones.length + 1,
+                    fecha: new Date().toISOString(),
+                    accion: 'ELIMINADO EN AUDITORÍA',
+                    usuario: selectedUser,
+                    razon: razon.trim(),
+                    datosAnteriores: {
+                        folio: registro.folio,
+                        sap: registro.sap,
+                        cantidad: registro.cantidad,
+                        ubicacion: registro.ubicacion
+                    }
+                });
+                
+                // Marcar como eliminado
+                registro.eliminado = true;
+                registro.fechaEliminacion = new Date().toISOString();
+                registro.eliminadoPor = selectedUser;
+                registro.razonEliminacion = razon.trim();
+                
+                // Actualizar en Firebase
+                if (registro.id && window.firebaseDB) {
+                    const { doc, updateDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await updateDoc(doc(db, 'registros', registro.id), {
+                        eliminado: true,
+                        fechaEliminacion: registro.fechaEliminacion,
+                        eliminadoPor: registro.eliminadoPor,
+                        razonEliminacion: registro.razonEliminacion,
+                        versiones: registro.versiones
+                    });
+                }
+                
+                // Enviar a Google Sheets
+                await enviarAGoogleSheets({
+                    ...registro,
+                    eliminado: true,
+                    modificado: false
+                });
+                
+                console.log('✅ Folio eliminado desde auditoría');
+                
+                // Confirmación visual
+                alert(`✅ FOLIO ELIMINADO\n\nFolio: ${registro.folio}\nRazón: ${razon.trim()}\n\n✓ Ya no aparecerá en validación`);
+                
+                // Recargar vista de SAP
+                abrirValidarSAP(sapActualValidando);
+                
+            } catch (error) {
+                console.error('❌ Error al eliminar folio:', error);
+                alert('⚠️ Error al eliminar:\n\n' + error.message);
+            }
         }
         
         // Volver a validar SAP
