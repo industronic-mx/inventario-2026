@@ -1881,7 +1881,8 @@
                 <div style="margin-bottom: 16px;">
                     <label style="font-size: 13px; color: #757575; margin-bottom: 4px; display: block;">Ver almacén:</label>
                     <select id="select-almacen-fases" onchange="actualizarPanelPorAlmacen()" style="width: 100%; padding: 10px; border: 2px solid #90caf9; border-radius: 8px; font-size: 14px; color: #1a237e; font-weight: 600;">
-                        <option value="01">01 - Materia Prima + MAQUILA</option>
+                        <option value="01">01 - Materia Prima</option>
+                        <option value="01-MAQUILA">MAQUILA (Área 01)</option>
                         <option value="30">30 - Transformadores</option>
                         <option value="31">31 - Placas</option>
                         <option value="32">32 - Arneses</option>
@@ -2620,7 +2621,7 @@
 
                 <div class="two-cols" style="margin-top: 16px;">
                     <button class="btn-secondary" onclick="cerrarModalEditar()">Cancelar</button>
-                    <button class="btn-primary" onclick="guardarEdicion()">💾 Guardar</button>
+                    <button id="btn-guardar-edicion" class="btn-primary" onclick="guardarEdicion()">💾 Guardar</button>
                 </div>
             </div>
         </div>
@@ -3766,6 +3767,17 @@
                     `o escribe la razón:`
                 );
                 
+                // BLOQUEAR BOTÓN
+                const btnGuardar = document.getElementById('btn-guardar-edicion');
+                if (!btnGuardar) {
+                    console.error('❌ Botón guardar edición no encontrado');
+                    return;
+                }
+                
+                btnGuardar.disabled = true;
+                const textoOriginal = btnGuardar.textContent;
+                btnGuardar.textContent = '⏳ Guardando...';
+                
                 try {
                     // Guardar en historial del registro VIEJO
                     if (!registroViejo.versiones) {
@@ -3835,6 +3847,8 @@
                         ]
                     };
                     
+                    btnGuardar.textContent = '📊 Guardando en Firebase...';
+                    
                     // Guardar en Firebase
                     const { collection, addDoc } = window.firebaseCollections;
                     const db = window.firebaseDB;
@@ -3844,6 +3858,8 @@
                         timestamp: new Date().toISOString(),
                         sincronizado: true
                     });
+                    
+                    btnGuardar.textContent = '📊 Sincronizando Sheets...';
                     
                     // Enviar NUEVO registro a Google Sheets como ACTIVO
                     await enviarAGoogleSheets(registroNuevo);
@@ -3869,6 +3885,13 @@
                 } catch (error) {
                     console.error('❌ Error al editar:', error);
                     alert('⚠️ Error al guardar:\n\n' + error.message);
+                    
+                } finally {
+                    // SIEMPRE restaurar botón
+                    if (btnGuardar) {
+                        btnGuardar.disabled = false;
+                        btnGuardar.textContent = textoOriginal;
+                    }
                 }
             }
         }
@@ -5241,11 +5264,21 @@
             // Si ya está escaneando, detener
             if (html5QrCodeTaller && html5QrCodeTaller.isScanning) {
                 console.log('🛑 TALLER: Deteniendo escáner');
-                html5QrCodeTaller.stop().then(() => {
-                    readerDiv.style.display = 'none';
-                    btnEscanear.textContent = '📷 Escanear';
-                    btnEscanear.style.background = '#1976d2';
-                });
+                
+                html5QrCodeTaller.stop()
+                    .then(() => {
+                        console.log('✅ TALLER: Escáner detenido correctamente');
+                    })
+                    .catch((err) => {
+                        console.error('⚠️ TALLER: Error al detener:', err);
+                    })
+                    .finally(() => {
+                        // SIEMPRE restaurar botón
+                        readerDiv.style.display = 'none';
+                        btnEscanear.textContent = '📷 Escanear';
+                        btnEscanear.style.background = '#1976d2';
+                    });
+                
                 return;
             }
             
@@ -5290,13 +5323,24 @@
         function procesarCodigoSAPTaller(texto) {
             console.log('🔍 TALLER: Procesando código:', texto);
             
-            // Detener escáner
+            const readerDiv = document.getElementById('qr-reader-taller');
+            const btnEscanear = document.getElementById('btn-escanear-sap-taller');
+            
+            // Detener escáner con manejo robusto
             if (html5QrCodeTaller && html5QrCodeTaller.isScanning) {
-                html5QrCodeTaller.stop().then(() => {
-                    document.getElementById('qr-reader-taller').style.display = 'none';
-                    document.getElementById('btn-escanear-sap-taller').textContent = '📷 Escanear';
-                    document.getElementById('btn-escanear-sap-taller').style.background = '#1976d2';
-                });
+                html5QrCodeTaller.stop()
+                    .then(() => {
+                        console.log('✅ TALLER: Escáner detenido después de escaneo');
+                    })
+                    .catch((err) => {
+                        console.error('⚠️ TALLER: Error al detener después de escaneo:', err);
+                    })
+                    .finally(() => {
+                        // SIEMPRE restaurar botón
+                        readerDiv.style.display = 'none';
+                        btnEscanear.textContent = '📷 Escanear';
+                        btnEscanear.style.background = '#1976d2';
+                    });
             }
             
             // Extraer SAP del código (formato: "CODIGO : 263234.")
@@ -6003,7 +6047,33 @@
         
         function actualizarPanelPorAlmacen() {
             almacenSeleccionadoFases = document.getElementById('select-almacen-fases').value;
-            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen === almacenSeleccionadoFases);
+            
+            // Filtrar registros según almacén seleccionado
+            let registrosActivos;
+            if (almacenSeleccionadoFases === '01-MAQUILA') {
+                // Solo registros de MAQUILA (areaMaquila = true)
+                registrosActivos = registrosGuardados.filter(r => 
+                    !r.eliminado && 
+                    !r.modificado && 
+                    r.almacen === '01' && 
+                    r.areaMaquila === true
+                );
+            } else if (almacenSeleccionadoFases === '01') {
+                // Solo registros de Materia Prima (areaMaquila = false o undefined)
+                registrosActivos = registrosGuardados.filter(r => 
+                    !r.eliminado && 
+                    !r.modificado && 
+                    r.almacen === '01' && 
+                    (r.areaMaquila === false || r.areaMaquila === undefined)
+                );
+            } else {
+                // Otros almacenes (30, 31, 32, 33)
+                registrosActivos = registrosGuardados.filter(r => 
+                    !r.eliminado && 
+                    !r.modificado && 
+                    r.almacen === almacenSeleccionadoFases
+                );
+            }
             
             // Detectar duplicados del almacén
             const duplicadosMap = {};
