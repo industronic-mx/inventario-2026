@@ -5481,10 +5481,30 @@
             let esPositivo = false;
             let enRevision = false;
             
-            if (baseDescripciones.length > 0) {
+            // VERIFICAR SI HAY BASE CARGADA
+            if (baseDescripciones.length === 0) {
+                // NO HAY BASE CARGADA - ALERTA + TODO A REVISIÓN
+                console.warn('⚠️ TALLER: Base de artículos NO cargada');
+                
+                alert(
+                    `⚠️ BASE DE ARTÍCULOS NO CARGADA\n\n` +
+                    `No se puede validar códigos.\n\n` +
+                    `Este marbete irá a REVISIÓN automáticamente.\n\n` +
+                    `Mesa de Control debe:\n` +
+                    `1. Cargar base de artículos\n` +
+                    `2. Validar con Ingeniería`
+                );
+                
+                enRevision = true;
+                descripcion = '🔬 EN REVISIÓN - Base no cargada';
+                console.log('⚠️ TALLER: Marcado para revisión (sin base)');
+                
+            } else {
+                // SÍ HAY BASE - VALIDAR NORMALMENTE
                 const encontrado = baseDescripciones.find(item => item.codigo === sap);
+                
                 if (!encontrado) {
-                    // CÓDIGO NO ENCONTRADO
+                    // CÓDIGO NO ENCONTRADO EN BASE
                     console.warn('⚠️ TALLER: SAP no encontrado en base de artículos');
                     
                     // Preguntar si capturar en revisión
@@ -5511,8 +5531,10 @@
                     
                     enRevision = true;
                     descripcion = '🔬 EN REVISIÓN - Validar con Ingeniería';
-                    console.log('✓ TALLER: Marcado para revisión');
+                    console.log('✓ TALLER: Marcado para revisión (código no encontrado)');
+                    
                 } else {
+                    // CÓDIGO ENCONTRADO - TODO OK
                     descripcion = encontrado.descripcion;
                     console.log('✅ TALLER: Descripción encontrada');
                 }
