@@ -1935,14 +1935,19 @@
                     </div>
                     <div style="font-size: 13px; color: #424242; margin-bottom: 12px;">
                         SAPs asignados: <strong id="count-saps-alm" style="color: #1a237e;">0</strong><br>
-                        <span style="font-size: 12px; color: #757575;">Visibilidad bloqueada hasta resolver duplicados</span>
+                        <span id="info-liberacion-alm" style="font-size: 12px; color: #757575;">Visibilidad bloqueada hasta resolver duplicados</span>
                     </div>
                     <button class="btn-secondary" onclick="abrirAsignarPorAlmacen()" style="width: 100%; background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; font-size: 13px; margin-bottom: 8px;">
                         🔍 Asignar SAPs a Auditar
                     </button>
-                    <button id="btn-liberar-alm" class="btn-primary" onclick="liberarAuditoriaPorAlmacen()" style="width: 100%; background: #bdbdbd; color: white; opacity: 0.6; cursor: not-allowed; font-size: 13px; font-weight: 700;" disabled>
+                    <button id="btn-liberar-alm" class="btn-primary" onclick="liberarAuditoriaPorAlmacen()" style="width: 100%; background: #bdbdbd; color: white; opacity: 0.6; cursor: not-allowed; font-size: 13px; font-weight: 700; margin-bottom: 12px;" disabled>
                         🔓 Liberar Visibilidad para Auditores
                     </button>
+                    
+                    <!-- PROGRESO INTEGRADO -->
+                    <div id="progreso-auditoria-alm" style="display: none; background: white; border-radius: 8px; padding: 12px; margin-top: 12px; border: 2px solid #4caf50;">
+                        <!-- Se llena dinámicamente -->
+                    </div>
                 </div>
             </div>
 
@@ -6112,9 +6117,44 @@
                     })
                 });
                 
-                console.log('✓ Enviado a Google Sheets');
+                console.log('✅ Enviado a Google Sheets');
             } catch (error) {
-                console.error('Error al enviar a Google Sheets:', error);
+                console.error('❌ Error al enviar a Google Sheets:', error);
+            }
+        }
+        
+        // NUEVA: Enviar correcciones de auditoría a pestaña específica
+        async function enviarCorreccionAuditoria(correccion) {
+            try {
+                const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'correccion_auditoria',
+                        correccion: {
+                            tipo: 'CORRECCIÓN AUDITORÍA',
+                            fecha: new Date().toISOString(),
+                            folio: correccion.folio,
+                            almacen: correccion.almacen,
+                            sap: correccion.sap,
+                            descripcion: correccion.desc,
+                            cantidadOriginal: correccion.cantidadOriginal,
+                            cantidadCorrecta: correccion.cantidadCorrecta,
+                            diferencia: correccion.diferencia,
+                            porcentajeDif: correccion.porcentajeDif || '',
+                            observaciones: correccion.observaciones || '',
+                            auditor: correccion.auditor,
+                            fechaHora: new Date().toLocaleString('es-MX')
+                        }
+                    })
+                });
+                
+                console.log('✅ Corrección enviada a Google Sheets (pestaña CORRECCIONES)');
+            } catch (error) {
+                console.error('❌ Error al enviar corrección a Sheets:', error);
             }
         }
         
@@ -6214,24 +6254,115 @@
             // Habilitar botón de liberar si duplicados = 0
             const btnLiberar = document.getElementById('btn-liberar-alm');
             const statusFase3 = document.getElementById('status-fase3-alm');
+            const infoLiberacion = document.getElementById('info-liberacion-alm');
+            
             if (duplicadosPendientes === 0 && !auditoriasLiberadasPorAlmacen[almacenSeleccionadoFases]) {
                 btnLiberar.disabled = false;
                 btnLiberar.style.opacity = '1';
                 btnLiberar.style.cursor = 'pointer';
                 btnLiberar.style.background = '#1a237e';
                 btnLiberar.style.color = 'white';
+                infoLiberacion.textContent = 'Lista para liberar';
+                infoLiberacion.style.color = '#4caf50';
             } else if (auditoriasLiberadasPorAlmacen[almacenSeleccionadoFases]) {
                 btnLiberar.disabled = true;
                 btnLiberar.textContent = '✅ Visibilidad Liberada';
                 btnLiberar.style.background = '#c8e6c9';
                 btnLiberar.style.color = '#2e7d32';
                 btnLiberar.style.cursor = 'default';
-                statusFase3.textContent = 'VISIBLE';
+                statusFase3.textContent = 'LIBERADA';
                 statusFase3.style.background = '#c8e6c9';
                 statusFase3.style.color = '#2e7d32';
+                infoLiberacion.textContent = 'Auditores pueden validar';
+                infoLiberacion.style.color = '#4caf50';
             } else {
                 btnLiberar.textContent = '🔓 Liberar Visibilidad para Auditores';
+                infoLiberacion.textContent = 'Visibilidad bloqueada hasta resolver duplicados';
+                infoLiberacion.style.color = '#757575';
             }
+            
+            // RENDERIZAR PROGRESO INTEGRADO SI ESTÁ LIBERADO
+            renderizarProgresoIntegrado(almacenSeleccionadoFases);
+        }
+        
+        // Renderizar progreso dentro de Fase 3
+        function renderizarProgresoIntegrado(almacen) {
+            const container = document.getElementById('progreso-auditoria-alm');
+            const sapsDelAlmacen = sapsAuditoria.filter(s => s.almacen === almacen);
+            const liberado = auditoriasLiberadasPorAlmacen[almacen] === true;
+            
+            if (!liberado || sapsDelAlmacen.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+            
+            container.style.display = 'block';
+            
+            // Agrupar por auditor
+            const porAuditor = {};
+            sapsDelAlmacen.forEach(s => {
+                if (!porAuditor[s.auditor]) porAuditor[s.auditor] = [];
+                porAuditor[s.auditor].push(s);
+            });
+            
+            let html = '<div style="font-size: 13px; font-weight: 700; color: #1a237e; margin-bottom: 12px;">📋 Progreso por Auditor:</div>';
+            
+            Object.keys(porAuditor).forEach(auditor => {
+                const saps = porAuditor[auditor];
+                const nombreCorto = auditor.split(' ')[0] + ' ' + (auditor.split(' ')[1] || '');
+                
+                html += `
+                    <div style="background: #f5f5f5; border-radius: 8px; padding: 10px; margin-bottom: 8px;">
+                        <div style="font-size: 12px; font-weight: 600; color: #424242; margin-bottom: 8px;">
+                            👤 ${nombreCorto}
+                        </div>
+                `;
+                
+                saps.forEach(s => {
+                    const progreso = calcularProgresoSAP(s.sap);
+                    const estaCompleto = progreso.validados === progreso.total && progreso.total > 0;
+                    const icono = estaCompleto ? '✅' : progreso.validados > 0 ? '⏳' : '⬜';
+                    const color = estaCompleto ? '#4caf50' : progreso.validados > 0 ? '#2196f3' : '#bdbdbd';
+                    
+                    html += `
+                        <div style="background: white; border-radius: 6px; padding: 8px; margin-bottom: 6px; border-left: 3px solid ${color};">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <div style="font-size: 11px; font-weight: 700; color: #1a237e;">
+                                    ${icono} ${s.sap}
+                                </div>
+                                <div style="font-size: 11px; font-weight: 700; color: ${color};">
+                                    ${progreso.porcentaje}%
+                                </div>
+                            </div>
+                            <div style="font-size: 10px; color: #757575; margin-bottom: 4px;">
+                                ${progreso.validados}/${progreso.total} folios
+                            </div>
+                            <div style="background: #e0e0e0; border-radius: 4px; height: 4px; overflow: hidden;">
+                                <div style="width: ${progreso.porcentaje}%; height: 100%; background: ${color}; transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            // Resumen total
+            const totalSAPs = sapsDelAlmacen.length;
+            const completados = sapsDelAlmacen.filter(s => {
+                const prog = calcularProgresoSAP(s.sap);
+                return prog.validados === prog.total && prog.total > 0;
+            }).length;
+            
+            html += `
+                <div style="background: #e3f2fd; border-radius: 6px; padding: 8px; text-align: center; margin-top: 8px;">
+                    <div style="font-size: 11px; color: #1565c0; font-weight: 600;">
+                        ✅ Completados: ${completados} / ${totalSAPs}
+                    </div>
+                </div>
+            `;
+            
+            container.innerHTML = html;
         }
         
         function toggleBloqueoAlmacen() {
@@ -7327,6 +7458,8 @@
             // SI HAY DIFERENCIA, enviar corrección a Google Sheets
             if (diferencia !== 0) {
                 try {
+                    const porcentajeDif = registro.cantidad > 0 ? ((diferencia / registro.cantidad) * 100).toFixed(1) : 0;
+                    
                     const correccion = {
                         folio,
                         almacen,
@@ -7335,14 +7468,13 @@
                         cantidadOriginal: registro.cantidad,
                         cantidadCorrecta: cantidadValidada,
                         diferencia,
+                        porcentajeDif,
                         observaciones,
-                        auditor: selectedUser,
-                        fecha: new Date().toISOString(),
-                        tipo: 'CORRECCIÓN AUDITORÍA'
+                        auditor: selectedUser
                     };
                     
-                    await enviarAGoogleSheets(correccion);
-                    console.log('✅ Corrección enviada a Google Sheets');
+                    await enviarCorreccionAuditoria(correccion);
+                    console.log('✅ Corrección enviada a Google Sheets (pestaña CORRECCIONES)');
                 } catch (error) {
                     console.error('❌ Error al enviar corrección a Sheets:', error);
                 }
