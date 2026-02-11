@@ -2453,19 +2453,7 @@
                         </button>
                     </div>
                     
-                    <!-- Botón RESETEAR TODO (Firebase + Sheets + Caché) -->
-                    <div style="margin-top: 16px; border-top: 2px solid #ffebee; padding-top: 16px;">
-                        <div style="background: #fff3e0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; color: #e65100; font-weight: 700; margin-bottom: 4px;">⚠️ ZONA DE LIMPIEZA</div>
-                            <div style="font-size: 11px; color: #757575;">Usar solo al terminar pruebas, antes del inventario real</div>
-                        </div>
-                        <button class="btn-secondary" style="width: 100%; background: #d32f2f; color: white; font-weight: 700; font-size: 14px; padding: 16px;" onclick="resetearTodoElSistema()">
-                            🗑️ RESETEAR TODO EL SISTEMA
-                        </button>
-                        <div style="font-size: 10px; color: #d32f2f; text-align: center; margin-top: 8px; font-weight: 600;">
-                            Borra Firebase + Google Sheets + Caché Local
-                        </div>
-                    </div>
+                    <!-- ZONA DE LIMPIEZA REMOVIDA - Usar Firebase Console manualmente -->
                 </div>
 
                 <div class="menu-grid" style="margin-top: 24px;">
@@ -103889,9 +103877,18 @@
             let sap = '';
             let desc = '';
 
-            // Detectar almacén
-            if (texto.includes('Materia Prima')) {
-                almacen = '01 - Materia Prima';
+            // Detectar almacén por palabra clave
+            if (texto.includes('Lineas Produccion')) {
+                almacen = '00 - Lineas Produccion';
+                almacenCod = '00';
+            } else if (texto.includes('Maquila')) {
+                almacen = '01-MAQUILA';
+                almacenCod = '01';
+            } else if (texto.includes('Tarimas MP')) {
+                almacen = '01 - Resto MP';
+                almacenCod = '01';
+            } else if (texto.includes('Materia Prima')) {
+                almacen = '01 - Resto MP';
                 almacenCod = '01';
             } else if (texto.includes('Transformadores')) {
                 almacen = '30 - Transformadores';
