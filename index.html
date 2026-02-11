@@ -2111,10 +2111,16 @@
                     <div class="filter-option" onclick="selectAlmacen('33')">33 - Gabinetes</div>
                 </div>
 
-                <div id="filter-usuario" class="filter-dropdown">
-                    <!-- Se llena dinámicamente con cargarUsuariosFiltro() -->
-                    <div class="filter-option selected" onclick="selectUsuario('todos')">Todos los usuarios</div>
-                    <div id="usuarios-list"></div>
+                <!-- Campo de búsqueda de usuario (reemplaza dropdown) -->
+                <div id="filter-usuario-search" class="filter-dropdown" style="padding: 12px;">
+                    <input type="text" 
+                           id="input-buscar-usuario" 
+                           placeholder="👤 Buscar por nombre de usuario..." 
+                           onkeyup="filtrarPorUsuarioBusqueda(this.value)"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    <div style="font-size: 11px; color: #757575; margin-top: 8px; text-align: center;">
+                        Escribe el nombre para filtrar
+                    </div>
                 </div>
             </div>
 
@@ -104732,9 +104738,18 @@
             element.classList.add('active');
             document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
             
-            if (type !== 'todos' && type !== 'duplicados') {
-                const dropdown = document.getElementById('filter-' + type);
-                if (dropdown) dropdown.classList.add('show');
+            if (type !== 'todos' && type !== 'duplicados' && type !== 'editados' && type !== 'eliminados') {
+                const dropdownId = type === 'usuario' ? 'filter-usuario-search' : 'filter-' + type;
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) {
+                    dropdown.classList.add('show');
+                    // Si es usuario, enfocar en el campo de búsqueda
+                    if (type === 'usuario') {
+                        setTimeout(() => {
+                            document.getElementById('input-buscar-usuario').focus();
+                        }, 100);
+                    }
+                }
             }
             
             currentFilter = type;
@@ -104756,6 +104771,35 @@
             event.target.classList.add('selected');
             currentUsuario = usuario;
             document.getElementById('filter-usuario').classList.remove('show');
+            buscarRegistros();
+        }
+        
+        // Nueva función: Filtrar por búsqueda de usuario
+        function filtrarPorUsuarioBusqueda(texto) {
+            const textoLimpio = texto.trim().toUpperCase();
+            
+            if (textoLimpio === '') {
+                // Si está vacío, mostrar todos
+                currentUsuario = 'todos';
+            } else {
+                // Buscar usuario que contenga el texto
+                const usuarioEncontrado = USUARIOS_SISTEMA.find(u => 
+                    u.toUpperCase().includes(textoLimpio)
+                );
+                
+                if (usuarioEncontrado) {
+                    currentUsuario = usuarioEncontrado;
+                } else {
+                    // Si no encuentra, buscar en registros
+                    const usuariosEnRegistros = [...new Set(registrosGuardados.map(r => r.usuario))];
+                    const encontradoEnRegistros = usuariosEnRegistros.find(u => 
+                        u.toUpperCase().includes(textoLimpio)
+                    );
+                    currentUsuario = encontradoEnRegistros || 'todos';
+                }
+            }
+            
+            // Aplicar filtro
             buscarRegistros();
         }
 
