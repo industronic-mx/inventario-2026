@@ -1839,9 +1839,6 @@
 
                 <!-- Botones de acción -->
                 <div style="padding: 0 20px 20px;">
-                    <button class="btn-primary" onclick="verComparativo()" style="margin-bottom: 12px;">
-                        📊 Ver Comparativo SAP vs Físico
-                    </button>
                     <button class="btn-secondary" onclick="verPositivos()">
                         ❓ Ver Códigos Positivos
                     </button>
@@ -1852,18 +1849,32 @@
         <!-- ========== BUSCADOR SAP ========== -->
         <div id="screen-buscador-sap" class="screen">
             <div class="header-inner">
-                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <button class="btn-back" onclick="volverAlMenu()">←</button>
                 <h1>🔍 Buscador SAP</h1>
             </div>
 
             <div style="background: white; padding: 20px;">
-                <div class="input-group" style="margin-bottom: 24px;">
+                <div class="input-group" style="margin-bottom: 16px;">
                     <label style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 8px;">Buscar SAP:</label>
                     <input type="text" id="input-buscar-sap" placeholder="Ej: 2002398" style="width: 100%; padding: 14px; border: 2px solid #90caf9; border-radius: 8px; font-size: 16px;" onkeyup="if(event.key==='Enter') buscarSAP()">
-                    <button class="btn-primary" onclick="buscarSAP()" style="margin-top: 12px; width: 100%;">
-                        🔍 Buscar
-                    </button>
                 </div>
+                
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <label style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 8px;">Almacén:</label>
+                    <select id="input-almacen-buscador" style="width: 100%; padding: 14px; border: 2px solid #90caf9; border-radius: 8px; font-size: 16px; background: white;">
+                        <option value="todos">🔍 Todos los almacenes</option>
+                        <option value="00">00 - Líneas Producción</option>
+                        <option value="01">01 - Materia Prima</option>
+                        <option value="30">30 - Transformadores</option>
+                        <option value="31">31 - Placas</option>
+                        <option value="32">32 - Arneses</option>
+                        <option value="33">33 - Gabinetes</option>
+                    </select>
+                </div>
+                
+                <button class="btn-primary" onclick="buscarSAP()" style="width: 100%;">
+                    🔍 Buscar
+                </button>
 
                 <div id="resultado-buscador-sap"></div>
             </div>
@@ -2358,6 +2369,10 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Botón eliminar kardex -->
+                        <button onclick="eliminarKardex()" style="margin-top: 12px; width: 100%; padding: 10px; background: #d32f2f; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                            🗑️ Eliminar Kardex
+                        </button>
                     </div>
                     
                     <!-- Base de Descripciones: Ya cargada automáticamente (25,230 artículos) -->
@@ -2442,6 +2457,9 @@
                         </button>
                         <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarComparativoSAP()">
                             📊 Comparativo SAP vs Físico
+                        </button>
+                        <button class="btn-primary" style="width: 100%;" onclick="descargarTop40Diferencias()">
+                            🔥 Top 40 Mayores Diferencias
                         </button>
                         <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarAvancePorAlmacen()">
                             📦 Avance por Almacén
@@ -104602,12 +104620,21 @@
                 
                 if (type === 'kardex') {
                     // Guardar Kardex SAP
-                    kardexSAP = jsonData.map(row => ({
-                        codigo: String(row['Código Artículo'] || row['Codigo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
-                        almacen: String(row['Almacén'] || row['Almacen'] || row['ALMACEN'] || row['WhsCode'] || '').trim(),
-                        unidadMedida: String(row['Unidad de Medida'] || row['UnidadMedida'] || row['InvntryUom'] || 'PZA').trim(),
-                        cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0)
-                    })).filter(item => item.codigo && item.almacen);
+                    kardexSAP = jsonData.map(row => {
+                        let almacen = String(row['Almacén'] || row['Almacen'] || row['ALMACEN'] || row['WhsCode'] || '').trim();
+                        
+                        // NORMALIZAR ALMACÉN: "1" → "01", "30" → "30", etc.
+                        if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                            almacen = '0' + almacen; // Agregar 0 al inicio
+                        }
+                        
+                        return {
+                            codigo: String(row['Código Artículo'] || row['Codigo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                            almacen: almacen,
+                            unidadMedida: String(row['Unidad de Medida'] || row['UnidadMedida'] || row['InvntryUom'] || 'PZA').trim(),
+                            cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0)
+                        };
+                    }).filter(item => item.codigo && item.almacen);
                     
                     // SUBIR A FIREBASE
                     try {
@@ -104722,6 +104749,56 @@
                 if (por) {
                     porElement.textContent = por;
                 }
+            }
+        }
+        
+        // Eliminar kardex cargado
+        async function eliminarKardex() {
+            if (!confirm('⚠️ ¿SEGURO que deseas ELIMINAR el Kardex?\n\nEsta acción eliminará:\n• Kardex de Firebase\n• Kardex de localStorage\n• Tendrás que volver a cargar el archivo\n\n¿Continuar?')) {
+                return;
+            }
+            
+            try {
+                // Eliminar de Firebase
+                if (window.firebaseDB) {
+                    const { doc, deleteDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await deleteDoc(doc(db, 'config', 'kardex'));
+                    console.log('✅ Kardex eliminado de Firebase');
+                }
+                
+                // Eliminar de localStorage
+                localStorage.removeItem('kardexSAP');
+                localStorage.removeItem('kardexFecha');
+                localStorage.removeItem('kardexPor');
+                console.log('✅ Kardex eliminado de localStorage');
+                
+                // Limpiar variable global
+                kardexSAP = [];
+                
+                // Ocultar panel
+                const panelKardex = document.getElementById('kardex-info');
+                if (panelKardex) {
+                    panelKardex.style.display = 'none';
+                }
+                
+                // Resetear input de archivo
+                const inputKardex = document.getElementById('file-kardex');
+                if (inputKardex) {
+                    inputKardex.value = '';
+                }
+                
+                const nameKardex = document.getElementById('name-kardex');
+                if (nameKardex) {
+                    nameKardex.textContent = 'Cargar archivo Excel con inventario teórico';
+                }
+                
+                alert('✅ Kardex eliminado exitosamente\n\nPuedes cargar un nuevo archivo cuando quieras.');
+                
+            } catch (error) {
+                console.error('❌ Error al eliminar kardex:', error);
+                alert('⚠️ Error al eliminar kardex:\n\n' + error.message);
             }
         }
 
@@ -106059,6 +106136,92 @@
             ws['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15},{wch:15},{wch:15},{wch:15},{wch:12}];
             XLSX.utils.book_append_sheet(wb, ws, "Comparativo");
             XLSX.writeFile(wb, `Comparativo_SAP_vs_Fisico_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // TOP 40 MAYORES DIFERENCIAS (por costo)
+        function descargarTop40Diferencias() {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Primero carga el Kardex SAP');
+                return;
+            }
+            
+            const comparativo = [];
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Agrupar físico por SAP + Almacén
+            const fisicoMap = {};
+            registrosActivos.forEach(r => {
+                const key = `${r.sap}_${r.almacen}`;
+                if (!fisicoMap[key]) {
+                    fisicoMap[key] = { cantidad: 0, sap: r.sap, almacen: r.almacen, desc: r.desc };
+                }
+                fisicoMap[key].cantidad += r.cantidad;
+            });
+            
+            // Comparar con Kardex
+            kardexSAP.forEach(k => {
+                const key = `${k.codigo}_${k.almacen}`;
+                const fisico = fisicoMap[key] || { cantidad: 0, desc: k.descripcion || '' };
+                const cantKardex = k.cantidad || 0;
+                const cantFisica = fisico.cantidad;
+                const diferenciaCant = cantFisica - cantKardex;
+                
+                // CÁLCULO DE COSTOS según especificación de Andy
+                const costoUnitario = k.costoUnitario || 0;
+                const costoKardex = cantKardex * costoUnitario;
+                const costoDiferencia = diferenciaCant * costoUnitario; // Costo de la diferencia
+                
+                comparativo.push({
+                    'SAP': k.codigo,
+                    'Descripción': fisico.desc || k.descripcion || '',
+                    'Cant. Kardex': cantKardex,
+                    'Cant. Física': cantFisica,
+                    'Dif. Cantidad': diferenciaCant,
+                    'Costo Kardex': costoKardex.toFixed(2),
+                    'Costo Dif.': costoDiferencia.toFixed(2),
+                    'Almacén': k.almacen,
+                    'Unidad': k.unidadMedida || 'PZA',
+                    'Costo Unit.': costoUnitario.toFixed(4)
+                });
+            });
+            
+            // Ordenar por VALOR ABSOLUTO de Costo Diferencia (mayor impacto primero)
+            comparativo.sort((a, b) => {
+                const valorA = Math.abs(parseFloat(a['Costo Dif.']));
+                const valorB = Math.abs(parseFloat(b['Costo Dif.']));
+                return valorB - valorA; // Descendente (mayor primero)
+            });
+            
+            // Tomar TOP 40
+            const top40 = comparativo.slice(0, 40);
+            
+            if (top40.length === 0) {
+                alert('⚠️ No hay diferencias para reportar');
+                return;
+            }
+            
+            // Crear Excel
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(top40);
+            
+            // Configurar anchos de columnas
+            ws['!cols'] = [
+                {wch:12},  // SAP
+                {wch:45},  // Descripción
+                {wch:12},  // Cant. Kardex
+                {wch:12},  // Cant. Física
+                {wch:12},  // Dif. Cantidad
+                {wch:15},  // Costo Kardex
+                {wch:15},  // Costo Dif.
+                {wch:10},  // Almacén
+                {wch:8},   // Unidad
+                {wch:12}   // Costo Unit.
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, "Top 40 Diferencias");
+            XLSX.writeFile(wb, `Top_40_Mayores_Diferencias_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            alert(`✅ Reporte generado exitosamente\n\nTop ${top40.length} mayores diferencias por impacto en costo`);
         }
         
         // 7. Diferencias Significativas
@@ -108201,6 +108364,11 @@
             showScreen('mesa');
         }
         
+        function volverAlMenu() {
+            // Regresar al menú principal (Auditoría/Capturista/Mesa Control)
+            showScreen('roles');
+        }
+        
         // ========== VISTAS CON FILTROS ==========
         function abrirResolucionDuplicados() {
             showScreen('duplicados');
@@ -109636,10 +109804,19 @@
                 '33': { nombre: '33 - Gabinetes', color: '#f57c00', total: 0, esperado: 0 }
             };
             
-            // Contar capturados por almacén
+            // Contar SAPs ÚNICOS capturados por almacén (no registros totales)
+            const sapsCapturadosPorAlmacen = {};
             registrosActivos.forEach(r => {
-                if (almacenes[r.almacen]) {
-                    almacenes[r.almacen].total++;
+                if (!sapsCapturadosPorAlmacen[r.almacen]) {
+                    sapsCapturadosPorAlmacen[r.almacen] = new Set();
+                }
+                sapsCapturadosPorAlmacen[r.almacen].add(r.sap);
+            });
+            
+            // Asignar conteo de SAPs únicos a cada almacén
+            Object.keys(almacenes).forEach(codigo => {
+                if (sapsCapturadosPorAlmacen[codigo]) {
+                    almacenes[codigo].total = sapsCapturadosPorAlmacen[codigo].size;
                 }
             });
             
@@ -109726,6 +109903,7 @@
         // ========== BUSCADOR SAP ==========
         function buscarSAP() {
             const sapBuscado = document.getElementById('input-buscar-sap').value.trim();
+            const almacenSeleccionado = document.getElementById('input-almacen-buscador').value;
             const resultado = document.getElementById('resultado-buscador-sap');
             
             if (!sapBuscado) {
@@ -109733,18 +109911,26 @@
                 return;
             }
             
-            // Buscar registros ACTIVOS con ese SAP
-            const registrosEncontrados = registrosGuardados.filter(r => 
+            // Buscar registros ACTIVOS con ese SAP (y filtrar por almacén si aplica)
+            let registrosEncontrados = registrosGuardados.filter(r => 
                 r.sap === sapBuscado && 
                 !r.eliminado && 
                 !r.modificado
             );
             
+            // Filtrar por almacén si no es "todos"
+            if (almacenSeleccionado !== 'todos') {
+                registrosEncontrados = registrosEncontrados.filter(r => r.almacen === almacenSeleccionado);
+            }
+            
             if (registrosEncontrados.length === 0) {
+                const mensajeAlmacen = almacenSeleccionado !== 'todos' 
+                    ? ` en almacén ${almacenSeleccionado}` 
+                    : '';
                 resultado.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #9e9e9e;">
                         <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-                        <div style="font-size: 16px; color: #424242;">No se encontraron registros para el SAP: ${sapBuscado}</div>
+                        <div style="font-size: 16px; color: #424242;">No se encontraron registros para el SAP: ${sapBuscado}${mensajeAlmacen}</div>
                     </div>
                 `;
                 return;
@@ -109755,17 +109941,31 @@
             const unidad = registrosEncontrados[0].unidadMedida || 'PZA';
             const descripcion = registrosEncontrados[0].desc || 'Sin descripción';
             
-            // Buscar en Kardex SAP
-            const kardexItem = kardexSAP.find(k => k.sap === sapBuscado);
+            // Buscar en Kardex SAP (filtrar por almacén si aplica)
+            let kardexItem;
+            if (almacenSeleccionado !== 'todos') {
+                kardexItem = kardexSAP.find(k => k.codigo === sapBuscado && k.almacen === almacenSeleccionado);
+            } else {
+                // Si es "todos", sumar todas las cantidades del kardex para este SAP
+                const itemsKardex = kardexSAP.filter(k => k.codigo === sapBuscado);
+                kardexItem = itemsKardex.length > 0 
+                    ? { cantidad: itemsKardex.reduce((sum, k) => sum + k.cantidad, 0) }
+                    : null;
+            }
+            
             const cantidadKardex = kardexItem ? kardexItem.cantidad : 0;
             const diferencia = totalContado - cantidadKardex;
             const colorDif = diferencia === 0 ? '#388e3c' : diferencia > 0 ? '#1976d2' : '#d32f2f';
             const iconoDif = diferencia === 0 ? '✅' : diferencia > 0 ? '📈' : '📉';
             
+            const tituloAlmacen = almacenSeleccionado !== 'todos' 
+                ? ` - Almacén ${almacenSeleccionado}` 
+                : ' - Todos los almacenes';
+            
             let html = `
                 <!-- Resumen -->
                 <div style="background: #e3f2fd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-                    <div style="font-size: 14px; color: #1565c0; font-weight: 700; margin-bottom: 8px;">SAP: ${sapBuscado}</div>
+                    <div style="font-size: 14px; color: #1565c0; font-weight: 700; margin-bottom: 8px;">SAP: ${sapBuscado}${tituloAlmacen}</div>
                     <div style="font-size: 13px; color: #424242; margin-bottom: 16px;">${descripcion}</div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
