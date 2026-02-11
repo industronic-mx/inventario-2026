@@ -17,7 +17,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
         // Firebase configuration
         const firebaseConfig = {
@@ -35,7 +35,7 @@
         
         // Hacer disponible globalmente
         window.firebaseDB = db;
-        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc };
+        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc, deleteDoc };
     </script>
     
     <!-- Google Sheets API Configuration -->
@@ -106685,6 +106685,15 @@
                         const data = kardexDoc.data();
                         kardexSAP = data.kardex || [];
                         
+                        // NORMALIZAR ALMACENES al cargar desde Firebase
+                        kardexSAP = kardexSAP.map(k => {
+                            let almacen = String(k.almacen || '').trim();
+                            if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                almacen = '0' + almacen;
+                            }
+                            return { ...k, almacen };
+                        });
+                        
                         // Guardar en localStorage también
                         localStorage.setItem('kardexSAP', JSON.stringify(kardexSAP));
                         localStorage.setItem('kardexFecha', data.fechaActualizacion || '');
@@ -106703,6 +106712,16 @@
                         const kardexLocal = localStorage.getItem('kardexSAP');
                         if (kardexLocal) {
                             kardexSAP = JSON.parse(kardexLocal);
+                            
+                            // NORMALIZAR ALMACENES al cargar
+                            kardexSAP = kardexSAP.map(k => {
+                                let almacen = String(k.almacen || '').trim();
+                                if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                    almacen = '0' + almacen;
+                                }
+                                return { ...k, almacen };
+                            });
+                            
                             console.log('✅ Kardex cargado desde localStorage:', kardexSAP.length, 'registros');
                             actualizarInfoKardex();
                         } else {
@@ -106716,6 +106735,16 @@
                     const kardexLocal = localStorage.getItem('kardexSAP');
                     if (kardexLocal) {
                         kardexSAP = JSON.parse(kardexLocal);
+                        
+                        // NORMALIZAR ALMACENES al cargar
+                        kardexSAP = kardexSAP.map(k => {
+                            let almacen = String(k.almacen || '').trim();
+                            if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                almacen = '0' + almacen;
+                            }
+                            return { ...k, almacen };
+                        });
+                        
                         console.log('✅ Kardex cargado desde localStorage (fallback):', kardexSAP.length, 'registros');
                         actualizarInfoKardex();
                     }
@@ -108366,7 +108395,7 @@
         
         function volverAlMenu() {
             // Regresar al menú principal (Auditoría/Capturista/Mesa Control)
-            showScreen('roles');
+            showScreen('login');
         }
         
         // ========== VISTAS CON FILTROS ==========
