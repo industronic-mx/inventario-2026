@@ -103877,18 +103877,28 @@
             let sap = '';
             let desc = '';
 
-            // Detectar almacén por palabra clave
+            // Detectar almacén por palabra clave (orden de más específico a menos específico)
             if (texto.includes('Lineas Produccion')) {
                 almacen = '00 - Lineas Produccion';
                 almacenCod = '00';
-            } else if (texto.includes('Maquila')) {
-                almacen = '01-MAQUILA';
+            } else if (texto.includes('MP TARIMAS')) {
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('TARIMAS MP')) {
+                almacen = '01 - Materia Prima';
                 almacenCod = '01';
             } else if (texto.includes('Tarimas MP')) {
-                almacen = '01 - Resto MP';
+                almacen = '01 - Materia Prima';
                 almacenCod = '01';
             } else if (texto.includes('Materia Prima')) {
-                almacen = '01 - Resto MP';
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.split(' ').includes('MP')) {
+                // Detectar "MP" como palabra completa (no parte de otra palabra)
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('Maquila')) {
+                almacen = '01-MAQUILA';
                 almacenCod = '01';
             } else if (texto.includes('Transformadores')) {
                 almacen = '30 - Transformadores';
@@ -104035,9 +104045,16 @@
         }
         
         // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01)
+        // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01 - Materia Prima)
         function validarMultiplesMateriales(item) {
-            // Solo aplica para Almacén 01 y MAQUILA
+            // Solo aplica para Almacén 01 - Materia Prima
+            // NO aplica para Maquila (01-MAQUILA)
             if (item.almacen !== '01') {
+                return { esMultipleMaterial: false };
+            }
+            
+            // Si viene de Maquila, NO aplicar sufijo D
+            if (item.areaMaquila) {
                 return { esMultipleMaterial: false };
             }
             
