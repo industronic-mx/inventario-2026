@@ -105035,25 +105035,21 @@
                         }];
                     }
                     
-                    // MARCAR TODOS LOS REGISTROS CON MISMO FOLIO+ALMACEN+SAP COMO EDITADO
-                    registrosGuardados.forEach((r, i) => {
-                        if (r.folio === registroViejo.folio && 
-                            r.almacen === registroViejo.almacen && 
-                            r.sap === registroViejo.sap && 
-                            !r.eliminado) {
-                            
-                            r.modificado = true;
-                            r.fechaModificacion = new Date().toISOString();
-                            r.modificadoPor = currentRole || selectedUser;
-                            
-                            // Enviar a Google Sheets como EDITADO
-                            enviarAGoogleSheets({
-                                ...r,
-                                eliminado: false,
-                                modificado: true
-                            });
-                        }
-                    });
+                    // MARCAR REGISTRO VIEJO COMO ELIMINADO
+                    registroViejo.eliminado = true;
+                    registroViejo.modificado = false; // El viejo NO es modificado, es ELIMINADO
+                    registroViejo.fechaEliminacion = new Date().toISOString();
+                    registroViejo.eliminadoPor = currentRole || selectedUser;
+                    registroViejo.razonEliminacion = 'Registro editado - versión antigua';
+                    
+                    // Enviar registro VIEJO a Google Sheets como ELIMINADO
+                    if (!esSegundoConteo) {
+                        await enviarAGoogleSheets({
+                            ...registroViejo,
+                            eliminado: true,
+                            modificado: false
+                        });
+                    }
                     
                     // Crear NUEVA versión con el MISMO FOLIO
                     const registroNuevo = {
