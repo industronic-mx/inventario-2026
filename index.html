@@ -104053,14 +104053,7 @@
             console.log('   - SAP:', item.sap);
             console.log('   - areaMaquila:', item.areaMaquila);
             
-            // Solo aplica para Almacén 01 - Materia Prima
-            // NO aplica para Maquila (01-MAQUILA)
-            if (item.almacen !== '01') {
-                console.log('❌ SUFIJO D: Almacén NO es 01, saltando');
-                return { esMultipleMaterial: false };
-            }
-            
-            // Si viene de Maquila, NO aplicar sufijo D
+            // Aplicar en TODOS los almacenes EXCEPTO Maquila
             if (item.areaMaquila) {
                 console.log('❌ SUFIJO D: Es Maquila, saltando');
                 return { esMultipleMaterial: false };
@@ -104192,18 +104185,21 @@
                 fecha: new Date().toISOString()
             };
 
-            // PASO 1: Validar múltiples materiales (SOLO ALMACÉN 01)
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
             const resultadoMultiple = validarMultiplesMateriales(item);
             
             if (resultadoMultiple.esMultipleMaterial) {
                 // Obtener descripción del material anterior
                 const materialAnterior = resultadoMultiple.registrosExistentes[0];
-                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\nEl folio ${item.folio} ya tiene otro material:\n\n` +
-                    `Material anterior:\nSAP: ${materialAnterior.sap}\n${materialAnterior.desc}\n\n` +
-                    `Material actual:\nSAP: ${item.sap}\n${item.desc}\n\n` +
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${item.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${item.sap}\n\n` +
                     `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
-                    `SÍ = Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
-                    `NO = Se marcará como duplicado`;
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
                 
                 if (confirm(mensaje)) {
                     // Usuario confirma que son materiales diferentes
@@ -104215,8 +104211,10 @@
                     currentScanData = null;
                     return;
                 } else {
-                    // Usuario dice que NO, entonces es duplicado real
-                    // Continuar con validación normal de duplicados
+                    // Usuario dice que NO, cancelar
+                    document.getElementById('scan-form-container').style.display = 'none';
+                    currentScanData = null;
+                    return;
                 }
             }
             
@@ -104943,7 +104941,7 @@
                         ubicacion: ubicacion,
                         fecha: new Date().toISOString(),
                         eliminado: false,
-                        modificado: false, // El NUEVO es ACTIVO
+                        modificado: true, // ✅ El NUEVO también es MODIFICADO (bolita amarilla)
                         editadoDe: registroViejo.fecha,
                         razonEdicion: razon && razon.trim() !== '' ? razon.trim() : 'Sin razón especificada',
                         editadoPor: currentRole || selectedUser,
@@ -106971,7 +106969,7 @@
                 sincronizado: false
             };
             
-            // PASO 1: Validar múltiples materiales (SOLO ALMACÉN 01)
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
             console.log('🔍🔍🔍 EJECUTANDO VALIDACIÓN DE MÚLTIPLES MATERIALES 🔍🔍🔍');
             console.log('Registro a validar:', registro);
             
@@ -106982,17 +106980,17 @@
             if (resultadoMultiple.esMultipleMaterial) {
                 console.log('🎯🎯🎯 MÚLTIPLES MATERIALES DETECTADOS 🎯🎯🎯');
                 
-                // ALERT VISIBLE
-                alert(`🔍 DETECTADO: Múltiples materiales en mismo folio\n\nFolio actual: ${registro.folio}\nSe cambiará a: ${resultadoMultiple.siguienteSufijo}`);
-                
                 // Obtener descripción del material anterior
                 const materialAnterior = resultadoMultiple.registrosExistentes[0];
-                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\nEl folio ${registro.folio} ya tiene otro material:\n\n` +
-                    `Material anterior:\nSAP: ${materialAnterior.sap}\n${materialAnterior.desc}\n\n` +
-                    `Material actual:\nSAP: ${registro.sap}\n${registro.desc}\n\n` +
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${registro.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${registro.sap}\n\n` +
                     `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
-                    `SÍ = Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
-                    `NO = Se marcará como duplicado`;
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
                 
                 if (!confirm(mensaje)) {
                     // Usuario dice que NO, entonces cancelar
@@ -108873,11 +108871,39 @@
             
             document.getElementById('container-historial').innerHTML = html;
         }
+        // ========== LISTA COMPLETA DE USUARIOS DEL SISTEMA ==========
+        const USUARIOS_SISTEMA = [
+            'ANGIE NOHEMI MARTINEZ GUEVARA',
+            'BRENDA ABIGAIL AGUIÑAGA GALLARDO',
+            'CARMEN DEL ROCIO CAMARA URIETA',
+            'DANIEL OMAR ARENAS SOLORIO',
+            'EVELIN YAHAIRA RUIZ ESPINOSA',
+            'INGRID GONZALEZ SAUCEDO',
+            'JAHYR CASTRO',
+            'JENNIFER GERALDINE FLORES SANCHEZ',
+            'MARIO ALBERTO LOPEZ SAUCEDO',
+            'OSCAR BUTANDA',
+            'PAOLA YAMILETH GARCIA SANCHEZ',
+            'PATRICIO MAXIMILIANO CARRILLO RAMIREZ',
+            'SANDRA ANTONIO BENITO',
+            'JOSE NAPOLEON PEREZ',
+            'JESUS GABRIEL FLORES',
+            'AMALIA DOMINGUEZ',
+            'HILARY NAHOMI GARCIA',
+            'BLANCA ALICIA AVALOS ROMO',
+            'EDSON ALEJANDRO ENCINIA HERNANDEZ',
+            'ENRIQUE CORTEZ RIOS',
+            'ENRIQUE FERNANDO GARCIA MORENO',
+            'ERICK ORLANDO CORTEZ GONZALEZ',
+            'FATIMA VALERIA GONZALEZ PEDRAZA',
+            'KARLA ALEXANDRA CASTILLO VAZQUEZ',
+            'LUIS GERARDO CARDENAS ROSALES'
+        ].sort();
         
         function cargarUsuariosFiltro(tipo) {
-            const usuarios = [...new Set(registrosGuardados.map(r => r.usuario))].sort();
+            // Usar lista completa de usuarios del sistema
             let html = '';
-            usuarios.forEach(u => {
+            USUARIOS_SISTEMA.forEach(u => {
                 html += `<div class="filter-option" onclick="selectUsuario${tipo.charAt(0).toUpperCase() + tipo.slice(1)}('${u}')">${u}</div>`;
             });
             document.getElementById('usuarios-' + tipo + '-list').innerHTML = html;
