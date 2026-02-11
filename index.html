@@ -17,7 +17,7 @@
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
         
         // Firebase configuration
         const firebaseConfig = {
@@ -35,7 +35,7 @@
         
         // Hacer disponible globalmente
         window.firebaseDB = db;
-        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc };
+        window.firebaseCollections = { collection, addDoc, onSnapshot, query, where, updateDoc, doc, orderBy, getDocs, setDoc, deleteDoc };
     </script>
     
     <!-- Google Sheets API Configuration -->
@@ -1773,13 +1773,16 @@
                     <button onclick="filtrarMisRegistros()">🔍</button>
                 </div>
 
-                <!-- PESTAÑAS: Activos | Editados -->
+                <!-- PESTAÑAS: Activos | Editados | Eliminados -->
                 <div class="filter-chips">
                     <div class="filter-chip active" onclick="filtrarMisRegistrosPorTipo('activos')">
                         🟢 Activos
                     </div>
                     <div class="filter-chip" onclick="filtrarMisRegistrosPorTipo('editados')">
                         🟡 Editados
+                    </div>
+                    <div class="filter-chip" onclick="filtrarMisRegistrosPorTipo('eliminados')">
+                        🔴 Eliminados
                     </div>
                 </div>
             </div>
@@ -1836,9 +1839,6 @@
 
                 <!-- Botones de acción -->
                 <div style="padding: 0 20px 20px;">
-                    <button class="btn-primary" onclick="verComparativo()" style="margin-bottom: 12px;">
-                        📊 Ver Comparativo SAP vs Físico
-                    </button>
                     <button class="btn-secondary" onclick="verPositivos()">
                         ❓ Ver Códigos Positivos
                     </button>
@@ -1849,18 +1849,32 @@
         <!-- ========== BUSCADOR SAP ========== -->
         <div id="screen-buscador-sap" class="screen">
             <div class="header-inner">
-                <button class="btn-back" onclick="showScreen('mesa')">←</button>
+                <button class="btn-back" onclick="volverAlMenu()">←</button>
                 <h1>🔍 Buscador SAP</h1>
             </div>
 
             <div style="background: white; padding: 20px;">
-                <div class="input-group" style="margin-bottom: 24px;">
+                <div class="input-group" style="margin-bottom: 16px;">
                     <label style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 8px;">Buscar SAP:</label>
                     <input type="text" id="input-buscar-sap" placeholder="Ej: 2002398" style="width: 100%; padding: 14px; border: 2px solid #90caf9; border-radius: 8px; font-size: 16px;" onkeyup="if(event.key==='Enter') buscarSAP()">
-                    <button class="btn-primary" onclick="buscarSAP()" style="margin-top: 12px; width: 100%;">
-                        🔍 Buscar
-                    </button>
                 </div>
+                
+                <div class="input-group" style="margin-bottom: 24px;">
+                    <label style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 8px;">Almacén:</label>
+                    <select id="input-almacen-buscador" style="width: 100%; padding: 14px; border: 2px solid #90caf9; border-radius: 8px; font-size: 16px; background: white;">
+                        <option value="todos">🔍 Todos los almacenes</option>
+                        <option value="00">00 - Líneas Producción</option>
+                        <option value="01">01 - Materia Prima</option>
+                        <option value="30">30 - Transformadores</option>
+                        <option value="31">31 - Placas</option>
+                        <option value="32">32 - Arneses</option>
+                        <option value="33">33 - Gabinetes</option>
+                    </select>
+                </div>
+                
+                <button class="btn-primary" onclick="buscarSAP()" style="width: 100%;">
+                    🔍 Buscar
+                </button>
 
                 <div id="resultado-buscador-sap"></div>
             </div>
@@ -2092,6 +2106,8 @@
                 <div class="filter-chips">
                     <div class="filter-chip active" onclick="toggleFilter(this, 'todos')">Todos</div>
                     <div class="filter-chip" onclick="toggleFilter(this, 'duplicados')">⚠️ Duplicados</div>
+                    <div class="filter-chip" onclick="toggleFilter(this, 'editados')">✏️ Editados</div>
+                    <div class="filter-chip" onclick="toggleFilter(this, 'eliminados')">🗑️ Eliminados</div>
                     <div class="filter-chip" onclick="toggleFilter(this, 'almacen')">📦 Almacén</div>
                     <div class="filter-chip" onclick="toggleFilter(this, 'usuario')">👤 Usuario</div>
                 </div>
@@ -2106,14 +2122,16 @@
                     <div class="filter-option" onclick="selectAlmacen('33')">33 - Gabinetes</div>
                 </div>
 
-                <div id="filter-usuario" class="filter-dropdown">
-                    <div class="filter-option selected" onclick="selectUsuario('todos')">Todos los usuarios</div>
-                    <div class="filter-option" onclick="selectUsuario('Sandra Antonio')">Sandra Antonio</div>
-                    <div class="filter-option" onclick="selectUsuario('Jahyr Castro')">Jahyr Castro</div>
-                    <div class="filter-option" onclick="selectUsuario('Angie Martínez')">Angie Martínez</div>
-                    <div class="filter-option" onclick="selectUsuario('Ingrid González')">Ingrid González</div>
-                    <div class="filter-option" onclick="selectUsuario('Edson Encinia')">Edson Encinia</div>
-                    <div class="filter-option" onclick="selectUsuario('Enrique García')">Enrique García</div>
+                <!-- Campo de búsqueda de usuario (reemplaza dropdown) -->
+                <div id="filter-usuario-search" class="filter-dropdown" style="padding: 12px;">
+                    <input type="text" 
+                           id="input-buscar-usuario" 
+                           placeholder="👤 Buscar por nombre de usuario..." 
+                           onkeyup="filtrarPorUsuarioBusqueda(this.value)"
+                           style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                    <div style="font-size: 11px; color: #757575; margin-top: 8px; text-align: center;">
+                        Escribe el nombre para filtrar
+                    </div>
                 </div>
             </div>
 
@@ -2351,6 +2369,10 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Botón eliminar kardex -->
+                        <button onclick="eliminarKardex()" style="margin-top: 12px; width: 100%; padding: 10px; background: #d32f2f; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                            🗑️ Eliminar Kardex
+                        </button>
                     </div>
                     
                     <!-- Base de Descripciones: Ya cargada automáticamente (25,230 artículos) -->
@@ -2436,6 +2458,9 @@
                         <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarComparativoSAP()">
                             📊 Comparativo SAP vs Físico
                         </button>
+                        <button class="btn-primary" style="width: 100%;" onclick="descargarTop40Diferencias()">
+                            🔥 Top 40 Mayores Diferencias
+                        </button>
                         <button class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="descargarAvancePorAlmacen()">
                             📦 Avance por Almacén
                         </button>
@@ -2453,19 +2478,7 @@
                         </button>
                     </div>
                     
-                    <!-- Botón RESETEAR TODO (Firebase + Sheets + Caché) -->
-                    <div style="margin-top: 16px; border-top: 2px solid #ffebee; padding-top: 16px;">
-                        <div style="background: #fff3e0; border-radius: 8px; padding: 12px; margin-bottom: 12px;">
-                            <div style="font-size: 12px; color: #e65100; font-weight: 700; margin-bottom: 4px;">⚠️ ZONA DE LIMPIEZA</div>
-                            <div style="font-size: 11px; color: #757575;">Usar solo al terminar pruebas, antes del inventario real</div>
-                        </div>
-                        <button class="btn-secondary" style="width: 100%; background: #d32f2f; color: white; font-weight: 700; font-size: 14px; padding: 16px;" onclick="resetearTodoElSistema()">
-                            🗑️ RESETEAR TODO EL SISTEMA
-                        </button>
-                        <div style="font-size: 10px; color: #d32f2f; text-align: center; margin-top: 8px; font-weight: 600;">
-                            Borra Firebase + Google Sheets + Caché Local
-                        </div>
-                    </div>
+                    <!-- ZONA DE LIMPIEZA REMOVIDA - Usar Firebase Console manualmente -->
                 </div>
 
                 <div class="menu-grid" style="margin-top: 24px;">
@@ -103889,9 +103902,28 @@
             let sap = '';
             let desc = '';
 
-            // Detectar almacén
-            if (texto.includes('Materia Prima')) {
+            // Detectar almacén por palabra clave (orden de más específico a menos específico)
+            if (texto.includes('Lineas Produccion')) {
+                almacen = '00 - Lineas Produccion';
+                almacenCod = '00';
+            } else if (texto.includes('MP TARIMAS')) {
                 almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('TARIMAS MP')) {
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('Tarimas MP')) {
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('Materia Prima')) {
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.split(' ').includes('MP')) {
+                // Detectar "MP" como palabra completa (no parte de otra palabra)
+                almacen = '01 - Materia Prima';
+                almacenCod = '01';
+            } else if (texto.includes('Maquila')) {
+                almacen = '01-MAQUILA';
                 almacenCod = '01';
             } else if (texto.includes('Transformadores')) {
                 almacen = '30 - Transformadores';
@@ -104036,6 +104068,76 @@
                 otroUsuario: duplicadoOtro ? duplicadoOtro.usuario : null
             };
         }
+        
+        // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01)
+        // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01 - Materia Prima)
+        function validarMultiplesMateriales(item) {
+            console.log('🔍 SUFIJO D: Validando múltiples materiales');
+            console.log('   - Almacén:', item.almacen);
+            console.log('   - Folio:', item.folio);
+            console.log('   - SAP:', item.sap);
+            console.log('   - areaMaquila:', item.areaMaquila);
+            
+            // Aplicar en TODOS los almacenes EXCEPTO Maquila
+            if (item.areaMaquila) {
+                console.log('❌ SUFIJO D: Es Maquila, saltando');
+                return { esMultipleMaterial: false };
+            }
+            
+            // Buscar si ya existe el folio con DIFERENTE SAP
+            const registrosConMismoFolio = [
+                ...registrosGuardados.filter(r => !r.eliminado),
+                ...escaneados
+            ].filter(r => 
+                r.folio.startsWith(item.folio.replace(/D\d*$/,'')) && // Mismo folio base (sin D)
+                r.almacen === item.almacen &&
+                r.sap !== item.sap // DIFERENTE SAP
+            );
+            
+            console.log('🔍 SUFIJO D: Registros con mismo folio:', registrosConMismoFolio.length);
+            
+            if (registrosConMismoFolio.length > 0) {
+                console.log('✅ SUFIJO D: SÍ hay múltiples materiales');
+                return {
+                    esMultipleMaterial: true,
+                    registrosExistentes: registrosConMismoFolio,
+                    siguienteSufijo: generarSiguienteSufijo(item.folio, item.almacen)
+                };
+            }
+            
+            console.log('❌ SUFIJO D: NO hay múltiples materiales');
+            return { esMultipleMaterial: false };
+        }
+        
+        // Generar siguiente sufijo disponible (D, D2, D3...)
+        function generarSiguienteSufijo(folioBase, almacen) {
+            // Limpiar sufijos existentes del folio
+            const folio = folioBase.replace(/D\d*$/, '');
+            
+            // Buscar todos los registros con este folio (con o sin D)
+            const todosLosRegistros = [
+                ...registrosGuardados.filter(r => !r.eliminado),
+                ...escaneados
+            ].filter(r => 
+                r.folio.startsWith(folio) && 
+                r.almacen === almacen
+            );
+            
+            // Extraer sufijos existentes
+            const sufijosUsados = todosLosRegistros.map(r => {
+                const match = r.folio.match(/D(\d*)$/);
+                if (!match) return 0; // Sin sufijo = 0
+                if (match[1] === '') return 1; // Solo "D" = 1
+                return parseInt(match[1]); // D2, D3... = 2, 3...
+            });
+            
+            // Encontrar el siguiente disponible
+            const maxSufijo = sufijosUsados.length > 0 ? Math.max(...sufijosUsados) : 0;
+            const siguiente = maxSufijo + 1;
+            
+            if (siguiente === 1) return folio + 'D';
+            return folio + 'D' + siguiente;
+        }
 
         // Confirmar formulario
         function confirmarFormulario() {
@@ -104043,6 +104145,13 @@
             const ubicacion = document.getElementById('form-ubicacion').value;
             const nombreContador = document.getElementById('form-contador').value.trim();
             const almacenSeleccionado = document.getElementById('form-almacen-select').value; // Leer del select
+            
+            // VALIDAR ALMACÉN OBLIGATORIO
+            if (!almacenSeleccionado || almacenSeleccionado === '') {
+                alert('⚠️ Debes seleccionar un almacén');
+                document.getElementById('form-almacen-select').focus();
+                return;
+            }
             
             // Convertir MAQUILA a 01 (físicamente es área separada pero se suma como almacén 01)
             const almacenFinal = almacenSeleccionado === '01-MAQUILA' ? '01' : almacenSeleccionado;
@@ -104062,23 +104171,25 @@
                 return;
             }
             
-            // Validar cantidad
+            // VALIDAR CANTIDAD OBLIGATORIA Y MAYOR A 0
             if (cantidad === '' || cantidad === null || isNaN(cantidad)) {
-                alert('Ingresa una cantidad válida');
+                alert('⚠️ Debes ingresar una cantidad válida');
+                document.getElementById('form-cantidad').focus();
                 return;
             }
             
             // Validar cantidad negativa
             if (cantidad < 0) {
-                alert('La cantidad no puede ser negativa');
+                alert('⚠️ La cantidad no puede ser negativa');
+                document.getElementById('form-cantidad').focus();
                 return;
             }
             
-            // Confirmación si cantidad es 0
+            // CANTIDAD 0 NO PERMITIDA
             if (cantidad === 0) {
-                if (!confirm('⚠️ ¿Confirmas que la cantidad es 0?\n\nEsto significa que el artículo NO existe físicamente.')) {
-                    return;
-                }
+                alert('⚠️ La cantidad no puede ser 0\n\nSi el artículo no existe, NO escanees el marbete.');
+                document.getElementById('form-cantidad').focus();
+                return;
             }
             
             const item = {
@@ -104099,6 +104210,40 @@
                 fecha: new Date().toISOString()
             };
 
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
+            const resultadoMultiple = validarMultiplesMateriales(item);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${item.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${item.sap}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
+                
+                if (confirm(mensaje)) {
+                    // Usuario confirma que son materiales diferentes
+                    item.folio = resultadoMultiple.siguienteSufijo;
+                    item.multipleMaterial = true;
+                    agregarEscaneado(item);
+                    reproducirSonido('scan');
+                    document.getElementById('scan-form-container').style.display = 'none';
+                    currentScanData = null;
+                    return;
+                } else {
+                    // Usuario dice que NO, cancelar
+                    document.getElementById('scan-form-container').style.display = 'none';
+                    currentScanData = null;
+                    return;
+                }
+            }
+            
+            // PASO 2: Validar duplicados normales
             const resultadoDuplicado = validarDuplicado(item);
             
             if (resultadoDuplicado.esDuplicado) {
@@ -104475,12 +104620,21 @@
                 
                 if (type === 'kardex') {
                     // Guardar Kardex SAP
-                    kardexSAP = jsonData.map(row => ({
-                        codigo: String(row['Código Artículo'] || row['Codigo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
-                        almacen: String(row['Almacén'] || row['Almacen'] || row['ALMACEN'] || row['WhsCode'] || '').trim(),
-                        unidadMedida: String(row['Unidad de Medida'] || row['UnidadMedida'] || row['InvntryUom'] || 'PZA').trim(),
-                        cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0)
-                    })).filter(item => item.codigo && item.almacen);
+                    kardexSAP = jsonData.map(row => {
+                        let almacen = String(row['Almacén'] || row['Almacen'] || row['ALMACEN'] || row['WhsCode'] || '').trim();
+                        
+                        // NORMALIZAR ALMACÉN: "1" → "01", "30" → "30", etc.
+                        if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                            almacen = '0' + almacen; // Agregar 0 al inicio
+                        }
+                        
+                        return {
+                            codigo: String(row['Código Artículo'] || row['Codigo'] || row['Código'] || row['CODIGO'] || row['ItemCode'] || '').trim(),
+                            almacen: almacen,
+                            unidadMedida: String(row['Unidad de Medida'] || row['UnidadMedida'] || row['InvntryUom'] || 'PZA').trim(),
+                            cantidad: parseFloat(row['Cantidad'] || row['CANTIDAD'] || row['OnHand'] || 0)
+                        };
+                    }).filter(item => item.codigo && item.almacen);
                     
                     // SUBIR A FIREBASE
                     try {
@@ -104597,6 +104751,56 @@
                 }
             }
         }
+        
+        // Eliminar kardex cargado
+        async function eliminarKardex() {
+            if (!confirm('⚠️ ¿SEGURO que deseas ELIMINAR el Kardex?\n\nEsta acción eliminará:\n• Kardex de Firebase\n• Kardex de localStorage\n• Tendrás que volver a cargar el archivo\n\n¿Continuar?')) {
+                return;
+            }
+            
+            try {
+                // Eliminar de Firebase
+                if (window.firebaseDB) {
+                    const { doc, deleteDoc } = window.firebaseCollections;
+                    const db = window.firebaseDB;
+                    
+                    await deleteDoc(doc(db, 'config', 'kardex'));
+                    console.log('✅ Kardex eliminado de Firebase');
+                }
+                
+                // Eliminar de localStorage
+                localStorage.removeItem('kardexSAP');
+                localStorage.removeItem('kardexFecha');
+                localStorage.removeItem('kardexPor');
+                console.log('✅ Kardex eliminado de localStorage');
+                
+                // Limpiar variable global
+                kardexSAP = [];
+                
+                // Ocultar panel
+                const panelKardex = document.getElementById('kardex-info');
+                if (panelKardex) {
+                    panelKardex.style.display = 'none';
+                }
+                
+                // Resetear input de archivo
+                const inputKardex = document.getElementById('file-kardex');
+                if (inputKardex) {
+                    inputKardex.value = '';
+                }
+                
+                const nameKardex = document.getElementById('name-kardex');
+                if (nameKardex) {
+                    nameKardex.textContent = 'Cargar archivo Excel con inventario teórico';
+                }
+                
+                alert('✅ Kardex eliminado exitosamente\n\nPuedes cargar un nuevo archivo cuando quieras.');
+                
+            } catch (error) {
+                console.error('❌ Error al eliminar kardex:', error);
+                alert('⚠️ Error al eliminar kardex:\n\n' + error.message);
+            }
+        }
 
 
         // Filtrar mis registros
@@ -104611,9 +104815,18 @@
             element.classList.add('active');
             document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
             
-            if (type !== 'todos' && type !== 'duplicados') {
-                const dropdown = document.getElementById('filter-' + type);
-                if (dropdown) dropdown.classList.add('show');
+            if (type !== 'todos' && type !== 'duplicados' && type !== 'editados' && type !== 'eliminados') {
+                const dropdownId = type === 'usuario' ? 'filter-usuario-search' : 'filter-' + type;
+                const dropdown = document.getElementById(dropdownId);
+                if (dropdown) {
+                    dropdown.classList.add('show');
+                    // Si es usuario, enfocar en el campo de búsqueda
+                    if (type === 'usuario') {
+                        setTimeout(() => {
+                            document.getElementById('input-buscar-usuario').focus();
+                        }, 100);
+                    }
+                }
             }
             
             currentFilter = type;
@@ -104635,6 +104848,35 @@
             event.target.classList.add('selected');
             currentUsuario = usuario;
             document.getElementById('filter-usuario').classList.remove('show');
+            buscarRegistros();
+        }
+        
+        // Nueva función: Filtrar por búsqueda de usuario
+        function filtrarPorUsuarioBusqueda(texto) {
+            const textoLimpio = texto.trim().toUpperCase();
+            
+            if (textoLimpio === '') {
+                // Si está vacío, mostrar todos
+                currentUsuario = 'todos';
+            } else {
+                // Buscar usuario que contenga el texto
+                const usuarioEncontrado = USUARIOS_SISTEMA.find(u => 
+                    u.toUpperCase().includes(textoLimpio)
+                );
+                
+                if (usuarioEncontrado) {
+                    currentUsuario = usuarioEncontrado;
+                } else {
+                    // Si no encuentra, buscar en registros
+                    const usuariosEnRegistros = [...new Set(registrosGuardados.map(r => r.usuario))];
+                    const encontradoEnRegistros = usuariosEnRegistros.find(u => 
+                        u.toUpperCase().includes(textoLimpio)
+                    );
+                    currentUsuario = encontradoEnRegistros || 'todos';
+                }
+            }
+            
+            // Aplicar filtro
             buscarRegistros();
         }
 
@@ -104821,7 +105063,7 @@
                         ubicacion: ubicacion,
                         fecha: new Date().toISOString(),
                         eliminado: false,
-                        modificado: false, // El NUEVO es ACTIVO
+                        modificado: true, // ✅ El NUEVO también es MODIFICADO (bolita amarilla)
                         editadoDe: registroViejo.fecha,
                         razonEdicion: razon && razon.trim() !== '' ? razon.trim() : 'Sin razón especificada',
                         editadoPor: currentRole || selectedUser,
@@ -105016,14 +105258,12 @@
                 
                 console.log('✅ Registro eliminado correctamente');
                 
+                // Actualizar UI INMEDIATAMENTE
+                renderizarMisRegistros();
+                renderizarTodosRegistros();
+                
                 // OVERLAY MEJORADO
                 mostrarConfirmacionEliminacion(registro.folio, razon.trim(), currentRole || selectedUser);
-                
-                // Recargar vistas después de 2 segundos
-                setTimeout(() => {
-                    renderizarMisRegistros();
-                    renderizarTodosRegistros();
-                }, 2000);
                 
             } catch (error) {
                 console.error('❌ Error al eliminar:', error);
@@ -105386,38 +105626,12 @@
         }
         
         function renderizarMisRegistros() {
-            // FILTRAR según pestaña activa - INCLUIR eliminados para mostrarlos tachados
+            // PASO 1: Obtener TODOS los registros del usuario (sin filtrar todavía)
             let misRegistros = registrosGuardados.filter(r => 
                 r.usuario === selectedUser
             );
             
-            // Aplicar filtro de tipo
-            if (filtroMisRegistros === 'activos') {
-                misRegistros = misRegistros.filter(r => !r.modificado && !r.eliminado);
-            } else if (filtroMisRegistros === 'editados') {
-                misRegistros = misRegistros.filter(r => r.modificado && !r.eliminado);
-            } else if (filtroMisRegistros === 'todos') {
-                // Mostrar todos incluyendo eliminados
-            }
-            
-            const container = document.getElementById('container-mis-registros');
-            const count = document.getElementById('count-mis-registros');
-            
-            if (!container) return;
-            
-            // Actualizar contador (solo activos)
-            const activos = misRegistros.filter(r => !r.eliminado);
-            count.textContent = `${activos.length} registro${activos.length !== 1 ? 's' : ''} activo${activos.length !== 1 ? 's' : ''}`;
-            
-            if (misRegistros.length === 0) {
-                const mensaje = filtroMisRegistros === 'editados' 
-                    ? 'No tienes registros editados' 
-                    : 'No hay registros activos';
-                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #9e9e9e;">${mensaje}</div>`;
-                return;
-            }
-            
-            // Agrupar por folio para mostrar solo el más reciente
+            // PASO 2: Agrupar por folio para mostrar solo el más reciente
             const registrosPorFolio = {};
             misRegistros.forEach(r => {
                 const key = `${r.folio}-${r.almacen}-${r.sap}`;
@@ -105426,7 +105640,38 @@
                 }
             });
             
-            const registrosFinales = Object.values(registrosPorFolio);
+            // PASO 3: Convertir a array
+            let registrosFinales = Object.values(registrosPorFolio);
+            
+            // PASO 4: AHORA SÍ FILTRAR según pestaña activa
+            if (filtroMisRegistros === 'activos') {
+                registrosFinales = registrosFinales.filter(r => !r.modificado && !r.eliminado);
+            } else if (filtroMisRegistros === 'editados') {
+                registrosFinales = registrosFinales.filter(r => r.modificado && !r.eliminado);
+            } else if (filtroMisRegistros === 'eliminados') {
+                registrosFinales = registrosFinales.filter(r => r.eliminado);
+            } else if (filtroMisRegistros === 'todos') {
+                // Mostrar todos (incluyendo eliminados)
+            }
+            
+            const container = document.getElementById('container-mis-registros');
+            const count = document.getElementById('count-mis-registros');
+            
+            if (!container) return;
+            
+            // Actualizar contador (solo activos)
+            const activos = registrosFinales.filter(r => !r.eliminado && !r.modificado);
+            count.textContent = `${activos.length} registro${activos.length !== 1 ? 's' : ''} activo${activos.length !== 1 ? 's' : ''}`;
+            
+            if (registrosFinales.length === 0) {
+                const mensaje = filtroMisRegistros === 'editados' 
+                    ? 'No tienes registros editados' 
+                    : filtroMisRegistros === 'eliminados'
+                    ? 'No tienes registros eliminados'
+                    : 'No hay registros activos';
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #9e9e9e;">${mensaje}</div>`;
+                return;
+            }
             
             container.innerHTML = registrosFinales.map((r, index) => {
                 let estadoVisual = '';
@@ -105499,6 +105744,9 @@
             console.log('🔍 Renderizando Todos los Registros...');
             console.log('📊 Total en sistema:', registrosGuardados.length);
             
+            // Cargar lista de usuarios al iniciar
+            cargarUsuariosFiltro('');
+            
             const container = document.getElementById('container-todos-registros');
             const count = document.getElementById('count-registros');
             
@@ -105527,20 +105775,37 @@
                 return;
             }
             
-            // Filtrar registros ACTIVOS (no eliminados ni modificados)
-            const todosRegistros = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            // FILTRAR según tipo activo (leer de filtros activos)
+            let todosRegistros = registrosGuardados.filter(r => r.almacen !== '00');
             
-            console.log('✅ Registros activos:', todosRegistros.length);
-            console.log('🗑️ Eliminados:', registrosGuardados.filter(r => r.eliminado).length);
-            console.log('✏️ Modificados:', registrosGuardados.filter(r => r.modificado).length);
+            // Detectar qué filtro está activo
+            const filtroEditados = document.querySelector('.filter-chip[onclick*="editados"]')?.classList.contains('active');
+            const filtroEliminados = document.querySelector('.filter-chip[onclick*="eliminados"]')?.classList.contains('active');
+            const filtroDuplicados = document.querySelector('.filter-chip[onclick*="duplicados"]')?.classList.contains('active');
             
-            count.textContent = `${todosRegistros.length} registros activos`;
+            if (filtroEditados) {
+                todosRegistros = todosRegistros.filter(r => r.modificado && !r.eliminado);
+            } else if (filtroEliminados) {
+                todosRegistros = todosRegistros.filter(r => r.eliminado);
+            } else if (filtroDuplicados) {
+                todosRegistros = todosRegistros.filter(r => r.esDuplicado && !r.eliminado && !r.modificado);
+            } else {
+                // Filtro "Todos" - solo activos (no eliminados ni modificados)
+                todosRegistros = todosRegistros.filter(r => !r.eliminado && !r.modificado);
+            }
+            
+            console.log('✅ Registros filtrados:', todosRegistros.length);
+            console.log('🗑️ Eliminados totales:', registrosGuardados.filter(r => r.eliminado).length);
+            console.log('✏️ Modificados totales:', registrosGuardados.filter(r => r.modificado).length);
+            
+            const tipoFiltro = filtroEditados ? 'editados' : filtroEliminados ? 'eliminados' : filtroDuplicados ? 'duplicados' : 'activos';
+            count.textContent = `${todosRegistros.length} registros ${tipoFiltro}`;
             
             if (todosRegistros.length === 0) {
                 container.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #9e9e9e;">
                         <div style="font-size: 48px; margin-bottom: 16px;">📭</div>
-                        <div style="font-size: 16px; color: #424242; margin-bottom: 8px;">No hay registros activos</div>
+                        <div style="font-size: 16px; color: #424242; margin-bottom: 8px;">No hay registros ${tipoFiltro}</div>
                         <div style="font-size: 13px;">Total en sistema: ${registrosGuardados.length}</div>
                         <div style="font-size: 13px; color: #757575; margin-top: 8px;">
                             (Eliminados: ${registrosGuardados.filter(r => r.eliminado).length} | 
@@ -105871,6 +106136,92 @@
             ws['!cols'] = [{wch:12},{wch:40},{wch:10},{wch:8},{wch:12},{wch:12},{wch:12},{wch:12},{wch:15},{wch:15},{wch:15},{wch:15},{wch:12}];
             XLSX.utils.book_append_sheet(wb, ws, "Comparativo");
             XLSX.writeFile(wb, `Comparativo_SAP_vs_Fisico_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+        
+        // TOP 40 MAYORES DIFERENCIAS (por costo)
+        function descargarTop40Diferencias() {
+            if (kardexSAP.length === 0) {
+                alert('⚠️ Primero carga el Kardex SAP');
+                return;
+            }
+            
+            const comparativo = [];
+            const registrosActivos = registrosGuardados.filter(r => !r.eliminado && !r.modificado && r.almacen !== '00');
+            
+            // Agrupar físico por SAP + Almacén
+            const fisicoMap = {};
+            registrosActivos.forEach(r => {
+                const key = `${r.sap}_${r.almacen}`;
+                if (!fisicoMap[key]) {
+                    fisicoMap[key] = { cantidad: 0, sap: r.sap, almacen: r.almacen, desc: r.desc };
+                }
+                fisicoMap[key].cantidad += r.cantidad;
+            });
+            
+            // Comparar con Kardex
+            kardexSAP.forEach(k => {
+                const key = `${k.codigo}_${k.almacen}`;
+                const fisico = fisicoMap[key] || { cantidad: 0, desc: k.descripcion || '' };
+                const cantKardex = k.cantidad || 0;
+                const cantFisica = fisico.cantidad;
+                const diferenciaCant = cantFisica - cantKardex;
+                
+                // CÁLCULO DE COSTOS según especificación de Andy
+                const costoUnitario = k.costoUnitario || 0;
+                const costoKardex = cantKardex * costoUnitario;
+                const costoDiferencia = diferenciaCant * costoUnitario; // Costo de la diferencia
+                
+                comparativo.push({
+                    'SAP': k.codigo,
+                    'Descripción': fisico.desc || k.descripcion || '',
+                    'Cant. Kardex': cantKardex,
+                    'Cant. Física': cantFisica,
+                    'Dif. Cantidad': diferenciaCant,
+                    'Costo Kardex': costoKardex.toFixed(2),
+                    'Costo Dif.': costoDiferencia.toFixed(2),
+                    'Almacén': k.almacen,
+                    'Unidad': k.unidadMedida || 'PZA',
+                    'Costo Unit.': costoUnitario.toFixed(4)
+                });
+            });
+            
+            // Ordenar por VALOR ABSOLUTO de Costo Diferencia (mayor impacto primero)
+            comparativo.sort((a, b) => {
+                const valorA = Math.abs(parseFloat(a['Costo Dif.']));
+                const valorB = Math.abs(parseFloat(b['Costo Dif.']));
+                return valorB - valorA; // Descendente (mayor primero)
+            });
+            
+            // Tomar TOP 40
+            const top40 = comparativo.slice(0, 40);
+            
+            if (top40.length === 0) {
+                alert('⚠️ No hay diferencias para reportar');
+                return;
+            }
+            
+            // Crear Excel
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet(top40);
+            
+            // Configurar anchos de columnas
+            ws['!cols'] = [
+                {wch:12},  // SAP
+                {wch:45},  // Descripción
+                {wch:12},  // Cant. Kardex
+                {wch:12},  // Cant. Física
+                {wch:12},  // Dif. Cantidad
+                {wch:15},  // Costo Kardex
+                {wch:15},  // Costo Dif.
+                {wch:10},  // Almacén
+                {wch:8},   // Unidad
+                {wch:12}   // Costo Unit.
+            ];
+            
+            XLSX.utils.book_append_sheet(wb, ws, "Top 40 Diferencias");
+            XLSX.writeFile(wb, `Top_40_Mayores_Diferencias_${new Date().toISOString().split('T')[0]}.xlsx`);
+            
+            alert(`✅ Reporte generado exitosamente\n\nTop ${top40.length} mayores diferencias por impacto en costo`);
         }
         
         // 7. Diferencias Significativas
@@ -106334,6 +106685,15 @@
                         const data = kardexDoc.data();
                         kardexSAP = data.kardex || [];
                         
+                        // NORMALIZAR ALMACENES al cargar desde Firebase
+                        kardexSAP = kardexSAP.map(k => {
+                            let almacen = String(k.almacen || '').trim();
+                            if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                almacen = '0' + almacen;
+                            }
+                            return { ...k, almacen };
+                        });
+                        
                         // Guardar en localStorage también
                         localStorage.setItem('kardexSAP', JSON.stringify(kardexSAP));
                         localStorage.setItem('kardexFecha', data.fechaActualizacion || '');
@@ -106352,6 +106712,16 @@
                         const kardexLocal = localStorage.getItem('kardexSAP');
                         if (kardexLocal) {
                             kardexSAP = JSON.parse(kardexLocal);
+                            
+                            // NORMALIZAR ALMACENES al cargar
+                            kardexSAP = kardexSAP.map(k => {
+                                let almacen = String(k.almacen || '').trim();
+                                if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                    almacen = '0' + almacen;
+                                }
+                                return { ...k, almacen };
+                            });
+                            
                             console.log('✅ Kardex cargado desde localStorage:', kardexSAP.length, 'registros');
                             actualizarInfoKardex();
                         } else {
@@ -106365,6 +106735,16 @@
                     const kardexLocal = localStorage.getItem('kardexSAP');
                     if (kardexLocal) {
                         kardexSAP = JSON.parse(kardexLocal);
+                        
+                        // NORMALIZAR ALMACENES al cargar
+                        kardexSAP = kardexSAP.map(k => {
+                            let almacen = String(k.almacen || '').trim();
+                            if (almacen.length === 1 && /^\d$/.test(almacen)) {
+                                almacen = '0' + almacen;
+                            }
+                            return { ...k, almacen };
+                        });
+                        
                         console.log('✅ Kardex cargado desde localStorage (fallback):', kardexSAP.length, 'registros');
                         actualizarInfoKardex();
                     }
@@ -106848,6 +107228,66 @@
                 sincronizado: false
             };
             
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
+            console.log('🔍🔍🔍 EJECUTANDO VALIDACIÓN DE MÚLTIPLES MATERIALES 🔍🔍🔍');
+            console.log('Registro a validar:', registro);
+            
+            const resultadoMultiple = validarMultiplesMateriales(registro);
+            
+            console.log('Resultado validación:', resultadoMultiple);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                console.log('🎯🎯🎯 MÚLTIPLES MATERIALES DETECTADOS 🎯🎯🎯');
+                
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${registro.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${registro.sap}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
+                
+                if (!confirm(mensaje)) {
+                    // Usuario dice que NO, entonces cancelar
+                    console.log('❌ MANUAL: Usuario canceló múltiples materiales');
+                    return;
+                }
+                
+                // Usuario confirma que son materiales diferentes
+                console.log(`✅✅✅ CAMBIANDO FOLIO: ${registro.folio} → ${resultadoMultiple.siguienteSufijo} ✅✅✅`);
+                registro.folio = resultadoMultiple.siguienteSufijo;
+                registro.multipleMaterial = true;
+            } else {
+                console.log('❌ NO hay múltiples materiales, continuando normal');
+            }
+            
+            // PASO 2: Validar duplicados normales
+            const resultadoDuplicado = validarDuplicado(registro);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (!confirm(mensaje)) {
+                    console.log('❌ MANUAL: Usuario canceló duplicado');
+                    return;
+                }
+                
+                registro.esDuplicado = true;
+                registro.continuoDespuesAlerta = true;
+            }
+            
             // Obtener botón
             const btnGuardar = document.getElementById('btn-guardar-manual');
             if (!btnGuardar) {
@@ -106991,6 +107431,67 @@
                 areaMaquila: almacenSeleccionado === '01-MAQUILA',
                 sincronizado: false
             };
+            
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
+            console.log('🔍🔍🔍 QR: EJECUTANDO VALIDACIÓN DE MÚLTIPLES MATERIALES 🔍🔍🔍');
+            console.log('QR: Registro a validar:', registro);
+            
+            const resultadoMultiple = validarMultiplesMateriales(registro);
+            
+            console.log('QR: Resultado validación:', resultadoMultiple);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                console.log('🎯🎯🎯 QR: MÚLTIPLES MATERIALES DETECTADOS 🎯🎯🎯');
+                
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${registro.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${registro.sap}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
+                
+                if (!confirm(mensaje)) {
+                    // Usuario dice que NO, entonces cancelar
+                    console.log('❌ QR: Usuario canceló múltiples materiales');
+                    return;
+                }
+                
+                // Usuario confirma que son materiales diferentes
+                console.log(`✅✅✅ QR: CAMBIANDO FOLIO: ${registro.folio} → ${resultadoMultiple.siguienteSufijo} ✅✅✅`);
+                registro.folio = resultadoMultiple.siguienteSufijo;
+                registro.multipleMaterial = true;
+            } else {
+                console.log('❌ QR: NO hay múltiples materiales, continuando normal');
+            }
+            
+            // PASO 2: Validar duplicados normales
+            const resultadoDuplicado = validarDuplicado(registro);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (!confirm(mensaje)) {
+                    console.log('❌ QR: Usuario canceló por duplicado');
+                    return;
+                }
+                
+                // Usuario continuó - marcar como duplicado
+                console.log('⚠️ QR: Usuario continuó después de alerta duplicado');
+                registro.esDuplicado = true;
+            }
             
             // Obtener botón
             const btnGuardar = document.getElementById('btn-guardar-qr');
@@ -107205,20 +107706,40 @@
         }
         
         // ========== GOOGLE SHEETS INTEGRATION ==========
-        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxj2ast6F1W2g3VD7D7V1tOj8Q4Ur5amBJWNGOnlTlA0gkQKte_SJ1bEvELHtaFPGcQ/exec';
+        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbyk2AM2aCdLhCSazo3GUZUuSqoXcnm0kjJVAxPSVViOqMkWbT9aOa3Wq4br2mk3UDz4/exec';
         
         async function enviarAGoogleSheets(registro) {
             try {
-                // Determinar a qué pestaña debe ir según el tipo de registro
-                let tipoRegistro = 'REGISTROS'; // Por defecto
+                // Formatear registro para Google Sheets con columnas específicas
+                const registroFormateado = {
+                    Timestamp: new Date(registro.timestamp || registro.fecha).toLocaleString('es-MX', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    }),
+                    Folio: registro.folio || '',
+                    Almacén: registro.almacen || '',
+                    SAP: registro.sap || '',
+                    Descripción: registro.desc || '',
+                    Cantidad: registro.cantidad || 0,
+                    Unidad: registro.unidadMedida || 'PZA',
+                    Ubicación: registro.ubicacion || '',
+                    Usuario: registro.usuario || '',
+                    Método: registro.metodo || '',
+                    Contador: registro.nombreContador || '',
+                    ESTATUS: registro.eliminado ? 'ELIMINADO' : 'ACTIVO',
+                    'ES EDITADO': registro.modificado ? 'SÍ' : 'NO',
+                    'ES DUPLICADO': registro.esDuplicado ? 'SÍ' : 'NO',
+                    'ES POSITIVO': registro.esPositivo ? 'SÍ' : 'NO',
+                    'EN REVISIÓN': registro.enRevision ? 'SÍ' : 'NO',
+                    'Fecha/Hora': registro.fecha || new Date().toISOString()
+                };
                 
-                if (registro.eliminado) {
-                    tipoRegistro = 'ELIMINADOS';
-                } else if (registro.modificado) {
-                    tipoRegistro = 'MODIFICADOS';
-                } else if (registro.enRevision) {
-                    tipoRegistro = 'REVISIONES';
-                }
+                // Determinar a qué pestaña debe ir según el tipo de registro
+                let tipoRegistro = 'REGISTROS'; // Siempre va a REGISTROS (pestaña principal)
                 
                 const response = await fetch(GOOGLE_SHEETS_WEBHOOK, {
                     method: 'POST',
@@ -107229,7 +107750,7 @@
                     body: JSON.stringify({
                         action: 'add',
                         tipoRegistro: tipoRegistro,
-                        registro: registro
+                        registro: registroFormateado
                     })
                 });
                 
@@ -107951,6 +108472,11 @@
         function volverAMesa() {
             actualizarPanelPorAlmacen();
             showScreen('mesa');
+        }
+        
+        function volverAlMenu() {
+            // Regresar al menú principal (Auditoría/Capturista/Mesa Control)
+            showScreen('login');
         }
         
         // ========== VISTAS CON FILTROS ==========
@@ -108690,14 +109216,67 @@
             
             document.getElementById('container-historial').innerHTML = html;
         }
+        // ========== LISTA COMPLETA DE USUARIOS DEL SISTEMA (34 USUARIOS) ==========
+        const USUARIOS_SISTEMA = [
+            'ANA CECILIA ESCALANTE HERRERA',
+            'ANDREA CASTRO ROMERO',
+            'ANGIE NOHEMI MARTINEZ GUEVARA',
+            'BRENDA ABIGAIL AGUIÑAGA GALLARDO',
+            'CARMEN DEL ROCIO CAMARA URIETA',
+            'DANIEL OMAR ARENAS SOLORIO',
+            'EVELIN YAHAIRA RUIZ ESPINOSA',
+            'INGRID GONZALEZ SAUCEDO',
+            'JAHYR CASTRO',
+            'JENNIFER GERALDINE FLORES SANCHEZ',
+            'MARIO ALBERTO LOPEZ SAUCEDO',
+            'OSCAR BUTANDA',
+            'PAOLA YAMILETH GARCIA SANCHEZ',
+            'PATRICIO MAXIMILIANO CARRILLO RAMIREZ',
+            'SANDRA ANTONIO BENITO',
+            'JOSE NAPOLEON PEREZ',
+            'JESUS GABRIEL FLORES',
+            'AMALIA DOMINGUEZ',
+            'HILARY NAHOMI GARCIA',
+            'BLANCA ALICIA AVALOS ROMO',
+            'EDSON ALEJANDRO ENCINIA HERNANDEZ',
+            'ENRIQUE CORTEZ RIOS',
+            'ENRIQUE FERNANDO GARCIA MORENO',
+            'ERICK ORLANDO CORTEZ GONZALEZ',
+            'HIRAM ENRIQUE CORTEZ GARZA',
+            'LOLIS PEREZ SIMANCAS',
+            'YARELLI GUADALUPE HERNANDEZ GARCIA',
+            'USUARIO GENERICO 1',
+            'USUARIO GENERICO 2',
+            'USUARIO GENERICO 3',
+            'USUARIO GENERICO 4',
+            'USUARIO GENERICO 5',
+            'AUDITOR GENERICO 1',
+            'AUDITOR GENERICO 2',
+            'AUDITOR GENERICO 3'
+        ].sort();
         
         function cargarUsuariosFiltro(tipo) {
-            const usuarios = [...new Set(registrosGuardados.map(r => r.usuario))].sort();
+            // Usar lista completa de usuarios del sistema
             let html = '';
-            usuarios.forEach(u => {
-                html += `<div class="filter-option" onclick="selectUsuario${tipo.charAt(0).toUpperCase() + tipo.slice(1)}('${u}')">${u}</div>`;
+            USUARIOS_SISTEMA.forEach(u => {
+                if (tipo === '') {
+                    // Para Todos los Registros (Mesa de Control)
+                    html += `<div class="filter-option" onclick="selectUsuario('${u}')">${u}</div>`;
+                } else {
+                    // Para Historial
+                    html += `<div class="filter-option" onclick="selectUsuario${tipo.charAt(0).toUpperCase() + tipo.slice(1)}('${u}')">${u}</div>`;
+                }
             });
-            document.getElementById('usuarios-' + tipo + '-list').innerHTML = html;
+            
+            if (tipo === '') {
+                // Llenar lista en Todos los Registros
+                const container = document.getElementById('usuarios-list');
+                if (container) container.innerHTML = html;
+            } else {
+                // Llenar lista en Historial
+                const container = document.getElementById('usuarios-' + tipo + '-list');
+                if (container) container.innerHTML = html;
+            }
         }
         
         // ========== AUDITORÍA DE CONTEO ==========
@@ -109335,10 +109914,19 @@
                 '33': { nombre: '33 - Gabinetes', color: '#f57c00', total: 0, esperado: 0 }
             };
             
-            // Contar capturados por almacén
+            // Contar SAPs ÚNICOS capturados por almacén (no registros totales)
+            const sapsCapturadosPorAlmacen = {};
             registrosActivos.forEach(r => {
-                if (almacenes[r.almacen]) {
-                    almacenes[r.almacen].total++;
+                if (!sapsCapturadosPorAlmacen[r.almacen]) {
+                    sapsCapturadosPorAlmacen[r.almacen] = new Set();
+                }
+                sapsCapturadosPorAlmacen[r.almacen].add(r.sap);
+            });
+            
+            // Asignar conteo de SAPs únicos a cada almacén
+            Object.keys(almacenes).forEach(codigo => {
+                if (sapsCapturadosPorAlmacen[codigo]) {
+                    almacenes[codigo].total = sapsCapturadosPorAlmacen[codigo].size;
                 }
             });
             
@@ -109425,6 +110013,7 @@
         // ========== BUSCADOR SAP ==========
         function buscarSAP() {
             const sapBuscado = document.getElementById('input-buscar-sap').value.trim();
+            const almacenSeleccionado = document.getElementById('input-almacen-buscador').value;
             const resultado = document.getElementById('resultado-buscador-sap');
             
             if (!sapBuscado) {
@@ -109432,18 +110021,26 @@
                 return;
             }
             
-            // Buscar registros ACTIVOS con ese SAP
-            const registrosEncontrados = registrosGuardados.filter(r => 
+            // Buscar registros ACTIVOS con ese SAP (y filtrar por almacén si aplica)
+            let registrosEncontrados = registrosGuardados.filter(r => 
                 r.sap === sapBuscado && 
                 !r.eliminado && 
                 !r.modificado
             );
             
+            // Filtrar por almacén si no es "todos"
+            if (almacenSeleccionado !== 'todos') {
+                registrosEncontrados = registrosEncontrados.filter(r => r.almacen === almacenSeleccionado);
+            }
+            
             if (registrosEncontrados.length === 0) {
+                const mensajeAlmacen = almacenSeleccionado !== 'todos' 
+                    ? ` en almacén ${almacenSeleccionado}` 
+                    : '';
                 resultado.innerHTML = `
                     <div style="text-align: center; padding: 40px; color: #9e9e9e;">
                         <div style="font-size: 48px; margin-bottom: 16px;">🔍</div>
-                        <div style="font-size: 16px; color: #424242;">No se encontraron registros para el SAP: ${sapBuscado}</div>
+                        <div style="font-size: 16px; color: #424242;">No se encontraron registros para el SAP: ${sapBuscado}${mensajeAlmacen}</div>
                     </div>
                 `;
                 return;
@@ -109454,17 +110051,31 @@
             const unidad = registrosEncontrados[0].unidadMedida || 'PZA';
             const descripcion = registrosEncontrados[0].desc || 'Sin descripción';
             
-            // Buscar en Kardex SAP
-            const kardexItem = kardexSAP.find(k => k.sap === sapBuscado);
+            // Buscar en Kardex SAP (filtrar por almacén si aplica)
+            let kardexItem;
+            if (almacenSeleccionado !== 'todos') {
+                kardexItem = kardexSAP.find(k => k.codigo === sapBuscado && k.almacen === almacenSeleccionado);
+            } else {
+                // Si es "todos", sumar todas las cantidades del kardex para este SAP
+                const itemsKardex = kardexSAP.filter(k => k.codigo === sapBuscado);
+                kardexItem = itemsKardex.length > 0 
+                    ? { cantidad: itemsKardex.reduce((sum, k) => sum + k.cantidad, 0) }
+                    : null;
+            }
+            
             const cantidadKardex = kardexItem ? kardexItem.cantidad : 0;
             const diferencia = totalContado - cantidadKardex;
             const colorDif = diferencia === 0 ? '#388e3c' : diferencia > 0 ? '#1976d2' : '#d32f2f';
             const iconoDif = diferencia === 0 ? '✅' : diferencia > 0 ? '📈' : '📉';
             
+            const tituloAlmacen = almacenSeleccionado !== 'todos' 
+                ? ` - Almacén ${almacenSeleccionado}` 
+                : ' - Todos los almacenes';
+            
             let html = `
                 <!-- Resumen -->
                 <div style="background: #e3f2fd; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
-                    <div style="font-size: 14px; color: #1565c0; font-weight: 700; margin-bottom: 8px;">SAP: ${sapBuscado}</div>
+                    <div style="font-size: 14px; color: #1565c0; font-weight: 700; margin-bottom: 8px;">SAP: ${sapBuscado}${tituloAlmacen}</div>
                     <div style="font-size: 13px; color: #424242; margin-bottom: 16px;">${descripcion}</div>
                     
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
