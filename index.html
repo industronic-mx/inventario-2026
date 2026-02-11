@@ -107432,6 +107432,67 @@
                 sincronizado: false
             };
             
+            // PASO 1: Validar múltiples materiales (TODOS LOS ALMACENES)
+            console.log('🔍🔍🔍 QR: EJECUTANDO VALIDACIÓN DE MÚLTIPLES MATERIALES 🔍🔍🔍');
+            console.log('QR: Registro a validar:', registro);
+            
+            const resultadoMultiple = validarMultiplesMateriales(registro);
+            
+            console.log('QR: Resultado validación:', resultadoMultiple);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                console.log('🎯🎯🎯 QR: MÚLTIPLES MATERIALES DETECTADOS 🎯🎯🎯');
+                
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                
+                // MENSAJE SIMPLIFICADO
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\n` +
+                    `Folio "${registro.folio}" ya tiene otro SAP registrado:\n\n` +
+                    `SAP anterior: ${materialAnterior.sap}\n` +
+                    `SAP actual: ${registro.sap}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ → Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO → Se cancelará el registro`;
+                
+                if (!confirm(mensaje)) {
+                    // Usuario dice que NO, entonces cancelar
+                    console.log('❌ QR: Usuario canceló múltiples materiales');
+                    return;
+                }
+                
+                // Usuario confirma que son materiales diferentes
+                console.log(`✅✅✅ QR: CAMBIANDO FOLIO: ${registro.folio} → ${resultadoMultiple.siguienteSufijo} ✅✅✅`);
+                registro.folio = resultadoMultiple.siguienteSufijo;
+                registro.multipleMaterial = true;
+            } else {
+                console.log('❌ QR: NO hay múltiples materiales, continuando normal');
+            }
+            
+            // PASO 2: Validar duplicados normales
+            const resultadoDuplicado = validarDuplicado(registro);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (!confirm(mensaje)) {
+                    console.log('❌ QR: Usuario canceló por duplicado');
+                    return;
+                }
+                
+                // Usuario continuó - marcar como duplicado
+                console.log('⚠️ QR: Usuario continuó después de alerta duplicado');
+                registro.esDuplicado = true;
+            }
+            
             // Obtener botón
             const btnGuardar = document.getElementById('btn-guardar-qr');
             if (!btnGuardar) {
