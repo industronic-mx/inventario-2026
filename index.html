@@ -104047,14 +104047,22 @@
         // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01)
         // NUEVA: Validar múltiples materiales en mismo marbete (SOLO ALMACÉN 01 - Materia Prima)
         function validarMultiplesMateriales(item) {
+            console.log('🔍 SUFIJO D: Validando múltiples materiales');
+            console.log('   - Almacén:', item.almacen);
+            console.log('   - Folio:', item.folio);
+            console.log('   - SAP:', item.sap);
+            console.log('   - areaMaquila:', item.areaMaquila);
+            
             // Solo aplica para Almacén 01 - Materia Prima
             // NO aplica para Maquila (01-MAQUILA)
             if (item.almacen !== '01') {
+                console.log('❌ SUFIJO D: Almacén NO es 01, saltando');
                 return { esMultipleMaterial: false };
             }
             
             // Si viene de Maquila, NO aplicar sufijo D
             if (item.areaMaquila) {
+                console.log('❌ SUFIJO D: Es Maquila, saltando');
                 return { esMultipleMaterial: false };
             }
             
@@ -104068,7 +104076,10 @@
                 r.sap !== item.sap // DIFERENTE SAP
             );
             
+            console.log('🔍 SUFIJO D: Registros con mismo folio:', registrosConMismoFolio.length);
+            
             if (registrosConMismoFolio.length > 0) {
+                console.log('✅ SUFIJO D: SÍ hay múltiples materiales');
                 return {
                     esMultipleMaterial: true,
                     registrosExistentes: registrosConMismoFolio,
@@ -104076,6 +104087,7 @@
                 };
             }
             
+            console.log('❌ SUFIJO D: NO hay múltiples materiales');
             return { esMultipleMaterial: false };
         }
         
@@ -105496,38 +105508,12 @@
         }
         
         function renderizarMisRegistros() {
-            // FILTRAR según pestaña activa - INCLUIR eliminados para mostrarlos tachados
+            // PASO 1: Obtener TODOS los registros del usuario (sin filtrar todavía)
             let misRegistros = registrosGuardados.filter(r => 
                 r.usuario === selectedUser
             );
             
-            // Aplicar filtro de tipo
-            if (filtroMisRegistros === 'activos') {
-                misRegistros = misRegistros.filter(r => !r.modificado && !r.eliminado);
-            } else if (filtroMisRegistros === 'editados') {
-                misRegistros = misRegistros.filter(r => r.modificado && !r.eliminado);
-            } else if (filtroMisRegistros === 'todos') {
-                // Mostrar todos incluyendo eliminados
-            }
-            
-            const container = document.getElementById('container-mis-registros');
-            const count = document.getElementById('count-mis-registros');
-            
-            if (!container) return;
-            
-            // Actualizar contador (solo activos)
-            const activos = misRegistros.filter(r => !r.eliminado);
-            count.textContent = `${activos.length} registro${activos.length !== 1 ? 's' : ''} activo${activos.length !== 1 ? 's' : ''}`;
-            
-            if (misRegistros.length === 0) {
-                const mensaje = filtroMisRegistros === 'editados' 
-                    ? 'No tienes registros editados' 
-                    : 'No hay registros activos';
-                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #9e9e9e;">${mensaje}</div>`;
-                return;
-            }
-            
-            // Agrupar por folio para mostrar solo el más reciente
+            // PASO 2: Agrupar por folio para mostrar solo el más reciente
             const registrosPorFolio = {};
             misRegistros.forEach(r => {
                 const key = `${r.folio}-${r.almacen}-${r.sap}`;
@@ -105536,7 +105522,34 @@
                 }
             });
             
-            const registrosFinales = Object.values(registrosPorFolio);
+            // PASO 3: Convertir a array
+            let registrosFinales = Object.values(registrosPorFolio);
+            
+            // PASO 4: AHORA SÍ FILTRAR según pestaña activa
+            if (filtroMisRegistros === 'activos') {
+                registrosFinales = registrosFinales.filter(r => !r.modificado && !r.eliminado);
+            } else if (filtroMisRegistros === 'editados') {
+                registrosFinales = registrosFinales.filter(r => r.modificado && !r.eliminado);
+            } else if (filtroMisRegistros === 'todos') {
+                // Mostrar todos (incluyendo eliminados)
+            }
+            
+            const container = document.getElementById('container-mis-registros');
+            const count = document.getElementById('count-mis-registros');
+            
+            if (!container) return;
+            
+            // Actualizar contador (solo activos)
+            const activos = registrosFinales.filter(r => !r.eliminado && !r.modificado);
+            count.textContent = `${activos.length} registro${activos.length !== 1 ? 's' : ''} activo${activos.length !== 1 ? 's' : ''}`;
+            
+            if (registrosFinales.length === 0) {
+                const mensaje = filtroMisRegistros === 'editados' 
+                    ? 'No tienes registros editados' 
+                    : 'No hay registros activos';
+                container.innerHTML = `<div style="text-align: center; padding: 40px; color: #9e9e9e;">${mensaje}</div>`;
+                return;
+            }
             
             container.innerHTML = registrosFinales.map((r, index) => {
                 let estadoVisual = '';
@@ -106957,6 +106970,66 @@
                 areaMaquila: almacenSeleccionado === '01-MAQUILA',
                 sincronizado: false
             };
+            
+            // PASO 1: Validar múltiples materiales (SOLO ALMACÉN 01)
+            console.log('🔍🔍🔍 EJECUTANDO VALIDACIÓN DE MÚLTIPLES MATERIALES 🔍🔍🔍');
+            console.log('Registro a validar:', registro);
+            
+            const resultadoMultiple = validarMultiplesMateriales(registro);
+            
+            console.log('Resultado validación:', resultadoMultiple);
+            
+            if (resultadoMultiple.esMultipleMaterial) {
+                console.log('🎯🎯🎯 MÚLTIPLES MATERIALES DETECTADOS 🎯🎯🎯');
+                
+                // ALERT VISIBLE
+                alert(`🔍 DETECTADO: Múltiples materiales en mismo folio\n\nFolio actual: ${registro.folio}\nSe cambiará a: ${resultadoMultiple.siguienteSufijo}`);
+                
+                // Obtener descripción del material anterior
+                const materialAnterior = resultadoMultiple.registrosExistentes[0];
+                const mensaje = `ℹ️ MÚLTIPLES MATERIALES DETECTADOS\n\nEl folio ${registro.folio} ya tiene otro material:\n\n` +
+                    `Material anterior:\nSAP: ${materialAnterior.sap}\n${materialAnterior.desc}\n\n` +
+                    `Material actual:\nSAP: ${registro.sap}\n${registro.desc}\n\n` +
+                    `¿Son materiales DIFERENTES en el MISMO marbete?\n\n` +
+                    `SÍ = Se agregará sufijo "${resultadoMultiple.siguienteSufijo}"\n` +
+                    `NO = Se marcará como duplicado`;
+                
+                if (!confirm(mensaje)) {
+                    // Usuario dice que NO, entonces cancelar
+                    console.log('❌ MANUAL: Usuario canceló múltiples materiales');
+                    return;
+                }
+                
+                // Usuario confirma que son materiales diferentes
+                console.log(`✅✅✅ CAMBIANDO FOLIO: ${registro.folio} → ${resultadoMultiple.siguienteSufijo} ✅✅✅`);
+                registro.folio = resultadoMultiple.siguienteSufijo;
+                registro.multipleMaterial = true;
+            } else {
+                console.log('❌ NO hay múltiples materiales, continuando normal');
+            }
+            
+            // PASO 2: Validar duplicados normales
+            const resultadoDuplicado = validarDuplicado(registro);
+            
+            if (resultadoDuplicado.esDuplicado) {
+                let mensaje = '';
+                
+                if (resultadoDuplicado.duplicadoOtro) {
+                    // NIVEL 2: Duplicado de OTRO usuario (ALERTA ROJA)
+                    mensaje = `🚨 CUIDADO: Este folio ya fue contado por ${resultadoDuplicado.otroUsuario}\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Estás SEGURO que deseas continuar?`;
+                } else if (resultadoDuplicado.duplicadoMio) {
+                    // NIVEL 1: Duplicado del MISMO usuario (ALERTA NARANJA)
+                    mensaje = `⚠️ ALERTA: Ya escaneaste este folio antes\n\nFolio: ${registro.folio}\nAlmacén: ${registro.almacen}\nSAP: ${registro.sap}\n\n¿Deseas continuar de todos modos?`;
+                }
+                
+                if (!confirm(mensaje)) {
+                    console.log('❌ MANUAL: Usuario canceló duplicado');
+                    return;
+                }
+                
+                registro.esDuplicado = true;
+                registro.continuoDespuesAlerta = true;
+            }
             
             // Obtener botón
             const btnGuardar = document.getElementById('btn-guardar-manual');
