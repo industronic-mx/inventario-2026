@@ -105035,18 +105035,20 @@
                         }];
                     }
                     
-                    // MARCAR REGISTRO VIEJO COMO ELIMINADO
+                    // MARCAR REGISTRO VIEJO COMO EDITADO (ya no es el válido)
                     registroViejo.eliminado = true;
-                    registroViejo.modificado = false; // El viejo NO es modificado, es ELIMINADO
+                    registroViejo.esRegistroEditado = true; // ← NUEVO: Para que en Sheets diga "EDITADO"
+                    registroViejo.modificado = false; // El viejo NO es modificado, es EDITADO
                     registroViejo.fechaEliminacion = new Date().toISOString();
                     registroViejo.eliminadoPor = currentRole || selectedUser;
                     registroViejo.razonEliminacion = 'Registro editado - versión antigua';
                     
-                    // Enviar registro VIEJO a Google Sheets como ELIMINADO
+                    // Enviar registro VIEJO a Google Sheets como EDITADO
                     if (!esSegundoConteo) {
                         await enviarAGoogleSheets({
                             ...registroViejo,
                             eliminado: true,
+                            esRegistroEditado: true,
                             modificado: false
                         });
                     }
@@ -107702,7 +107704,7 @@
         }
         
         // ========== GOOGLE SHEETS INTEGRATION ==========
-        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbyk2AM2aCdLhCSazo3GUZUuSqoXcnm0kjJVAxPSVViOqMkWbT9aOa3Wq4br2mk3UDz4/exec';
+        const GOOGLE_SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzyqOaMLDRN_hCTj3PEkjpb9zhpY_NSKK8Wsb-BEGPA_u0Ge5ezq70or1q9pFG3gsQK/exec';
         
         async function enviarAGoogleSheets(registro) {
             try {
@@ -107726,7 +107728,7 @@
                     Usuario: registro.usuario || '',
                     Método: registro.metodo || '',
                     Contador: registro.nombreContador || '',
-                    ESTATUS: registro.eliminado ? 'ELIMINADO' : 'ACTIVO',
+                    ESTATUS: registro.eliminado ? 'ELIMINADO' : (registro.esRegistroEditado ? 'EDITADO' : 'ACTIVO'),
                     'ES EDITADO': registro.modificado ? 'SÍ' : 'NO',
                     'ES DUPLICADO': registro.esDuplicado ? 'SÍ' : 'NO',
                     'ES POSITIVO': registro.esPositivo ? 'SÍ' : 'NO',
