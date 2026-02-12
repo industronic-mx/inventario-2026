@@ -7,7 +7,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Inventario 2026 v55 - Industronic</title>
+    <title>Inventario 2026 v56 - Industronic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -105793,7 +105793,8 @@
             }
             
             // FILTRAR según tipo activo (leer de filtros activos)
-            let todosRegistros = registrosGuardados.filter(r => r.almacen !== '00');
+            // v56 FIX: Incluir TODOS los almacenes (incluyendo 00)
+            let todosRegistros = [...registrosGuardados];
             
             // Detectar qué filtro está activo
             const filtroEditados = document.querySelector('.filter-chip[onclick*="editados"]')?.classList.contains('active');
@@ -106698,13 +106699,37 @@
                     }
                 });
                 
-                // NUEVO: Cargar Kardex desde Firebase
-                const { getDoc } = window.firebaseCollections;
+                // v56 FIX: Cargar Kardex desde collection kardexSAP
+                const { getDocs } = window.firebaseCollections;
                 try {
-                    const kardexDoc = await getDoc(doc(db, 'config', 'kardex'));
-                    if (kardexDoc.exists()) {
-                        const data = kardexDoc.data();
-                        kardexSAP = data.kardex || [];
+                    const kardexSnapshot = await getDocs(collection(db, 'kardexSAP'));
+                    
+                    if (!kardexSnapshot.empty) {
+                        // Combinar todos los documentos
+                        kardexSAP = [];
+                        let fechaActualizacion = null;
+                        let actualizadoPor = null;
+                        
+                        kardexSnapshot.forEach((doc) => {
+                            const data = doc.data();
+                            
+                            // Si el documento tiene un array de items
+                            if (data.items && Array.isArray(data.items)) {
+                                kardexSAP.push(...data.items);
+                            } 
+                            // O si el documento mismo es un item
+                            else if (data.codigo || data.sap) {
+                                kardexSAP.push(data);
+                            }
+                            
+                            // Guardar metadata del primer documento
+                            if (!fechaActualizacion && data.fechaActualizacion) {
+                                fechaActualizacion = data.fechaActualizacion;
+                            }
+                            if (!actualizadoPor && data.actualizadoPor) {
+                                actualizadoPor = data.actualizadoPor;
+                            }
+                        });
                         
                         // NORMALIZAR ALMACENES al cargar desde Firebase
                         kardexSAP = kardexSAP.map(k => {
@@ -106717,12 +106742,16 @@
                         
                         // Guardar en localStorage también
                         localStorage.setItem('kardexSAP', JSON.stringify(kardexSAP));
-                        localStorage.setItem('kardexFecha', data.fechaActualizacion || '');
-                        localStorage.setItem('kardexPor', data.actualizadoPor || '');
+                        if (fechaActualizacion) {
+                            localStorage.setItem('kardexFecha', fechaActualizacion);
+                        }
+                        if (actualizadoPor) {
+                            localStorage.setItem('kardexPor', actualizadoPor);
+                        }
                         
                         console.log('✅ Kardex cargado desde Firebase:', kardexSAP.length, 'registros');
-                        console.log('   Actualizado:', data.fechaActualizacion);
-                        console.log('   Por:', data.actualizadoPor);
+                        if (fechaActualizacion) console.log('   Actualizado:', fechaActualizacion);
+                        if (actualizadoPor) console.log('   Por:', actualizadoPor);
                         
                         // Actualizar UI si está en Auditoría
                         actualizarInfoKardex();
