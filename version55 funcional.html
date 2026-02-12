@@ -7,7 +7,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Inventario 2026 v50 - Industronic</title>
+    <title>Inventario 2026 v55 - Industronic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2057,7 +2057,8 @@
                     <label><strong>1. Selecciona el Almacén</strong></label>
                     <select id="almacen-auditoria" onchange="mostrarAuditoresAlmacen()" style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px;">
                         <option value="">-- Selecciona Almacén --</option>
-                        <option value="01">01 - MP + MAQUILA</option>
+                        <option value="01">01 - Materia Prima</option>
+                        <option value="01-MAQUILA">MAQUILA (Área 01)</option>
                         <option value="30">30 - Transformadores</option>
                         <option value="31">31 - Placas</option>
                         <option value="32">32 - Arneses</option>
@@ -105043,6 +105044,23 @@
                     registroViejo.eliminadoPor = currentRole || selectedUser;
                     registroViejo.razonEliminacion = 'Registro editado - versión antigua';
                     
+                    // ACTUALIZAR registro viejo en Firebase (v52 FIX)
+                    if (registroViejo.id && window.firebaseDB) {
+                        const { doc, updateDoc } = window.firebaseCollections;
+                        const db = window.firebaseDB;
+                        
+                        await updateDoc(doc(db, 'registros', registroViejo.id), {
+                            eliminado: true,
+                            esRegistroEditado: true,
+                            modificado: false,
+                            fechaEliminacion: registroViejo.fechaEliminacion,
+                            eliminadoPor: registroViejo.eliminadoPor,
+                            razonEliminacion: registroViejo.razonEliminacion,
+                            versiones: registroViejo.versiones
+                        });
+                        console.log('✅ Registro viejo actualizado en Firebase como EDITADO');
+                    }
+                    
                     // Enviar registro VIEJO a Google Sheets como EDITADO
                     if (!esSegundoConteo) {
                         await enviarAGoogleSheets({
@@ -105104,7 +105122,8 @@
                     // Enviar NUEVO registro a Google Sheets como ACTIVO
                     await enviarAGoogleSheets(registroNuevo);
                     
-                    registrosGuardados.push(registroNuevo);
+                    // v53 FIX: Removido push manual - Firebase onSnapshot ya agrega el registro automáticamente
+                    // registrosGuardados.push(registroNuevo); ❌ ESTO DUPLICABA
                     
                     console.log('✅ Registro editado correctamente');
                     
@@ -106611,9 +106630,13 @@
                 onSnapshot(qRegistros, (snapshot) => {
                     registrosGuardados = [];
                     snapshot.forEach((doc) => {
-                        registrosGuardados.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data();
+                        // v52 FIX: Solo incluir registros NO eliminados
+                        if (!data.eliminado) {
+                            registrosGuardados.push({ id: doc.id, ...data });
+                        }
                     });
-                    console.log('📥 Registros sincronizados:', registrosGuardados.length);
+                    console.log('📥 Registros sincronizados (solo activos):', registrosGuardados.length);
                     
                     // Actualizar vista si está abierta
                     if (document.getElementById('screen-mis-registros')?.classList.contains('active')) {
@@ -109296,9 +109319,9 @@
                 '31': ['ERICK ORLANDO CORTEZ GONZALEZ'],
                 '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
-                'MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '01-MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO ALBERTO', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'BLANCA ALICIA AVALOS ROMO', 'ERICK ORLANDO CORTEZ GONZALEZ', 'ENRIQUE CORTEZ RIOS'],
                 '00': [] // Por definir
             };
             
@@ -109345,8 +109368,9 @@
                 '31': ['ERICK ORLANDO CORTEZ GONZALEZ'],
                 '30': ['YARELLI GUADALUPE HERNANDEZ GARCIA', 'ENRIQUE CORTEZ RIOS'],
                 '32': ['ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS'],
+                '01-MAQUILA': ['LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
                 '33': ['BLANCA ALICIA AVALOS ROMO', 'ENRIQUE CORTEZ RIOS', 'LOLIS PEREZ SIMANCAS', 'ERICK ORLANDO CORTEZ GONZALEZ'],
-                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO (CALIDAD)', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'LOLIS PEREZ SIMANCAS', 'BRENDA ABIGAIL AGUIÑAGA GALLARDO'],
+                '01': ['DANIEL OMAR ARENAS SOLORIO', 'EDSON ALEJANDRO ENCINIA HERNANDEZ', 'MARIO ALBERTO', 'JOSE NAPOLEON PEREZ', 'HIRAM ENRIQUE CORTEZ GARZA', 'BLANCA ALICIA AVALOS ROMO', 'ERICK ORLANDO CORTEZ GONZALEZ', 'ENRIQUE CORTEZ RIOS'],
                 '00': [] // No se usa (líneas producción)
             };
             
@@ -109593,7 +109617,7 @@
         
         // Calcular progreso de validación de un SAP
         function calcularProgresoSAP(sap) {
-            const foliosConSAP = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            const foliosConSAP = registrosGuardados.filter(r => r.sap === sap); // Ya filtrado sin eliminados
             const foliosValidados = validacionesAuditoria.filter(v => v.sap === sap);
             
             const total = foliosConSAP.length;
@@ -109620,8 +109644,8 @@
             
             document.getElementById('info-sap-validar').innerHTML = htmlInfo;
             
-            // Folios con este SAP
-            const folios = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            // Folios con este SAP (ya filtrados sin eliminados)
+            const folios = registrosGuardados.filter(r => r.sap === sap);
             
             if (folios.length === 0) {
                 document.getElementById('folios-sap-validar').innerHTML = '<p style="text-align: center; color: #9e9e9e; padding: 40px;">No hay folios capturados con este SAP</p>';
@@ -110055,12 +110079,8 @@
                 return;
             }
             
-            // Buscar registros ACTIVOS con ese SAP (y filtrar por almacén si aplica)
-            let registrosEncontrados = registrosGuardados.filter(r => 
-                r.sap === sapBuscado && 
-                !r.eliminado && 
-                !r.modificado
-            );
+            // Buscar registros con ese SAP (ya filtrados sin eliminados)
+            let registrosEncontrados = registrosGuardados.filter(r => r.sap === sapBuscado);
             
             // Filtrar por almacén si no es "todos"
             if (almacenSeleccionado !== 'todos') {
