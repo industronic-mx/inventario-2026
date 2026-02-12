@@ -7,7 +7,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Inventario 2026 v56 - Industronic</title>
+    <title>Inventario 2026 v57 - Industronic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -104637,34 +104637,51 @@
                         };
                     }).filter(item => item.codigo && item.almacen);
                     
-                    // SUBIR A FIREBASE
+                    // v57 FIX: SUBIR A FIREBASE collection kardexSAP
                     try {
-                        const { doc, setDoc } = window.firebaseCollections;
+                        const { collection, addDoc, getDocs, deleteDoc, doc } = window.firebaseCollections;
                         const db = window.firebaseDB;
                         
-                        await setDoc(doc(db, 'config', 'kardex'), {
-                            kardex: kardexSAP,
-                            fechaActualizacion: new Date().toISOString(),
-                            actualizadoPor: selectedUser || 'Sistema',
-                            totalRegistros: kardexSAP.length
+                        console.log('🔄 Limpiando kardexSAP anterior...');
+                        
+                        // 1. LIMPIAR collection anterior (si existe)
+                        const kardexRef = collection(db, 'kardexSAP');
+                        const snapshot = await getDocs(kardexRef);
+                        
+                        for (const documento of snapshot.docs) {
+                            await deleteDoc(doc(db, 'kardexSAP', documento.id));
+                        }
+                        
+                        console.log(`🗑️ Eliminados ${snapshot.docs.length} documentos anteriores`);
+                        
+                        // 2. SUBIR NUEVO KARDEX en un solo documento
+                        const fechaActualizacion = new Date().toISOString();
+                        const usuarioActualizacion = selectedUser || 'Sistema';
+                        
+                        await addDoc(kardexRef, {
+                            items: kardexSAP,
+                            fechaActualizacion: fechaActualizacion,
+                            actualizadoPor: usuarioActualizacion,
+                            totalRegistros: kardexSAP.length,
+                            timestamp: fechaActualizacion
                         });
                         
-                        // Guardar en localStorage también
+                        console.log('✅ Kardex guardado en Firebase collection kardexSAP');
+                        
+                        // 3. Guardar en localStorage también
                         localStorage.setItem('kardexSAP', JSON.stringify(kardexSAP));
-                        localStorage.setItem('kardexFecha', new Date().toISOString());
-                        localStorage.setItem('kardexPor', selectedUser || 'Sistema');
+                        localStorage.setItem('kardexFecha', fechaActualizacion);
+                        localStorage.setItem('kardexPor', usuarioActualizacion);
                         
-                        console.log('✅ Kardex guardado en Firebase y localStorage');
-                        
+                        // 4. Actualizar UI
                         document.getElementById('name-' + type).textContent = 
                             file.name + ` ✓ (${kardexSAP.length} artículos)`;
                         
-                        // Actualizar panel informativo
                         actualizarInfoKardex();
                         
                         alert(`✅ KARDEX CARGADO EXITOSAMENTE\n\n` +
                               `${kardexSAP.length} registros procesados\n\n` +
-                              `✓ Guardado en Firebase\n` +
+                              `✓ Guardado en Firebase (collection kardexSAP)\n` +
                               `✓ Disponible para todos los dispositivos`);
                         
                     } catch (error) {
