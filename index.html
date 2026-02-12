@@ -7,7 +7,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Inventario 2026 v50 - Industronic</title>
+    <title>Inventario 2026 v51 - Industronic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -106611,9 +106611,15 @@
                 onSnapshot(qRegistros, (snapshot) => {
                     registrosGuardados = [];
                     snapshot.forEach((doc) => {
-                        registrosGuardados.push({ id: doc.id, ...doc.data() });
+                        const data = doc.data();
+                        // FILTRO v51: Incluir registros activos (no eliminados) + los marcados como editados (historial)
+                        // Excluir SOLO los verdaderamente eliminados (eliminado=true Y NO es editado antiguo)
+                        const esEliminadoReal = data.eliminado && !data.esRegistroEditado;
+                        if (!esEliminadoReal) {
+                            registrosGuardados.push({ id: doc.id, ...data });
+                        }
                     });
-                    console.log('📥 Registros sincronizados:', registrosGuardados.length);
+                    console.log('📥 Registros sincronizados (activos+editados, sin eliminados):', registrosGuardados.length);
                     
                     // Actualizar vista si está abierta
                     if (document.getElementById('screen-mis-registros')?.classList.contains('active')) {
@@ -109593,7 +109599,7 @@
         
         // Calcular progreso de validación de un SAP
         function calcularProgresoSAP(sap) {
-            const foliosConSAP = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            const foliosConSAP = registrosGuardados.filter(r => r.sap === sap); // Ya filtrado ACTIVO+EDITADO
             const foliosValidados = validacionesAuditoria.filter(v => v.sap === sap);
             
             const total = foliosConSAP.length;
@@ -109620,8 +109626,8 @@
             
             document.getElementById('info-sap-validar').innerHTML = htmlInfo;
             
-            // Folios con este SAP
-            const folios = registrosGuardados.filter(r => r.sap === sap && !r.eliminado);
+            // Folios con este SAP (ya filtrado ACTIVO+EDITADO)
+            const folios = registrosGuardados.filter(r => r.sap === sap);
             
             if (folios.length === 0) {
                 document.getElementById('folios-sap-validar').innerHTML = '<p style="text-align: center; color: #9e9e9e; padding: 40px;">No hay folios capturados con este SAP</p>';
@@ -110055,12 +110061,8 @@
                 return;
             }
             
-            // Buscar registros ACTIVOS con ese SAP (y filtrar por almacén si aplica)
-            let registrosEncontrados = registrosGuardados.filter(r => 
-                r.sap === sapBuscado && 
-                !r.eliminado && 
-                !r.modificado
-            );
+            // Buscar registros ACTIVOS y EDITADOS con ese SAP (ya filtrados en registrosGuardados)
+            let registrosEncontrados = registrosGuardados.filter(r => r.sap === sapBuscado);
             
             // Filtrar por almacén si no es "todos"
             if (almacenSeleccionado !== 'todos') {
