@@ -7,7 +7,7 @@
     <meta http-equiv="Permissions-Policy" content="camera=*, microphone=()">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Inventario 2026 v52 - Industronic</title>
+    <title>Inventario 2026 v53 - Industronic</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -105121,7 +105121,8 @@
                     // Enviar NUEVO registro a Google Sheets como ACTIVO
                     await enviarAGoogleSheets(registroNuevo);
                     
-                    registrosGuardados.push(registroNuevo);
+                    // v53 FIX: Removido push manual - Firebase onSnapshot ya agrega el registro automáticamente
+                    // registrosGuardados.push(registroNuevo); ❌ ESTO DUPLICABA
                     
                     console.log('✅ Registro editado correctamente');
                     
