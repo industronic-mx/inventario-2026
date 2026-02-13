@@ -106931,7 +106931,7 @@
                 }
                 
                 // ========== NUEVO: LISTENER DE ANUNCIOS ==========
-                const qAnuncios = query(collection(db, 'anuncios'), orderBy('fechaCreacion', 'desc'));
+                const qAnuncios = query(collection(db, 'anuncios'), orderBy('timestamp', 'desc'));
                 onSnapshot(qAnuncios, (snapshot) => {
                     const anunciosActivos = [];
                     snapshot.forEach((doc) => {
@@ -106941,7 +106941,10 @@
                         }
                     });
                     
-                    console.log('📢 Anuncios activos:', anunciosActivos.length);
+                    console.log('📢 Anuncios activos cargados:', anunciosActivos.length);
+                    if (anunciosActivos.length > 0) {
+                        console.log('📢 Primeros anuncios:', anunciosActivos.slice(0, 2));
+                    }
                     mostrarAnuncios(anunciosActivos);
                 });
                 
@@ -106954,8 +106957,12 @@
         
         // ========== MOSTRAR ANUNCIOS GLOBALES ==========
         function mostrarAnuncios(anuncios) {
+            console.log('🎨 mostrarAnuncios() llamada con', anuncios.length, 'anuncios');
+            
             // Mostrar en Dashboard
             const containerDashboard = document.getElementById('anuncios-dashboard');
+            console.log('📦 Container Dashboard:', containerDashboard ? 'EXISTE' : 'NO EXISTE');
+            
             if (containerDashboard) {
                 if (anuncios.length === 0) {
                     containerDashboard.innerHTML = '';
@@ -107086,6 +107093,10 @@
             const titulo = document.getElementById('anuncio-titulo').value.trim();
             const mensaje = document.getElementById('anuncio-mensaje').value.trim();
             
+            console.log('📢 ANUNCIO: Iniciando publicación...');
+            console.log('📝 Título:', titulo);
+            console.log('📝 Mensaje:', mensaje);
+            
             if (!titulo || !mensaje) {
                 alert('⚠️ Completa todos los campos');
                 return;
@@ -107097,24 +107108,37 @@
             btnPublicar.textContent = 'Publicando...';
             
             try {
+                console.log('🔥 ANUNCIO: Verificando Firebase...');
+                
+                if (!window.firebaseCollections) {
+                    throw new Error('Firebase no está inicializado');
+                }
+                
                 const { collection, addDoc } = window.firebaseCollections;
                 const db = window.firebaseDB;
                 
-                await addDoc(collection(db, 'anuncios'), {
+                console.log('✅ ANUNCIO: Firebase OK, guardando...');
+                
+                const nuevoAnuncio = {
                     titulo: titulo,
                     mensaje: mensaje,
                     autor: 'AUDITORÍA',
                     fecha: new Date().toISOString(),
                     timestamp: Date.now(),
                     activo: true
-                });
+                };
                 
-                console.log('✅ Anuncio publicado');
+                console.log('📦 ANUNCIO: Datos a guardar:', nuevoAnuncio);
+                
+                const docRef = await addDoc(collection(db, 'anuncios'), nuevoAnuncio);
+                
+                console.log('✅ Anuncio publicado con ID:', docRef.id);
                 alert('✅ Anuncio publicado correctamente');
                 cerrarModalAnuncio();
                 
             } catch (error) {
                 console.error('❌ Error al publicar anuncio:', error);
+                console.error('❌ Detalle completo:', error.message, error.stack);
                 alert('⚠️ Error al publicar:\n\n' + error.message);
             } finally {
                 btnPublicar.disabled = false;
