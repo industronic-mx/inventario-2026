@@ -1173,76 +1173,6 @@
             font-size: 13px;
             font-weight: 500;
         }
-
-        /* ========== ANUNCIOS GLOBALES ========== */
-        .anuncio {
-            background: white;
-            border-radius: 12px;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #1976d2;
-            animation: slideIn 0.3s ease-out;
-        }
-
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .anuncio.info {
-            border-left-color: #1976d2;
-            background: #e3f2fd;
-        }
-
-        .anuncio.warning {
-            border-left-color: #f57c00;
-            background: #fff3e0;
-        }
-
-        .anuncio.error {
-            border-left-color: #d32f2f;
-            background: #ffebee;
-        }
-
-        .anuncio.success {
-            border-left-color: #388e3c;
-            background: #e8f5e9;
-        }
-
-        .anuncio-icon {
-            font-size: 20px;
-            margin-right: 10px;
-            display: inline-block;
-            vertical-align: middle;
-        }
-
-        .anuncio-mensaje {
-            display: inline-block;
-            vertical-align: middle;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1a237e;
-            max-width: calc(100% - 40px);
-        }
-
-        .anuncio.warning .anuncio-mensaje {
-            color: #e65100;
-        }
-
-        .anuncio.error .anuncio-mensaje {
-            color: #c62828;
-        }
-
-        .anuncio.success .anuncio-mensaje {
-            color: #2e7d32;
-        }
     </style>
 </head>
 <body>
@@ -1254,9 +1184,6 @@
                 <h1>Inventario 2026</h1>
                 <p>Selecciona tu tipo de acceso</p>
             </div>
-
-            <!-- ========== ANUNCIOS GLOBALES ========== -->
-            <div id="anuncios-container" style="margin: 0 20px 20px 20px;"></div>
 
             <div class="content-white">
                 <div class="user-grid">
@@ -1900,9 +1827,6 @@
                     </div>
                 </div>
 
-                <!-- ========== ANUNCIOS (visible para todos) ========== -->
-                <div id="anuncios-dashboard" style="padding: 0 20px; margin-bottom: 20px;"></div>
-
                 <div class="almacen-card">
                     <h3>📦 Avance por Almacén</h3>
                     <div id="almacenes-dashboard"></div>
@@ -2520,21 +2444,6 @@
                     </div>
                 </div>
 
-                <!-- ========== GESTIÓN DE ANUNCIOS ========== -->
-                <div style="padding: 0 16px; margin-top: 32px;">
-                    <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
-                        📢 Gestión de Anuncios
-                    </h3>
-                    <button class="btn-primary" style="width: 100%; margin-bottom: 16px;" onclick="abrirModalAnuncio()">
-                        + CREAR ANUNCIO
-                    </button>
-                    
-                    <!-- Lista de anuncios activos -->
-                    <div id="lista-anuncios-auditoria" style="background: white; border-radius: 12px; padding: 16px;">
-                        <p style="color: #9e9e9e; text-align: center;">No hay anuncios activos</p>
-                    </div>
-                </div>
-
                 <!-- Reportes Completos -->
                 <div style="padding: 0 16px; margin-top: 32px;">
                     <h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 16px;">
@@ -2690,28 +2599,6 @@
                 <div class="two-cols" style="margin-top: 16px;">
                     <button class="btn-secondary" onclick="cerrarModalEditar()">Cancelar</button>
                     <button id="btn-guardar-edicion" class="btn-primary" onclick="guardarEdicion()">💾 Guardar</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ========== MODAL CREAR ANUNCIO ========== -->
-        <div id="modal-anuncio" class="modal-overlay">
-            <div class="modal-content" style="max-width: 500px;">
-                <h3>📢 Nuevo Anuncio</h3>
-                
-                <div class="input-group">
-                    <label>Título *</label>
-                    <input type="text" id="anuncio-titulo" placeholder="Ej: Recordatorio Importante" maxlength="50">
-                </div>
-
-                <div class="input-group">
-                    <label>Mensaje *</label>
-                    <textarea id="anuncio-mensaje" rows="4" placeholder="Favor de verificar ubicaciones antes de capturar..." style="width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
-                </div>
-
-                <div class="two-cols" style="margin-top: 16px;">
-                    <button class="btn-secondary" onclick="cerrarModalAnuncio()">Cancelar</button>
-                    <button id="btn-publicar-anuncio" class="btn-primary" onclick="publicarAnuncio()">📢 Publicar</button>
                 </div>
             </div>
         </div>
@@ -106930,217 +106817,10 @@
                     }
                 }
                 
-                // ========== NUEVO: LISTENER DE ANUNCIOS ==========
-                const qAnuncios = query(collection(db, 'anuncios'), orderBy('fechaCreacion', 'desc'));
-                onSnapshot(qAnuncios, (snapshot) => {
-                    const anunciosActivos = [];
-                    snapshot.forEach((doc) => {
-                        const data = doc.data();
-                        if (data.activo) {
-                            anunciosActivos.push({ id: doc.id, ...data });
-                        }
-                    });
-                    
-                    console.log('📢 Anuncios activos:', anunciosActivos.length);
-                    mostrarAnuncios(anunciosActivos);
-                });
-                
                 console.log('✅ Firebase inicializado correctamente con todos los listeners');
                 
             } catch (error) {
                 console.error('❌ Error al inicializar Firebase:', error);
-            }
-        }
-        
-        // ========== MOSTRAR ANUNCIOS GLOBALES ==========
-        function mostrarAnuncios(anuncios) {
-            // Mostrar en Dashboard
-            const containerDashboard = document.getElementById('anuncios-dashboard');
-            if (containerDashboard) {
-                if (anuncios.length === 0) {
-                    containerDashboard.innerHTML = '';
-                } else {
-                    let html = '<div style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
-                    html += '<h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 12px;">📢 ANUNCIOS</h3>';
-                    
-                    anuncios.forEach(anuncio => {
-                        const fecha = anuncio.fecha ? new Date(anuncio.fecha).toLocaleString('es-MX', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '';
-                        
-                        html += `
-                            <div style="background: #f5f5f5; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #1976d2;">
-                                <div style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 4px;">
-                                    ${anuncio.titulo || 'Sin título'}
-                                </div>
-                                <div style="font-size: 13px; color: #424242; margin-bottom: 6px; line-height: 1.4;">
-                                    ${anuncio.mensaje || ''}
-                                </div>
-                                <div style="font-size: 11px; color: #757575;">
-                                    📅 ${fecha}${anuncio.autor ? ' • ' + anuncio.autor : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div>';
-                    containerDashboard.innerHTML = html;
-                }
-            }
-            
-            // Mostrar en login (contenedor original)
-            const containerLogin = document.getElementById('anuncios-container');
-            if (containerLogin) {
-                if (anuncios.length === 0) {
-                    containerLogin.innerHTML = '';
-                } else {
-                    let html = '<div style="background: white; border-radius: 16px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">';
-                    html += '<h3 style="color: #1a237e; font-size: 16px; font-weight: 700; margin-bottom: 12px;">📢 ANUNCIOS</h3>';
-                    
-                    anuncios.forEach(anuncio => {
-                        const fecha = anuncio.fecha ? new Date(anuncio.fecha).toLocaleString('es-MX', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '';
-                        
-                        html += `
-                            <div style="background: #f5f5f5; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #1976d2;">
-                                <div style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 4px;">
-                                    ${anuncio.titulo || 'Sin título'}
-                                </div>
-                                <div style="font-size: 13px; color: #424242; margin-bottom: 6px; line-height: 1.4;">
-                                    ${anuncio.mensaje || ''}
-                                </div>
-                                <div style="font-size: 11px; color: #757575;">
-                                    📅 ${fecha}${anuncio.autor ? ' • ' + anuncio.autor : ''}
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div>';
-                    containerLogin.innerHTML = html;
-                }
-            }
-            
-            // Mostrar en panel de Auditoría (lista con opción de desactivar)
-            const containerAuditoria = document.getElementById('lista-anuncios-auditoria');
-            if (containerAuditoria) {
-                if (anuncios.length === 0) {
-                    containerAuditoria.innerHTML = '<p style="color: #9e9e9e; text-align: center;">No hay anuncios activos</p>';
-                } else {
-                    let html = '';
-                    anuncios.forEach(anuncio => {
-                        const fecha = anuncio.fecha ? new Date(anuncio.fecha).toLocaleString('es-MX', {
-                            day: '2-digit',
-                            month: 'short',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '';
-                        
-                        html += `
-                            <div style="background: #f5f5f5; border-radius: 12px; padding: 12px; margin-bottom: 10px; border-left: 4px solid #1976d2;">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
-                                    <div style="flex: 1;">
-                                        <div style="font-size: 14px; font-weight: 700; color: #1a237e; margin-bottom: 4px;">
-                                            ${anuncio.titulo || 'Sin título'}
-                                        </div>
-                                        <div style="font-size: 13px; color: #424242; margin-bottom: 6px; line-height: 1.4;">
-                                            ${anuncio.mensaje || ''}
-                                        </div>
-                                        <div style="font-size: 11px; color: #757575;">
-                                            📅 ${fecha}${anuncio.autor ? ' • ' + anuncio.autor : ''}
-                                        </div>
-                                    </div>
-                                    <button onclick="desactivarAnuncio('${anuncio.id}')" style="background: #d32f2f; color: white; border: none; border-radius: 6px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; margin-left: 12px;">
-                                        ✕ Ocultar
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    containerAuditoria.innerHTML = html;
-                }
-            }
-        }
-        
-        // Abrir modal de crear anuncio
-        function abrirModalAnuncio() {
-            document.getElementById('anuncio-titulo').value = '';
-            document.getElementById('anuncio-mensaje').value = '';
-            document.getElementById('modal-anuncio').classList.add('show');
-        }
-        
-        // Cerrar modal
-        function cerrarModalAnuncio() {
-            document.getElementById('modal-anuncio').classList.remove('show');
-        }
-        
-        // Publicar anuncio
-        async function publicarAnuncio() {
-            const titulo = document.getElementById('anuncio-titulo').value.trim();
-            const mensaje = document.getElementById('anuncio-mensaje').value.trim();
-            
-            if (!titulo || !mensaje) {
-                alert('⚠️ Completa todos los campos');
-                return;
-            }
-            
-            const btnPublicar = document.getElementById('btn-publicar-anuncio');
-            const textoOriginal = btnPublicar.textContent;
-            btnPublicar.disabled = true;
-            btnPublicar.textContent = 'Publicando...';
-            
-            try {
-                const { collection, addDoc } = window.firebaseCollections;
-                const db = window.firebaseDB;
-                
-                await addDoc(collection(db, 'anuncios'), {
-                    titulo: titulo,
-                    mensaje: mensaje,
-                    autor: 'AUDITORÍA',
-                    fecha: new Date().toISOString(),
-                    timestamp: Date.now(),
-                    activo: true
-                });
-                
-                console.log('✅ Anuncio publicado');
-                alert('✅ Anuncio publicado correctamente');
-                cerrarModalAnuncio();
-                
-            } catch (error) {
-                console.error('❌ Error al publicar anuncio:', error);
-                alert('⚠️ Error al publicar:\n\n' + error.message);
-            } finally {
-                btnPublicar.disabled = false;
-                btnPublicar.textContent = textoOriginal;
-            }
-        }
-        
-        // Desactivar anuncio
-        async function desactivarAnuncio(anuncioId) {
-            if (!confirm('¿Ocultar este anuncio?\n\nDejará de mostrarse en Dashboard y Login.')) {
-                return;
-            }
-            
-            try {
-                const { doc, updateDoc } = window.firebaseCollections;
-                const db = window.firebaseDB;
-                
-                await updateDoc(doc(db, 'anuncios', anuncioId), {
-                    activo: false
-                });
-                
-                console.log('✅ Anuncio desactivado');
-                
-            } catch (error) {
-                console.error('❌ Error al desactivar anuncio:', error);
-                alert('⚠️ Error:\n\n' + error.message);
             }
         }
         
@@ -107954,114 +107634,17 @@
             console.log('🔧 TALLER: Procesando código de barras');
             console.log('📄 Texto recibido:', texto);
             
-            // ========== OPCIÓN D: REGEX INTELIGENTE MULTI-PATRÓN ==========
-            let sap = null;
-            let metodoExtraccion = '';
+            // Extraer código SAP después de "CODIGO :" o "CODIGO:"
+            const match = texto.match(/CODIGO\s*:\s*(\d+)\.?/i);
             
-            // PASO 1: Intentar patrones "CODIGO" primero (más confiables)
-            const patronesCodigo = [
-                /CODIGO\s*:\s*(\d{6,7})\.?/i,      // "CODIGO : 123456" o "CODIGO : 123456."
-                /CODIGO\s*(\d{6,7})\.?/i,          // "CODIGO 123456" o "CODIGO 123456."
-                /COD\s*:\s*(\d{6,7})\.?/i,         // "COD : 123456"
-                /COD\s*(\d{6,7})\.?/i              // "COD 123456"
-            ];
-            
-            for (let patron of patronesCodigo) {
-                const match = texto.match(patron);
-                if (match) {
-                    sap = match[1];
-                    metodoExtraccion = 'Patrón CODIGO/COD';
-                    console.log('✅ TALLER: SAP extraído vía patrón:', metodoExtraccion);
-                    break;
-                }
+            if (!match) {
+                console.error('❌ TALLER: No se pudo extraer SAP del texto');
+                alert('⚠️ No se pudo extraer el código SAP del QR\n\nFormato esperado: "CODIGO : 123456"');
+                return;
             }
             
-            // PASO 2: Si no encontró con patrones CODIGO, buscar números de 6-7 dígitos
-            if (!sap) {
-                const numerosEncontrados = texto.match(/\d{6,7}/g);
-                
-                if (numerosEncontrados && numerosEncontrados.length === 1) {
-                    // Solo hay 1 número de 6-7 dígitos → Auto
-                    sap = numerosEncontrados[0];
-                    metodoExtraccion = 'Auto (único número 6-7 dígitos)';
-                    console.log('✅ TALLER: SAP extraído automáticamente (único):', sap);
-                    
-                } else if (numerosEncontrados && numerosEncontrados.length > 1) {
-                    // Múltiples números → Mostrar opciones
-                    console.log('⚠️ TALLER: Múltiples números encontrados:', numerosEncontrados);
-                    
-                    let opciones = '⚠️ MÚLTIPLES CÓDIGOS DETECTADOS\n\n';
-                    opciones += 'Texto: "' + texto + '"\n\n';
-                    opciones += '¿Cuál es el código SAP correcto?\n\n';
-                    
-                    numerosEncontrados.forEach((num, idx) => {
-                        opciones += `${idx + 1}. ${num}\n`;
-                    });
-                    opciones += `\n0. Ninguno (ingresar manual)`;
-                    
-                    const seleccion = prompt(opciones + '\n\nIngresa el número de opción (1-' + numerosEncontrados.length + '):');
-                    
-                    if (seleccion && seleccion !== '0') {
-                        const index = parseInt(seleccion) - 1;
-                        if (index >= 0 && index < numerosEncontrados.length) {
-                            sap = numerosEncontrados[index];
-                            metodoExtraccion = 'Selección manual (múltiples opciones)';
-                            console.log('✅ TALLER: SAP seleccionado manualmente:', sap);
-                        }
-                    }
-                    
-                    if (!sap) {
-                        console.log('❌ TALLER: Usuario canceló o no seleccionó opción válida');
-                        if (confirm('⚠️ No se seleccionó código SAP\n\n¿Deseas usar captura manual?')) {
-                            document.getElementById('tab-qr').classList.remove('active');
-                            document.getElementById('tab-manual').classList.add('active');
-                            document.getElementById('tab-scan').style.display = 'none';
-                            document.getElementById('tab-manual').style.display = 'block';
-                        }
-                        return;
-                    }
-                    
-                } else {
-                    // No se encontró ningún número de 6-7 dígitos
-                    console.error('❌ TALLER: No se encontraron números de 6-7 dígitos');
-                    
-                    // Último intento: cualquier número
-                    const cualquierNumero = texto.match(/\d+/g);
-                    if (cualquierNumero && cualquierNumero.length > 0) {
-                        let opciones = '⚠️ NO SE DETECTÓ CÓDIGO SAP ESTÁNDAR\n\n';
-                        opciones += 'Texto: "' + texto + '"\n\n';
-                        opciones += 'Números encontrados:\n\n';
-                        
-                        cualquierNumero.forEach((num, idx) => {
-                            opciones += `${idx + 1}. ${num}\n`;
-                        });
-                        opciones += `\n0. Ninguno (ingresar manual)`;
-                        
-                        const seleccion = prompt(opciones + '\n\nIngresa el número de opción:');
-                        
-                        if (seleccion && seleccion !== '0') {
-                            const index = parseInt(seleccion) - 1;
-                            if (index >= 0 && index < cualquierNumero.length) {
-                                sap = cualquierNumero[index];
-                                metodoExtraccion = 'Manual (números no estándar)';
-                                console.log('⚠️ TALLER: SAP extraído manualmente (no estándar):', sap);
-                            }
-                        }
-                    }
-                    
-                    if (!sap) {
-                        if (confirm('⚠️ No se pudo extraer código SAP\n\n¿Deseas usar captura manual?')) {
-                            document.getElementById('tab-qr').classList.remove('active');
-                            document.getElementById('tab-manual').classList.add('active');
-                            document.getElementById('tab-scan').style.display = 'none';
-                            document.getElementById('tab-manual').style.display = 'block';
-                        }
-                        return;
-                    }
-                }
-            }
-            
-            console.log('✅ TALLER: SAP final extraído:', sap, '| Método:', metodoExtraccion);
+            const sap = match[1]; // Código limpio sin punto
+            console.log('✅ TALLER: SAP extraído:', sap);
             
             // FORZAR ALMACÉN 33
             const almacenCod = '33';
